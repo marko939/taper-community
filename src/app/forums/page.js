@@ -4,7 +4,7 @@ import { useEffect } from 'react';
 import Link from 'next/link';
 import { useForumStore } from '@/stores/forumStore';
 import { PageLoading } from '@/components/shared/LoadingSpinner';
-import { groupForums, CATEGORY_ICONS } from '@/lib/forumCategories';
+import { getGeneralSections, getDrugClassGroups, CATEGORY_ICONS, DRUG_CLASS_ICONS } from '@/lib/forumCategories';
 import SearchBar from '@/components/shared/SearchBar';
 import ThreadCard from '@/components/forums/ThreadCard';
 
@@ -28,7 +28,8 @@ export default function ForumsPage() {
 
   const handleSearch = (q) => searchFn(null, q);
 
-  const sections = groupForums(forums);
+  const generalSections = getGeneralSections(forums);
+  const drugGroups = getDrugClassGroups(forums);
 
   return (
     <div className="space-y-8">
@@ -61,7 +62,8 @@ export default function ForumsPage() {
       )}
 
       {!isSearching && <div className="space-y-6">
-        {sections.map((section) => (
+        {/* General forum sections */}
+        {generalSections.map((section) => (
           <section key={section.key} className="glass-panel overflow-hidden">
             <div
               className="flex items-center gap-3 border-b px-6 py-4"
@@ -78,38 +80,87 @@ export default function ForumsPage() {
             </div>
 
             <div className="divide-y" style={{ borderColor: 'var(--border-subtle)' }}>
-              {section.forums.map((forum) => {
-                const href = forum.drug_slug ? `/forums/${forum.drug_slug}` : `/forums/${forum.slug || forum.id}`;
-                return (
-                  <Link
-                    key={forum.id}
-                    href={href}
-                    className="group flex items-center gap-4 bg-surface-strong p-5 no-underline transition hover:bg-purple-ghost/50"
+              {section.forums.map((forum) => (
+                <Link
+                  key={forum.slug}
+                  href={`/forums/${forum.slug}`}
+                  className="group flex items-center gap-4 bg-surface-strong p-5 no-underline transition hover:bg-purple-ghost/50"
+                >
+                  <div className="h-8 w-1 shrink-0 rounded-full" style={{ background: 'var(--purple)' }} />
+                  <div className="min-w-0 flex-1">
+                    <p className="font-semibold text-foreground transition group-hover:text-purple">
+                      {forum.name}
+                    </p>
+                    {forum.description && (
+                      <p className="mt-0.5 text-xs text-text-muted line-clamp-1">{forum.description}</p>
+                    )}
+                  </div>
+                  <span className="shrink-0 text-xs text-text-subtle">
+                    {forum.post_count ?? 0} posts
+                  </span>
+                  <svg
+                    className="h-4 w-4 shrink-0 text-text-subtle transition group-hover:text-purple"
+                    fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"
                   >
-                    <div className="h-8 w-1 shrink-0 rounded-full" style={{ background: 'var(--purple)' }} />
-                    <div className="min-w-0 flex-1">
-                      <p className="font-semibold text-foreground transition group-hover:text-purple">
-                        {forum.name}
-                      </p>
-                      {forum.description && (
-                        <p className="mt-0.5 text-xs text-text-muted line-clamp-1">{forum.description}</p>
-                      )}
-                    </div>
-                    <span className="shrink-0 text-xs text-text-subtle">
-                      {forum.post_count ?? 0} posts
-                    </span>
-                    <svg
-                      className="h-4 w-4 shrink-0 text-text-subtle transition group-hover:text-purple"
-                      fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"
-                    >
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
-                    </svg>
-                  </Link>
-                );
-              })}
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                  </svg>
+                </Link>
+              ))}
             </div>
           </section>
         ))}
+
+        {/* Drug-Specific Forums — grouped by class */}
+        <section className="glass-panel overflow-hidden">
+          <div
+            className="flex items-center gap-3 border-b px-6 py-4"
+            style={{ borderColor: 'var(--border-subtle)', background: 'var(--purple-ghost)' }}
+          >
+            <div className="text-purple">{CATEGORY_ICONS.drug}</div>
+            <h2 className="text-lg font-semibold text-foreground">Drug-Specific Forums</h2>
+          </div>
+          <div className="grid grid-cols-2 gap-4 p-5 sm:grid-cols-3">
+            {drugGroups.map((group) => (
+              <div
+                key={group.key}
+                className="rounded-2xl border p-5"
+                style={{ borderColor: 'var(--border-subtle)', background: 'var(--surface-strong)' }}
+              >
+                <div className="mb-3 flex items-center gap-3">
+                  <div
+                    className="flex h-12 w-12 items-center justify-center rounded-2xl"
+                    style={{ background: 'var(--purple-ghost)', color: 'var(--purple)' }}
+                  >
+                    {DRUG_CLASS_ICONS[group.key]}
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold text-foreground">{group.label}</p>
+                    <p className="text-[11px] text-text-subtle">{group.desc}</p>
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  {group.forums.map((forum) => (
+                    <Link
+                      key={forum.id}
+                      href={`/forums/${forum.drug_slug || forum.slug}`}
+                      className="group flex items-center justify-between rounded-lg px-2 py-1.5 text-sm no-underline transition hover:bg-purple-ghost/50"
+                    >
+                      <span className="font-medium text-foreground transition group-hover:text-purple">
+                        {forum.name}
+                      </span>
+                      <span className="text-[11px] text-text-subtle">
+                        {forum.post_count ?? 0}
+                      </span>
+                    </Link>
+                  ))}
+                  {group.forums.length === 0 && (
+                    <p className="px-2 py-1.5 text-xs text-text-subtle italic">No forums yet</p>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
       </div>}
     </div>
   );

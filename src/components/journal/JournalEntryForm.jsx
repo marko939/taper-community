@@ -76,8 +76,8 @@ export default function JournalEntryForm({ onSubmit, entryCount = 0 }) {
   const autoForums = useMemo(() => {
     const auto = [];
     if (entryCount === 0 && introForum) auto.push(introForum);
-    if (moodScore > 5 && successForum) auto.push(successForum);
-    if (moodScore < 5 && supportForum) auto.push(supportForum);
+    if (moodScore >= 7 && successForum) auto.push(successForum);
+    if (moodScore <= 3 && supportForum) auto.push(supportForum);
     return auto;
   }, [moodScore, entryCount, introForum, successForum, supportForum]);
 

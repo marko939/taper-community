@@ -65,74 +65,16 @@ export const DRUG_CATEGORY_GROUPS = [
   { key: 'Other', label: 'Other', desc: 'NaSSAs, NDRIs, Gabapentinoids & more', classes: ['NaSSA', 'NDRI', 'Gabapentinoid', 'Other'] },
 ];
 
-export const FORUM_SECTIONS = [
-  {
-    key: 'community',
-    label: 'Community',
-    forums: [
-      {
-        slug: 'introductions',
-        name: 'Introductions',
-        description: 'Welcome! Share your first post here — tell us about yourself and your tapering journey.',
-      },
-      {
-        slug: 'support',
-        name: 'Support',
-        description: 'Emotional support, difficult moments, identity, and finding meaning during tapering and withdrawal.',
-      },
-      {
-        slug: 'success-stories',
-        name: 'Success Stories',
-        description: 'Recovery stories and taper milestones worth celebrating.',
-      },
-    ],
-  },
-  {
-    key: 'tapering',
-    label: 'Tapering & Symptoms',
-    forums: [
-      {
-        slug: 'tapering',
-        name: 'Tapering',
-        description: 'Dose reduction strategies, schedules, methods, withdrawal symptoms, supplements, and self-care.',
-      },
-    ],
-  },
-  {
-    key: 'research',
-    label: 'Research & News',
-    forums: [
-      {
-        slug: 'research-and-news',
-        name: 'Research & News',
-        description: 'Scientific papers, clinical studies, news articles, books, advocacy, and media about psychiatric drug withdrawal.',
-      },
-    ],
-  },
-  {
-    key: 'lifestyle',
-    label: 'Relationships & Lifestyle',
-    forums: [
-      {
-        slug: 'lifestyle',
-        name: 'Relationships & Lifestyle',
-        description: 'Diet, exercise, sleep, mindfulness, relationships, and other lifestyle factors during tapering.',
-      },
-    ],
-  },
-];
-
 // Flat list of all general (non-drug) forum slugs for routing
-export const GENERAL_FORUM_SLUGS = FORUM_SECTIONS.flatMap((s) =>
-  s.forums.map((f) => f.slug)
-);
-
-// Legacy exports for backward compatibility during migration
-export const FORUM_CATEGORIES = {
-  drug: 'Drug-Specific',
-  general: 'General Discussion',
-  resources: 'Research & News',
-};
+export const GENERAL_FORUM_SLUGS = [
+  'introductions',
+  'success-stories',
+  'support',
+  'finding-meaning',
+  'tapering',
+  'research-and-news',
+  'lifestyle',
+];
 
 export const THREAD_TAGS = [
   'taper update',

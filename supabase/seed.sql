@@ -11,25 +11,28 @@ insert into public.forums (id, name, slug, drug_slug, category, description) val
 -- FORUMS — Community
 -- ============================================================
 insert into public.forums (id, name, slug, drug_slug, category, description) values
-  ('f0000000-0000-0000-0002-000000000001', 'Introductions and Updates', 'introductions', null, 'community', 'Create your personal topic and update it as your case history. One thread per member.'),
-  ('f0000000-0000-0000-0002-000000000002', 'Support', 'support', null, 'community', 'Emotional support for difficult moments during tapering and withdrawal.'),
-  ('f0000000-0000-0000-0002-000000000003', 'Success Stories', 'success-stories', null, 'community', 'Recovery stories and taper milestones worth celebrating.'),
-  ('f0000000-0000-0000-0002-000000000004', 'Finding Meaning', 'finding-meaning', null, 'community', 'Life philosophy, identity, and purpose during and after withdrawal.');
+  ('f0000000-0000-0000-0002-000000000001', 'Introductions', 'introductions', null, 'community', 'Welcome! Tell us about yourself and your tapering journey.'),
+  ('f0000000-0000-0000-0002-000000000002', 'I Need Support', 'support', null, 'community', 'Emotional support for tough moments during tapering and withdrawal.'),
+  ('f0000000-0000-0000-0002-000000000003', 'I''m Crushing It', 'success-stories', null, 'community', 'Recovery wins, taper milestones, and positive updates.'),
+  ('f0000000-0000-0000-0002-000000000004', 'Philosophy', 'finding-meaning', null, 'community', 'Life philosophy, identity, and purpose during and after withdrawal.');
 
 -- ============================================================
 -- FORUMS — Tapering & Symptoms
 -- ============================================================
 insert into public.forums (id, name, slug, drug_slug, category, description) values
-  ('f0000000-0000-0000-0003-000000000001', 'Tapering', 'tapering', null, 'tapering', 'Gradual dose reduction strategies, schedules, and tapering methods.'),
-  ('f0000000-0000-0000-0003-000000000002', 'Symptoms and Self-Care', 'symptoms-and-self-care', null, 'tapering', 'Withdrawal symptoms, supplements, coping strategies, and self-care.');
+  ('f0000000-0000-0000-0003-000000000001', 'Tapering & Symptoms', 'tapering', null, 'tapering', 'Dose reduction strategies, withdrawal symptoms, supplements, and self-care.');
 
 -- ============================================================
 -- FORUMS — Research & News
 -- ============================================================
 insert into public.forums (id, name, slug, drug_slug, category, description) values
-  ('f0000000-0000-0000-0004-000000000001', 'From Journals and Scientific Sources', 'journals-and-science', null, 'research', 'Research papers, clinical studies, and scientific evidence on psychiatric drug withdrawal.'),
-  ('f0000000-0000-0000-0004-000000000002', 'In the Media', 'in-the-media', null, 'research', 'News articles, books, podcasts, and documentaries about psychiatric drugs and withdrawal.'),
-  ('f0000000-0000-0000-0004-000000000003', 'Events, Actions, Controversies', 'events-controversies', null, 'research', 'Advocacy efforts, industry criticism, and psychiatric drug controversies.');
+  ('f0000000-0000-0000-0004-000000000001', 'Research & News', 'research-and-news', null, 'research', 'Scientific papers, news articles, advocacy, and media about psychiatric drug withdrawal.');
+
+-- ============================================================
+-- FORUMS — Relationships & Lifestyle
+-- ============================================================
+insert into public.forums (id, name, slug, drug_slug, category, description) values
+  ('f0000000-0000-0000-0005-000000000001', 'Relationships & Lifestyle', 'lifestyle', null, 'lifestyle', 'Diet, exercise, sleep, relationships, and lifestyle during tapering.');
 
 -- ============================================================
 -- FORUMS — Drug-Specific (25 drugs)
