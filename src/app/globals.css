@@ -1,0 +1,373 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+
+  /* ── Brand Purple System ── */
+  --purple: #5B2E91;
+  --purple-light: #7B4FAF;
+  --purple-pale: #EDE5F4;
+  --purple-ghost: #F7F3FB;
+  --purple-dark: #3D1D63;
+  --purple-deep: #2A1250;
+
+  /* Surfaces */
+  --background: #F6F4FA;
+  --foreground: #1E1B2E;
+  --surface-strong: #ffffff;
+  --surface-glass: rgba(255, 255, 255, 0.88);
+  --surface-tint: rgba(244, 242, 251, 0.62);
+
+  /* Borders */
+  --border-subtle: #E8E5F0;
+  --border-strong: rgba(30, 27, 46, 0.22);
+  --border-light: #F0EDF5;
+
+  /* Shadows — purple-tinted */
+  --shadow-soft: 0 2px 12px rgba(91, 46, 145, 0.04);
+  --shadow-elevated: 0 8px 32px rgba(91, 46, 145, 0.08), 0 2px 8px rgba(0, 0, 0, 0.03);
+  --shadow-ring: 0 0 0 1px rgba(91, 46, 145, 0.04);
+
+  /* Accents */
+  --accent-blue: #5B2E91;
+  --accent-teal: #2EC4B6;
+  --accent-teal-light: #D4F5F2;
+  --accent-emerald: #34A853;
+  --accent-red: #D64545;
+  --accent-warn: #E8A838;
+
+  /* Text */
+  --text-muted: #6B6580;
+  --text-subtle: #9B95A8;
+
+  /* Radii */
+  --radius-lg: 20px;
+  --radius-md: 16px;
+  --radius-sm: 12px;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background:
+    radial-gradient(1200px 1200px at 12% 18%, rgba(91, 46, 145, 0.06), transparent 60%),
+    radial-gradient(900px 900px at 88% 10%, rgba(46, 196, 182, 0.05), transparent 55%),
+    var(--background);
+  background-attachment: fixed;
+  color: var(--foreground);
+  font-family: var(--font-dm-sans), 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  letter-spacing: -0.01em;
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: var(--accent-blue);
+  text-decoration: none;
+}
+a:hover {
+  text-decoration: underline;
+}
+
+input,
+textarea,
+select {
+  appearance: none;
+  width: 100%;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-subtle);
+  background: rgba(255, 255, 255, 0.95);
+  padding: 0.75rem 1rem;
+  font-size: 0.95rem;
+  color: var(--foreground);
+  transition: border-color 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+}
+input:focus,
+textarea:focus,
+select:focus {
+  outline: none;
+  border-color: rgba(91, 46, 145, 0.55);
+  box-shadow: 0 0 0 3px rgba(91, 46, 145, 0.12);
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--text-subtle);
+}
+
+label {
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+/* ============================================================
+   Leaflet Map Fixes (Tailwind Preflight conflicts)
+   ============================================================ */
+
+.leaflet-container {
+  z-index: 1;
+}
+.leaflet-container img.leaflet-tile,
+.leaflet-container img {
+  max-width: none !important;
+  max-height: none !important;
+  width: auto;
+  height: auto;
+  padding: 0;
+  margin: 0;
+  border: none;
+}
+.leaflet-tile-pane img {
+  max-width: none !important;
+  max-height: none !important;
+  display: block;
+}
+.leaflet-container .leaflet-control-zoom a,
+.leaflet-container a {
+  color: inherit;
+  text-decoration: none;
+}
+.leaflet-popup-content-wrapper,
+.leaflet-popup-tip {
+  box-shadow: 0 3px 14px rgba(0, 0, 0, 0.15);
+}
+/* Ensure cluster markers render above tiles */
+.leaflet-marker-pane,
+.leaflet-popup-pane {
+  z-index: 600 !important;
+}
+
+/* ============================================================
+   Glass Panels
+   ============================================================ */
+
+.glass-panel {
+  background: var(--surface-strong);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-soft);
+  position: relative;
+}
+.glass-panel::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  box-shadow: var(--shadow-ring);
+}
+
+.glass-panel-muted {
+  background: var(--surface-tint);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-soft);
+}
+
+/* ============================================================
+   Panel Border Accents
+   ============================================================ */
+
+.panel-border-accent {
+  border: 1px solid rgba(91, 46, 145, 0.25);
+  box-shadow: 0 0 0 1px rgba(91, 46, 145, 0.08);
+}
+.panel-border-success {
+  border: 1px solid rgba(52, 168, 83, 0.28);
+  box-shadow: 0 0 0 1px rgba(52, 168, 83, 0.09);
+}
+.panel-border-danger {
+  border: 1px solid rgba(214, 69, 69, 0.22);
+  box-shadow: 0 0 0 1px rgba(214, 69, 69, 0.08);
+}
+
+/* ============================================================
+   Buttons
+   ============================================================ */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.7rem 1.5rem;
+  font-weight: 600;
+  font-size: 0.9rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid transparent;
+  background: var(--surface-strong);
+  color: var(--foreground);
+  transition: all 0.15s ease;
+  position: relative;
+  cursor: pointer;
+  font-family: inherit;
+}
+.btn:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-elevated);
+  text-decoration: none;
+}
+.btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(91, 46, 145, 0.18);
+}
+
+/* ============================================================
+   Typography
+   ============================================================ */
+
+.section-title {
+  font-family: var(--font-fraunces), 'Fraunces', Georgia, serif;
+  font-size: clamp(1.75rem, 4vw, 2.25rem);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--foreground);
+}
+.section-eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--purple-light);
+}
+.muted-copy {
+  color: var(--text-muted);
+  line-height: 1.65;
+}
+
+/* ============================================================
+   Utilities
+   ============================================================ */
+
+.surface-outline {
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--surface-strong);
+  box-shadow: var(--shadow-soft);
+}
+
+.badge-soft {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  border-radius: 100px;
+  padding: 0.3rem 0.7rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  background: var(--purple-pale);
+  color: var(--purple);
+}
+
+.divider {
+  height: 1px;
+  width: 100%;
+  background: linear-gradient(90deg, transparent, var(--border-subtle), transparent);
+}
+
+/* ============================================================
+   Animations
+   ============================================================ */
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease;
+}
+
+/* ============================================================
+   Component Classes
+   ============================================================ */
+
+@layer components {
+  .card {
+    background: var(--surface-strong);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-soft);
+    padding: 1.5rem;
+  }
+
+  .btn-primary {
+    @apply btn;
+    background: var(--purple);
+    color: #fff;
+    border-color: var(--purple);
+  }
+  .btn-primary:hover {
+    background: var(--purple-light);
+    border-color: var(--purple-light);
+  }
+
+  .btn-secondary {
+    @apply btn;
+    border-color: var(--border-subtle);
+    color: var(--text-muted);
+  }
+  .btn-secondary:hover {
+    background: var(--purple-ghost);
+    border-color: var(--purple-pale);
+    color: var(--purple);
+  }
+
+  .input {
+    width: 100%;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border-subtle);
+    background: rgba(255, 255, 255, 0.95);
+    padding: 0.75rem 1rem;
+    font-size: 0.95rem;
+    color: var(--foreground);
+    transition: border-color 0.18s ease, box-shadow 0.18s ease;
+  }
+  .input:focus {
+    outline: none;
+    border-color: rgba(91, 46, 145, 0.55);
+    box-shadow: 0 0 0 3px rgba(91, 46, 145, 0.12);
+  }
+
+  .textarea {
+    @apply input;
+    min-height: 120px;
+    resize: vertical;
+  }
+
+  .badge {
+    @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium;
+  }
+
+  .badge-teal {
+    @apply badge;
+    background: var(--purple-pale);
+    color: var(--purple);
+  }
+
+  .badge-amber {
+    @apply badge;
+    background: rgba(232, 168, 56, 0.12);
+    color: #8B6914;
+  }
+
+  .ai-border {
+    border: 1px solid rgba(91, 46, 145, 0.25);
+    background: rgba(91, 46, 145, 0.04);
+  }
+
+  .link {
+    color: var(--accent-blue);
+    transition: color 0.18s ease;
+  }
+  .link:hover {
+    color: var(--purple-dark);
+    text-decoration: underline;
+  }
+}
