@@ -1,3 +1,5 @@
+'use client';
+
 // Single source of truth for forum category display.
 // Both the landing page (ForumSections) and the /forums page use this.
 
