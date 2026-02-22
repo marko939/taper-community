@@ -196,7 +196,7 @@ export default function PatientDashboard({ user, profile }) {
     <div className="space-y-6">
       {/* Welcome + Status Card */}
       <div
-        className="relative overflow-hidden rounded-[24px] p-8"
+        className="relative overflow-hidden rounded-[24px] px-10 py-10"
         style={{
           boxShadow: '0 12px 48px rgba(91, 46, 145, 0.25), 0 4px 16px rgba(0,0,0,0.1)',
         }}
@@ -206,37 +206,37 @@ export default function PatientDashboard({ user, profile }) {
         </div>
         <div className="pointer-events-none absolute inset-0" style={{ background: 'rgba(42,18,80,0.35)' }} />
         <div className="relative z-10">
-          <p className="text-sm font-medium text-white/60">Welcome back</p>
-          <h1 className="mt-1 text-2xl font-bold text-white">
+          <p className="text-base font-medium text-white/60">Welcome back</p>
+          <h1 className="mt-1.5 text-3xl font-bold text-white">
             {profile?.display_name || 'there'}
           </h1>
 
           {loading ? (
             <div className="mt-6 h-16 animate-pulse rounded-xl bg-white/10" />
           ) : lastEntry ? (
-            <div className="mt-5 flex items-center justify-between rounded-xl px-5 py-4" style={{ background: 'rgba(255,255,255,0.12)', backdropFilter: 'blur(12px)' }}>
-              <div className="flex items-center gap-4">
+            <div className="mt-6 flex items-center justify-between rounded-xl px-6 py-5" style={{ background: 'rgba(255,255,255,0.12)', backdropFilter: 'blur(12px)' }}>
+              <div className="flex items-center gap-5">
                 {lastEntry.drug && (
                   <div>
-                    <p className="text-[10px] font-bold uppercase tracking-wider text-white/50">Dose</p>
-                    <p className="text-sm font-bold text-white">{lastEntry.current_dose || '—'} <span className="font-normal text-white/60">{lastEntry.drug}</span></p>
+                    <p className="text-[11px] font-bold uppercase tracking-wider text-white/50">Dose</p>
+                    <p className="text-base font-bold text-white">{lastEntry.current_dose || '—'} <span className="font-normal text-white/60">{lastEntry.drug}</span></p>
                   </div>
                 )}
                 <div className="h-8 w-px bg-white/20" />
                 <div>
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-white/50">Mood</p>
-                  <p className="text-sm font-bold" style={{ color: moodColor }}>{lastEntry.mood_score}/10 <span className="font-normal text-white/60">{MOOD_LABELS[lastEntry.mood_score]}</span></p>
+                  <p className="text-[11px] font-bold uppercase tracking-wider text-white/50">Mood</p>
+                  <p className="text-base font-bold" style={{ color: moodColor }}>{lastEntry.mood_score}/10 <span className="font-normal text-white/60">{MOOD_LABELS[lastEntry.mood_score]}</span></p>
                 </div>
                 <div className="h-8 w-px bg-white/20" />
                 <div>
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-white/50">Last check-in</p>
-                  <p className="text-sm text-white/80">{daysAgo === 0 ? 'Today' : `${daysAgo} day${daysAgo !== 1 ? 's' : ''} ago`}</p>
+                  <p className="text-[11px] font-bold uppercase tracking-wider text-white/50">Last check-in</p>
+                  <p className="text-base text-white/80">{daysAgo === 0 ? 'Today' : `${daysAgo} day${daysAgo !== 1 ? 's' : ''} ago`}</p>
                 </div>
               </div>
               {daysAgo > 0 && (
                 <Link
                   href="/journal"
-                  className="rounded-lg px-4 py-2 text-xs font-bold text-purple no-underline transition hover:opacity-90"
+                  className="rounded-lg px-5 py-2.5 text-sm font-bold text-purple no-underline transition hover:opacity-90"
                   style={{ background: 'white' }}
                 >
                   Check in now
