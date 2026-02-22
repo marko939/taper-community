@@ -94,6 +94,32 @@ export default function ProfilePage() {
   const karma = threads.reduce((sum, t) => sum + (t.vote_score || 0), 0) +
     replies.reduce((sum, r) => sum + (r.vote_score || 0), 0);
 
+  // Group cross-posted threads (same title + body created within 60s of each other)
+  const groupedThreads = (() => {
+    const groups = [];
+    const used = new Set();
+    const sorted = [...threads].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+    for (let i = 0; i < sorted.length; i++) {
+      if (used.has(sorted[i].id)) continue;
+      const main = sorted[i];
+      const siblings = [main];
+      used.add(main.id);
+
+      for (let j = i + 1; j < sorted.length; j++) {
+        if (used.has(sorted[j].id)) continue;
+        const other = sorted[j];
+        const timeDiff = Math.abs(new Date(main.created_at) - new Date(other.created_at));
+        if (main.title === other.title && main.body === other.body && timeDiff < 60000) {
+          siblings.push(other);
+          used.add(other.id);
+        }
+      }
+      groups.push({ main, forums: siblings.map((s) => s.forums).filter(Boolean) });
+    }
+    return groups;
+  })();
+
   // Journal entries to display: own profile shows all with visibility indicators, others see public only
   const journalEntries = isOwnProfile ? allJournal : publicEntries;
 
@@ -136,7 +162,7 @@ export default function ProfilePage() {
       {/* Tabs */}
       <div className="flex gap-1 rounded-full border border-border-subtle bg-surface-glass p-1">
         {tabs.map((t) => {
-          const count = t === 'posts' ? threads.length : t === 'replies' ? replies.length : journalEntries.length;
+          const count = t === 'posts' ? groupedThreads.length : t === 'replies' ? replies.length : journalEntries.length;
           return (
             <button
               key={t}
@@ -156,28 +182,36 @@ export default function ProfilePage() {
       {/* Content */}
       {tab === 'posts' && (
         <div className="space-y-3">
-          {threads.length === 0 ? (
+          {groupedThreads.length === 0 ? (
             <p className="py-8 text-center text-text-subtle">No posts yet.</p>
           ) : (
-            threads.map((thread) => (
+            groupedThreads.map(({ main, forums }) => (
               <Link
-                key={thread.id}
-                href={`/thread/${thread.id}`}
+                key={main.id}
+                href={`/thread/${main.id}`}
                 className="card group block transition hover:shadow-lg"
               >
                 <h3 className="font-semibold text-foreground group-hover:text-accent-blue transition">
-                  {thread.title}
+                  {main.title}
                 </h3>
-                <div className="mt-1 flex items-center gap-2 text-xs text-text-subtle">
-                  {thread.forums?.name && (
-                    <span className="badge-soft">{thread.forums.name}</span>
+                <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-text-subtle">
+                  {forums.map((f) => (
+                    <span key={f.slug || f.name} className="badge-soft">{f.name}</span>
+                  ))}
+                  {forums.length > 1 && (
+                    <span
+                      className="rounded-full px-2 py-0.5 text-[10px] font-semibold"
+                      style={{ background: 'var(--purple-ghost)', color: 'var(--purple)' }}
+                    >
+                      posted in {forums.length} topics
+                    </span>
                   )}
-                  <span>{timeAgo(thread.created_at)}</span>
-                  <span>{thread.reply_count} replies</span>
-                  <span>{thread.vote_score || 0} points</span>
+                  <span>{timeAgo(main.created_at)}</span>
+                  <span>{main.reply_count} replies</span>
+                  <span>{main.vote_score || 0} points</span>
                 </div>
-                {thread.body && (
-                  <p className="mt-2 text-sm text-text-muted line-clamp-2">{thread.body}</p>
+                {main.body && (
+                  <p className="mt-2 text-sm text-text-muted line-clamp-2">{main.body}</p>
                 )}
               </Link>
             ))
