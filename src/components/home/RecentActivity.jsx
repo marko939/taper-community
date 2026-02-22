@@ -1,7 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { useRecentThreads } from '@/hooks/useForumData';
+import { useEffect } from 'react';
+import { useForumStore } from '@/stores/forumStore';
 import LoadingSpinner from '@/components/shared/LoadingSpinner';
 
 function timeAgo(dateStr) {
@@ -21,7 +22,15 @@ function timeAgo(dateStr) {
 }
 
 export default function RecentActivity() {
-  const { threads, loading } = useRecentThreads(3);
+  const recentThreads = useForumStore((s) => s.recentThreads);
+  const fetchRecentThreads = useForumStore((s) => s.fetchRecentThreads);
+
+  useEffect(() => {
+    fetchRecentThreads(3);
+  }, [fetchRecentThreads]);
+
+  const threads = recentThreads.items;
+  const loading = recentThreads.loading;
 
   return (
     <section>

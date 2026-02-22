@@ -1,10 +1,87 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo } from 'react';
 import Link from 'next/link';
-import { createClient } from '@/lib/supabase/client';
+import { useJournalStore } from '@/stores/journalStore';
+import { useForumStore } from '@/stores/forumStore';
 import { MOOD_LABELS } from '@/lib/constants';
-import { useRecentThreads } from '@/hooks/useForumData';
+
+const BADGES = [
+  {
+    id: 'first_checkin',
+    icon: '🎯',
+    label: 'First Check-In',
+    desc: 'Logged your first journal entry',
+    check: (e) => e.length >= 1,
+  },
+  {
+    id: 'three_checkins',
+    icon: '🔥',
+    label: '3-Day Streak',
+    desc: 'Completed 3 check-ins',
+    check: (e) => e.length >= 3,
+  },
+  {
+    id: 'ten_checkins',
+    icon: '⭐',
+    label: 'Dedicated Tracker',
+    desc: '10 check-ins completed',
+    check: (e) => e.length >= 10,
+  },
+  {
+    id: 'dose_cut_25',
+    icon: '📉',
+    label: '25% Dose Cut',
+    desc: 'Reduced your dose by 25%',
+    check: (entries) => {
+      const doses = entries.filter((e) => e.dose_numeric).map((e) => e.dose_numeric);
+      if (doses.length < 2) return false;
+      const first = doses[doses.length - 1];
+      const last = doses[0];
+      return last <= first * 0.75;
+    },
+  },
+  {
+    id: 'dose_cut_50',
+    icon: '🏆',
+    label: 'Halfway There',
+    desc: 'Cut your dose by 50%',
+    check: (entries) => {
+      const doses = entries.filter((e) => e.dose_numeric).map((e) => e.dose_numeric);
+      if (doses.length < 2) return false;
+      const first = doses[doses.length - 1];
+      const last = doses[0];
+      return last <= first * 0.5;
+    },
+  },
+  {
+    id: 'mood_boost',
+    icon: '😊',
+    label: 'Mood Boost',
+    desc: 'Mood improved from a previous entry',
+    check: (entries) => {
+      if (entries.length < 2) return false;
+      for (let i = 0; i < entries.length - 1; i++) {
+        if (entries[i].mood_score > entries[i + 1].mood_score) return true;
+      }
+      return false;
+    },
+  },
+  {
+    id: 'community_post',
+    icon: '💬',
+    label: 'Community Voice',
+    desc: 'Shared an entry with the community',
+    check: (entries) => entries.some((e) => e.is_public),
+  },
+  {
+    id: 'symptom_free',
+    icon: '🌟',
+    label: 'Symptom-Free Day',
+    desc: 'Logged a day with zero symptoms',
+    check: (entries) => entries.some((e) => !e.symptoms || e.symptoms.length === 0),
+  },
+];
 
 function timeAgo(dateStr) {
   const now = new Date();
@@ -28,28 +105,30 @@ function daysSince(dateStr) {
 }
 
 export default function PatientDashboard({ user, profile }) {
-  const [lastEntry, setLastEntry] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const { threads, loading: threadsLoading } = useRecentThreads(5);
-  const supabase = createClient();
+  const entries = useJournalStore((s) => s.entries);
+  const journalLoading = useJournalStore((s) => s.loading);
+  const fetchEntries = useJournalStore((s) => s.fetchEntries);
+  const recentThreads = useForumStore((s) => s.recentThreads);
+  const fetchRecentThreads = useForumStore((s) => s.fetchRecentThreads);
 
   useEffect(() => {
-    const fetchLatest = async () => {
-      const { data } = await supabase
-        .from('journal_entries')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('date', { ascending: false })
-        .limit(1);
+    fetchEntries();
+    fetchRecentThreads(5);
+  }, [fetchEntries, fetchRecentThreads]);
 
-      if (data && data.length > 0) setLastEntry(data[0]);
-      setLoading(false);
-    };
-    fetchLatest();
-  }, [user.id]);
+  const loading = journalLoading;
+  const threads = recentThreads.items;
+  const threadsLoading = recentThreads.loading;
 
+  const lastEntry = entries[0] || null;
   const daysAgo = lastEntry ? daysSince(lastEntry.date) : null;
   const moodColor = lastEntry?.mood_score >= 7 ? '#2EC4B6' : lastEntry?.mood_score >= 4 ? '#F59E0B' : '#EF4444';
+
+  const badges = useMemo(() =>
+    BADGES.map((b) => ({ ...b, achieved: b.check(entries) })),
+    [entries]
+  );
+  const achievedCount = badges.filter((b) => b.achieved).length;
 
   return (
     <div className="space-y-8">
@@ -60,7 +139,6 @@ export default function PatientDashboard({ user, profile }) {
           boxShadow: '0 12px 48px rgba(91, 46, 145, 0.25), 0 4px 16px rgba(0,0,0,0.1)',
         }}
       >
-        {/* Background image — same as landing hero */}
         <div className="absolute inset-0">
           <img src="/hero-bg.jpg" alt="" className="h-full w-full object-cover" />
         </div>
@@ -72,72 +150,39 @@ export default function PatientDashboard({ user, profile }) {
           </h1>
 
           {loading ? (
-            <div className="mt-6 h-20 animate-pulse rounded-xl bg-white/10" />
+            <div className="mt-6 h-16 animate-pulse rounded-xl bg-white/10" />
           ) : lastEntry ? (
-            <>
-              {/* Status Strip */}
-              <div className="mt-6 flex gap-3">
-                {/* Current Dose */}
+            <div className="mt-5 flex items-center justify-between rounded-xl px-5 py-4" style={{ background: 'rgba(255,255,255,0.12)', backdropFilter: 'blur(12px)' }}>
+              <div className="flex items-center gap-4">
                 {lastEntry.drug && (
-                  <div className="flex-1 rounded-xl p-4" style={{ background: 'rgba(255,255,255,0.12)', backdropFilter: 'blur(12px)' }}>
-                    <p className="text-[10px] font-bold uppercase tracking-wider text-white/50">Current Dose</p>
-                    <p className="mt-1 text-lg font-bold text-white">{lastEntry.current_dose || '—'}</p>
-                    <p className="text-xs text-white/70">{lastEntry.drug}</p>
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-white/50">Dose</p>
+                    <p className="text-sm font-bold text-white">{lastEntry.current_dose || '—'} <span className="font-normal text-white/60">{lastEntry.drug}</span></p>
                   </div>
                 )}
-
-                {/* Mood */}
-                <div className="flex-1 rounded-xl p-4" style={{ background: 'rgba(255,255,255,0.12)', backdropFilter: 'blur(12px)' }}>
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-white/50">Mood</p>
-                  <div className="mt-1 flex items-baseline gap-2">
-                    <span className="text-lg font-bold" style={{ color: moodColor }}>{lastEntry.mood_score}/10</span>
-                    <span className="text-xs text-white/70">{MOOD_LABELS[lastEntry.mood_score]}</span>
-                  </div>
-                </div>
-
-                {/* Symptoms */}
-                <div className="flex-1 rounded-xl p-4" style={{ background: 'rgba(255,255,255,0.12)', backdropFilter: 'blur(12px)' }}>
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-white/50">Symptoms</p>
-                  {lastEntry.symptoms && lastEntry.symptoms.length > 0 ? (
-                    <div className="mt-1.5 flex flex-wrap gap-1">
-                      {lastEntry.symptoms.slice(0, 3).map((s) => (
-                        <span key={s} className="rounded-full px-2 py-0.5 text-[10px] font-semibold text-white" style={{ background: 'rgba(255,255,255,0.2)' }}>
-                          {s}
-                        </span>
-                      ))}
-                      {lastEntry.symptoms.length > 3 && (
-                        <span className="text-[10px] text-white/50">+{lastEntry.symptoms.length - 3}</span>
-                      )}
-                    </div>
-                  ) : (
-                    <p className="mt-1 text-sm font-medium text-white/70">None reported</p>
-                  )}
-                </div>
-              </div>
-
-              {/* Check-in Prompt */}
-              <div className="mt-4 flex items-center justify-between rounded-xl px-5 py-3" style={{ background: 'rgba(255,255,255,0.1)' }}>
+                <div className="h-8 w-px bg-white/20" />
                 <div>
-                  <p className="text-sm text-white/80">
-                    {daysAgo === 0
-                      ? 'You checked in today'
-                      : `Your last check-in was ${daysAgo} day${daysAgo !== 1 ? 's' : ''} ago`}
-                  </p>
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-white/50">Mood</p>
+                  <p className="text-sm font-bold" style={{ color: moodColor }}>{lastEntry.mood_score}/10 <span className="font-normal text-white/60">{MOOD_LABELS[lastEntry.mood_score]}</span></p>
                 </div>
-                {daysAgo > 0 && (
-                  <Link
-                    href="/journal"
-                    className="rounded-lg px-4 py-2 text-xs font-bold text-purple no-underline transition hover:opacity-90"
-                    style={{ background: 'white' }}
-                  >
-                    Check in now
-                  </Link>
-                )}
+                <div className="h-8 w-px bg-white/20" />
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-white/50">Last check-in</p>
+                  <p className="text-sm text-white/80">{daysAgo === 0 ? 'Today' : `${daysAgo} day${daysAgo !== 1 ? 's' : ''} ago`}</p>
+                </div>
               </div>
-            </>
+              {daysAgo > 0 && (
+                <Link
+                  href="/journal"
+                  className="rounded-lg px-4 py-2 text-xs font-bold text-purple no-underline transition hover:opacity-90"
+                  style={{ background: 'white' }}
+                >
+                  Check in now
+                </Link>
+              )}
+            </div>
           ) : (
-            /* No entries yet */
-            <div className="mt-6 rounded-xl px-5 py-6 text-center" style={{ background: 'rgba(255,255,255,0.1)' }}>
+            <div className="mt-5 rounded-xl px-5 py-5 text-center" style={{ background: 'rgba(255,255,255,0.1)' }}>
               <p className="text-sm text-white/80">Start tracking your taper journey</p>
               <Link
                 href="/journal"
@@ -150,6 +195,43 @@ export default function PatientDashboard({ user, profile }) {
           )}
         </div>
       </div>
+
+      {/* Achievement Badges */}
+      {!loading && (
+        <section>
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="font-serif text-xl font-semibold text-foreground">Achievements</h2>
+            <div className="flex items-center gap-2">
+              <div className="h-2 w-20 overflow-hidden rounded-full" style={{ background: 'var(--purple-ghost)' }}>
+                <div
+                  className="h-full rounded-full transition-all duration-700"
+                  style={{ width: `${Math.round((achievedCount / BADGES.length) * 100)}%`, background: 'var(--purple)' }}
+                />
+              </div>
+              <span className="text-xs font-semibold text-text-subtle">{achievedCount}/{BADGES.length}</span>
+            </div>
+          </div>
+          <div className="grid grid-cols-4 gap-3">
+            {badges.map((b) => (
+              <div
+                key={b.id}
+                className="flex flex-col items-center gap-2 rounded-2xl border p-4 text-center transition"
+                style={{
+                  borderColor: b.achieved ? 'var(--purple-pale)' : 'var(--border-subtle)',
+                  background: b.achieved ? 'var(--purple-ghost)' : 'var(--surface-strong)',
+                  opacity: b.achieved ? 1 : 0.5,
+                }}
+              >
+                <span className={`text-2xl ${b.achieved ? '' : 'grayscale'}`}>{b.icon}</span>
+                <div>
+                  <p className="text-xs font-bold text-foreground">{b.label}</p>
+                  <p className="mt-0.5 text-[10px] text-text-subtle">{b.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* Recent Posts */}
       <section>

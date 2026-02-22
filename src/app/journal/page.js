@@ -1,19 +1,30 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useAuth } from '@/hooks/useAuth';
-import { useJournal } from '@/hooks/useJournal';
+import { useAuthStore } from '@/stores/authStore';
+import { useJournalStore } from '@/stores/journalStore';
 import JournalEntryForm from '@/components/journal/JournalEntryForm';
 import JournalChart from '@/components/journal/JournalChart';
 import JournalEntryCard from '@/components/journal/JournalEntryCard';
 import { PageLoading } from '@/components/shared/LoadingSpinner';
 
 export default function JournalPage() {
-  const { user, loading: authLoading } = useAuth();
-  const { entries, loading, addEntry, getShareLink } = useJournal();
+  const user = useAuthStore((s) => s.user);
+  const authLoading = useAuthStore((s) => s.loading);
+  const entries = useJournalStore((s) => s.entries);
+  const loading = useJournalStore((s) => s.loading);
+  const fetchEntries = useJournalStore((s) => s.fetchEntries);
+  const addEntry = useJournalStore((s) => s.addEntry);
+  const getShareLink = useJournalStore((s) => s.getShareLink);
   const [shareUrl, setShareUrl] = useState(null);
   const [sharing, setSharing] = useState(false);
+
+  useEffect(() => {
+    if (user) {
+      fetchEntries();
+    }
+  }, [user, fetchEntries]);
 
   if (authLoading) return <PageLoading />;
 
@@ -89,19 +100,16 @@ export default function JournalPage() {
         </div>
       </div>
 
-      {/* Chart */}
       <div className="card">
         <h2 className="mb-4 text-lg font-semibold text-foreground">Your Taper Progress</h2>
         <JournalChart entries={entries} />
       </div>
 
-      {/* Entry form */}
       <div className="card">
         <h2 className="mb-4 text-lg font-semibold text-foreground">Log an Entry</h2>
         <JournalEntryForm onSubmit={handleSubmit} entryCount={entries.length} />
       </div>
 
-      {/* Entry history */}
       <div>
         <h2 className="mb-4 text-lg font-semibold text-foreground">Entry History</h2>
         {entries.length === 0 ? (

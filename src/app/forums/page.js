@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useForumData, useThreadSearch } from '@/hooks/useForumData';
+import { useForumStore } from '@/stores/forumStore';
 import { PageLoading } from '@/components/shared/LoadingSpinner';
 import { getDrugsByClass } from '@/lib/drugs';
 import { DRUG_CATEGORY_GROUPS } from '@/lib/constants';
@@ -58,26 +58,35 @@ const SECTION_ORDER = [
 ];
 
 export default function ForumsPage() {
-  const { forums, loading } = useForumData();
-  const { results: searchResults, loading: searchLoading, query: searchQuery, search } = useThreadSearch();
+  const forums = useForumStore((s) => s.forums);
+  const forumsLoading = useForumStore((s) => s.forumsLoading);
+  const fetchForums = useForumStore((s) => s.fetchForums);
+  const searchState = useForumStore((s) => s.searchState['global']);
+  const searchFn = useForumStore((s) => s.search);
 
-  if (loading) return <PageLoading />;
+  useEffect(() => {
+    fetchForums();
+  }, [fetchForums]);
 
+  if (forumsLoading) return <PageLoading />;
+
+  const searchResults = searchState?.results || [];
+  const searchLoading = searchState?.loading || false;
+  const searchQuery = searchState?.query || '';
   const isSearching = searchQuery && searchQuery.trim().length >= 2;
+
+  const handleSearch = (q) => searchFn(null, q);
 
   const grouped = {};
   for (const forum of forums) {
     const cat = forum.category;
-    // Skip "start" / "Read This First" entirely
     if (cat === 'start') continue;
     if (forum.name?.toLowerCase().includes('read this first')) continue;
-    // Normalize: merge general → community, resources → research
     const normalizedCat = cat === 'general' ? 'community' : cat === 'resources' ? 'research' : cat;
     if (!grouped[normalizedCat]) grouped[normalizedCat] = [];
     grouped[normalizedCat].push(forum);
   }
 
-  // Community keeps intro/struggling/crushing (3 forums), all others get 1
   const DISPLAY_NAMES = {
     'support': "I'm Struggling",
     'success-stories': "I'm Crushing It",
@@ -89,7 +98,6 @@ export default function ForumsPage() {
         keepSlugs.some((s) => f.slug?.includes(s) || f.name?.toLowerCase().includes(s.replace('-', ' ')))
       );
       grouped[cat] = kept.length > 0 ? kept : grouped[cat].slice(0, 3);
-      // Apply display name overrides
       grouped[cat] = grouped[cat].map((f) => {
         const override = Object.entries(DISPLAY_NAMES).find(([slug]) =>
           f.slug?.includes(slug) || f.name?.toLowerCase().includes(slug.replace('-', ' '))
@@ -119,8 +127,7 @@ export default function ForumsPage() {
         </Link>
       </div>
 
-      {/* Global search */}
-      <SearchBar onSearch={search} placeholder="Search all threads..." />
+      <SearchBar onSearch={handleSearch} placeholder="Search all threads..." />
 
       {isSearching && (
         <div className="space-y-3">

@@ -1,16 +1,17 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import { createClient } from '@/lib/supabase/client';
-import { useAuth } from '@/hooks/useAuth';
-import { usePublicJournal } from '@/hooks/useJournal';
+import { useAuthStore } from '@/stores/authStore';
+import { useProfileStore } from '@/stores/profileStore';
+import { useJournalStore } from '@/stores/journalStore';
 import Avatar from '@/components/shared/Avatar';
 import { PeerAdvisorBadge } from '@/components/shared/Badge';
 import DrugSignature from '@/components/shared/DrugSignature';
 import JournalEntryCard from '@/components/journal/JournalEntryCard';
 import { PageLoading } from '@/components/shared/LoadingSpinner';
+import { useState } from 'react';
 
 function timeAgo(dateStr) {
   const seconds = Math.floor((new Date() - new Date(dateStr)) / 1000);
@@ -26,61 +27,30 @@ function timeAgo(dateStr) {
 
 export default function ProfilePage() {
   const { userId } = useParams();
-  const { user: currentUser } = useAuth();
-  const [profile, setProfile] = useState(null);
-  const [threads, setThreads] = useState([]);
-  const [replies, setReplies] = useState([]);
-  const [allJournal, setAllJournal] = useState([]);
+  const currentUser = useAuthStore((s) => s.user);
+  const profileData = useProfileStore((s) => s.profiles[userId]);
+  const fetchProfile = useProfileStore((s) => s.fetchProfile);
+  const publicEntriesData = useJournalStore((s) => s.publicEntries[userId]);
+  const fetchPublicEntries = useJournalStore((s) => s.fetchPublicEntries);
   const [tab, setTab] = useState('posts');
-  const [loading, setLoading] = useState(true);
-  const supabase = createClient();
-  const { entries: publicEntries, loading: journalLoading } = usePublicJournal(userId);
 
   const isOwnProfile = currentUser?.id === userId;
 
   useEffect(() => {
-    const fetchData = async () => {
-      const promises = [
-        supabase.from('profiles').select('*').eq('id', userId).single(),
-        supabase
-          .from('threads')
-          .select('*, forums:forum_id(name, drug_slug, slug)')
-          .eq('user_id', userId)
-          .order('created_at', { ascending: false })
-          .limit(20),
-        supabase
-          .from('replies')
-          .select('*, threads:thread_id(id, title)')
-          .eq('user_id', userId)
-          .order('created_at', { ascending: false })
-          .limit(20),
-      ];
+    fetchProfile(userId);
+    if (!isOwnProfile) {
+      fetchPublicEntries(userId);
+    }
+  }, [userId, isOwnProfile, fetchProfile, fetchPublicEntries]);
 
-      // If own profile, fetch all journal entries
-      if (isOwnProfile) {
-        promises.push(
-          supabase
-            .from('journal_entries')
-            .select('*')
-            .eq('user_id', userId)
-            .order('date', { ascending: false })
-        );
-      }
-
-      const results = await Promise.all(promises);
-
-      setProfile(results[0].data);
-      setThreads(results[1].data || []);
-      setReplies(results[2].data || []);
-      if (isOwnProfile && results[3]) {
-        setAllJournal(results[3].data || []);
-      }
-      setLoading(false);
-    };
-    fetchData();
-  }, [userId, isOwnProfile]);
+  const loading = profileData?.loading ?? true;
 
   if (loading) return <PageLoading />;
+
+  const profile = profileData?.data;
+  const threads = profileData?.threads || [];
+  const replies = profileData?.replies || [];
+  const allJournal = profileData?.journal || [];
 
   if (!profile) {
     return (
@@ -94,7 +64,6 @@ export default function ProfilePage() {
   const karma = threads.reduce((sum, t) => sum + (t.vote_score || 0), 0) +
     replies.reduce((sum, r) => sum + (r.vote_score || 0), 0);
 
-  // Group cross-posted threads (same title + body created within 60s of each other)
   const groupedThreads = (() => {
     const groups = [];
     const used = new Set();
@@ -120,7 +89,8 @@ export default function ProfilePage() {
     return groups;
   })();
 
-  // Journal entries to display: own profile shows all with visibility indicators, others see public only
+  const publicEntries = publicEntriesData?.entries || [];
+  const journalLoading = publicEntriesData?.loading ?? false;
   const journalEntries = isOwnProfile ? allJournal : publicEntries;
 
   const tabs = ['posts', 'replies', 'journal'];

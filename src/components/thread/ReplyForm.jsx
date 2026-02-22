@@ -1,24 +1,18 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
-import { createClient } from '@/lib/supabase/client';
+import { useAuthStore } from '@/stores/authStore';
+import { useThreadStore } from '@/stores/threadStore';
 
-export default function ReplyForm({ threadId, onReplyAdded }) {
+export default function ReplyForm({ threadId }) {
   const [body, setBody] = useState('');
   const [loading, setLoading] = useState(false);
-  const [user, setUser] = useState(null);
-  const [authChecked, setAuthChecked] = useState(false);
-  const supabase = createClient();
+  const user = useAuthStore((s) => s.user);
+  const authLoading = useAuthStore((s) => s.loading);
+  const addReply = useThreadStore((s) => s.addReply);
 
-  useEffect(() => {
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      setUser(user);
-      setAuthChecked(true);
-    });
-  }, []);
-
-  if (authChecked && !user) {
+  if (!authLoading && !user) {
     return (
       <div className="card text-center">
         <p className="text-text-muted">
@@ -33,16 +27,8 @@ export default function ReplyForm({ threadId, onReplyAdded }) {
     if (!body.trim() || loading) return;
 
     setLoading(true);
-    const { data, error } = await supabase
-      .from('replies')
-      .insert({ thread_id: threadId, user_id: user.id, body: body.trim() })
-      .select('*, profiles:user_id(display_name, is_peer_advisor, drug, taper_stage, post_count, drug_signature)')
-      .single();
-
-    if (!error && data) {
-      onReplyAdded(data);
-      setBody('');
-    }
+    await addReply(threadId, body);
+    setBody('');
     setLoading(false);
   };
 

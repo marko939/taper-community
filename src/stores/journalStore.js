@@ -1,0 +1,176 @@
+'use client';
+
+import { create } from 'zustand';
+import { createClient } from '@/lib/supabase/client';
+import { useAuthStore } from './authStore';
+
+export const useJournalStore = create((set, get) => ({
+  entries: [],
+  loading: true,
+  shareToken: null,
+  sharedEntries: {},   // keyed by shareToken: { entries, loading }
+  publicEntries: {},   // keyed by userId: { entries, loading }
+
+  fetchEntries: async () => {
+    const supabase = createClient();
+    const userId = useAuthStore.getState().user?.id;
+    if (!userId) return;
+
+    const { data } = await supabase
+      .from('journal_entries')
+      .select('*')
+      .eq('user_id', userId)
+      .order('date', { ascending: false });
+
+    set({ entries: data || [], loading: false });
+  },
+
+  addEntry: async (entry) => {
+    const supabase = createClient();
+    const userId = useAuthStore.getState().user?.id;
+    if (!userId) return { data: null, error: { message: 'Not authenticated' } };
+
+    const { published_forums = [], ...entryData } = entry;
+
+    const { data, error } = await supabase
+      .from('journal_entries')
+      .insert({
+        ...entryData,
+        user_id: userId,
+        is_public: entry.is_public || false,
+        published_forums: published_forums,
+        thread_ids: [],
+      })
+      .select()
+      .single();
+
+    if (error) {
+      console.error('[journal] Insert failed:', error.message);
+      return { data: null, error };
+    }
+
+    // Cross-post to forums as threads (best-effort)
+    if (data && published_forums.length > 0 && entry.notes) {
+      try {
+        const threadTitle = entry.title || `${entry.drug || 'Journal'} — ${new Date(entry.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
+        const threadIds = [];
+
+        for (const forumId of published_forums) {
+          const { data: thread, error: threadErr } = await supabase
+            .from('threads')
+            .insert({
+              forum_id: forumId,
+              user_id: userId,
+              title: threadTitle,
+              body: entry.notes,
+              tags: ['taper update'],
+            })
+            .select('id')
+            .single();
+
+          if (threadErr) console.warn('[journal] Thread creation failed for forum', forumId, threadErr.message);
+          if (thread) threadIds.push(thread.id);
+        }
+
+        if (threadIds.length > 0) {
+          await supabase
+            .from('journal_entries')
+            .update({ thread_ids: threadIds })
+            .eq('id', data.id);
+          data.thread_ids = threadIds;
+        }
+      } catch (err) {
+        console.warn('[journal] Cross-post failed:', err.message);
+      }
+    }
+
+    if (data) {
+      set((state) => ({ entries: [data, ...state.entries] }));
+    }
+    return { data, error: null };
+  },
+
+  getShareLink: async () => {
+    const supabase = createClient();
+    const userId = useAuthStore.getState().user?.id;
+    if (!userId) return null;
+
+    // Check for existing share
+    const { data: existing } = await supabase
+      .from('journal_shares')
+      .select('share_token')
+      .eq('user_id', userId)
+      .single();
+
+    if (existing) {
+      set({ shareToken: existing.share_token });
+      return existing.share_token;
+    }
+
+    // Create new share
+    const { data } = await supabase
+      .from('journal_shares')
+      .insert({ user_id: userId })
+      .select('share_token')
+      .single();
+
+    const token = data?.share_token || null;
+    set({ shareToken: token });
+    return token;
+  },
+
+  fetchSharedEntries: async (shareToken) => {
+    if (!shareToken) return;
+    if (get().sharedEntries[shareToken]) return;
+
+    set((state) => ({
+      sharedEntries: { ...state.sharedEntries, [shareToken]: { entries: [], loading: true } },
+    }));
+
+    const supabase = createClient();
+
+    const { data: share } = await supabase
+      .from('journal_shares')
+      .select('user_id')
+      .eq('share_token', shareToken)
+      .single();
+
+    if (!share) {
+      set((state) => ({
+        sharedEntries: { ...state.sharedEntries, [shareToken]: { entries: [], loading: false } },
+      }));
+      return;
+    }
+
+    const { data } = await supabase
+      .from('journal_entries')
+      .select('*')
+      .eq('user_id', share.user_id)
+      .order('date', { ascending: true });
+
+    set((state) => ({
+      sharedEntries: { ...state.sharedEntries, [shareToken]: { entries: data || [], loading: false } },
+    }));
+  },
+
+  fetchPublicEntries: async (userId) => {
+    if (!userId) return;
+    if (get().publicEntries[userId]) return;
+
+    set((state) => ({
+      publicEntries: { ...state.publicEntries, [userId]: { entries: [], loading: true } },
+    }));
+
+    const supabase = createClient();
+    const { data } = await supabase
+      .from('journal_entries')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('is_public', true)
+      .order('date', { ascending: false });
+
+    set((state) => ({
+      publicEntries: { ...state.publicEntries, [userId]: { entries: data || [], loading: false } },
+    }));
+  },
+}));

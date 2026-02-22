@@ -2,18 +2,18 @@
 
 import { useState, useEffect } from 'react';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
-import { createClient } from '@/lib/supabase/client';
+import { useProfileStore } from '@/stores/profileStore';
 import { PageLoading } from '@/components/shared/LoadingSpinner';
 
 export default function SettingsPage() {
   const { user, profile, loading: authLoading } = useRequireAuth();
+  const updateProfile = useProfileStore((s) => s.updateProfile);
   const [displayName, setDisplayName] = useState('');
   const [drugSignature, setDrugSignature] = useState('');
   const [location, setLocation] = useState('');
   const [bio, setBio] = useState('');
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
-  const supabase = createClient();
 
   useEffect(() => {
     if (profile) {
@@ -29,15 +29,12 @@ export default function SettingsPage() {
   const handleSave = async () => {
     setSaving(true);
     setSaved(false);
-    await supabase
-      .from('profiles')
-      .update({
-        display_name: displayName,
-        drug_signature: drugSignature,
-        location: location,
-        bio: bio,
-      })
-      .eq('id', user.id);
+    await updateProfile({
+      display_name: displayName,
+      drug_signature: drugSignature,
+      location: location,
+      bio: bio,
+    });
     setSaving(false);
     setSaved(true);
     setTimeout(() => setSaved(false), 3000);

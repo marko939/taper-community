@@ -1,7 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { useForumData } from '@/hooks/useForumData';
+import { useEffect } from 'react';
+import { useForumStore } from '@/stores/forumStore';
 import LoadingSpinner from '@/components/shared/LoadingSpinner';
 
 const SECTION_ICONS = {
@@ -33,7 +34,13 @@ const SECTION_ICONS = {
 };
 
 export default function ForumSections() {
-  const { forums, loading } = useForumData();
+  const forums = useForumStore((s) => s.forums);
+  const loading = useForumStore((s) => s.forumsLoading);
+  const fetchForums = useForumStore((s) => s.fetchForums);
+
+  useEffect(() => {
+    fetchForums();
+  }, [fetchForums]);
 
   if (loading) {
     return (

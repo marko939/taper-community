@@ -1,8 +1,9 @@
 'use client';
 
+import { useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import { useThreadData } from '@/hooks/useThreadData';
+import { useThreadStore } from '@/stores/threadStore';
 import ThreadView from '@/components/thread/ThreadView';
 import ReplyList from '@/components/thread/ReplyList';
 import ReplyForm from '@/components/thread/ReplyForm';
@@ -12,7 +13,23 @@ import { PageLoading } from '@/components/shared/LoadingSpinner';
 
 export default function ThreadPage() {
   const { threadId } = useParams();
-  const { thread, replies, loading, setReplies, hasMoreReplies, totalReplies, loadMoreReplies } = useThreadData(threadId);
+  const thread = useThreadStore((s) => s.threads[threadId]);
+  const replyData = useThreadStore((s) => s.replies[threadId]);
+  const fetchThread = useThreadStore((s) => s.fetchThread);
+  const fetchReplies = useThreadStore((s) => s.fetchReplies);
+  const loadMoreReplies = useThreadStore((s) => s.loadMoreReplies);
+
+  const replies = replyData?.items || [];
+  const hasMoreReplies = replyData?.hasMore || false;
+  const totalReplies = replyData?.totalCount || 0;
+  const loading = !thread && !replyData;
+
+  useEffect(() => {
+    if (threadId) {
+      fetchThread(threadId);
+      fetchReplies(threadId);
+    }
+  }, [threadId, fetchThread, fetchReplies]);
 
   if (loading) return <PageLoading />;
 
@@ -24,10 +41,6 @@ export default function ThreadPage() {
       </div>
     );
   }
-
-  const handleReplyAdded = (newReply) => {
-    setReplies((prev) => [...prev, newReply]);
-  };
 
   return (
     <div className="grid gap-8 lg:grid-cols-[1fr_320px]">
@@ -46,9 +59,9 @@ export default function ThreadPage() {
             replies={replies}
             hasMore={hasMoreReplies}
             totalCount={totalReplies}
-            onLoadMore={loadMoreReplies}
+            onLoadMore={() => loadMoreReplies(threadId)}
           />
-          <ReplyForm threadId={threadId} onReplyAdded={handleReplyAdded} />
+          <ReplyForm threadId={threadId} />
         </div>
 
         <DeprescriberCTA className="mt-8" />

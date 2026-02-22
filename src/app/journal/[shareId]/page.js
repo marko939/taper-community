@@ -1,14 +1,23 @@
 'use client';
 
+import { useEffect } from 'react';
 import { useParams } from 'next/navigation';
-import { useSharedJournal } from '@/hooks/useJournal';
+import { useJournalStore } from '@/stores/journalStore';
 import JournalChart from '@/components/journal/JournalChart';
 import JournalEntryCard from '@/components/journal/JournalEntryCard';
 import { PageLoading } from '@/components/shared/LoadingSpinner';
 
 export default function SharedJournalPage() {
   const { shareId } = useParams();
-  const { entries, loading } = useSharedJournal(shareId);
+  const sharedData = useJournalStore((s) => s.sharedEntries[shareId]);
+  const fetchSharedEntries = useJournalStore((s) => s.fetchSharedEntries);
+
+  useEffect(() => {
+    fetchSharedEntries(shareId);
+  }, [shareId, fetchSharedEntries]);
+
+  const entries = sharedData?.entries || [];
+  const loading = sharedData?.loading ?? true;
 
   if (loading) return <PageLoading />;
 

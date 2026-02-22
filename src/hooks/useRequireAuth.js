@@ -2,10 +2,12 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from './useAuth';
+import { useAuthStore } from '@/stores/authStore';
 
 export function useRequireAuth() {
-  const { user, profile, loading } = useAuth();
+  const user = useAuthStore((s) => s.user);
+  const profile = useAuthStore((s) => s.profile);
+  const loading = useAuthStore((s) => s.loading);
   const router = useRouter();
 
   useEffect(() => {

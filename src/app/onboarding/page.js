@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { createClient } from '@/lib/supabase/client';
+import { useProfileStore } from '@/stores/profileStore';
 import { DRUG_LIST } from '@/lib/drugs';
 import { TAPER_STAGES } from '@/lib/constants';
 import { generateSignature } from '@/lib/signatureGenerator';
@@ -18,14 +18,13 @@ export default function OnboardingPage() {
   const [drugSignature, setDrugSignature] = useState('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
-  const supabase = createClient();
+  const updateProfile = useProfileStore((s) => s.updateProfile);
 
   const progress = ((step + 1) / STEPS.length) * 100;
 
   const handleNext = () => {
     if (step < STEPS.length - 1) {
       const nextStep = step + 1;
-      // Auto-generate signature when entering step 4
       if (nextStep === 4 && !drugSignature) {
         setDrugSignature(generateSignature({ drug, duration, taperStage, hasClinician }));
       }
@@ -37,29 +36,13 @@ export default function OnboardingPage() {
 
   const handleComplete = async () => {
     setLoading(true);
-    const { data: { user } } = await supabase.auth.getUser();
-
-    if (user) {
-      // Profile row is auto-created by database trigger on auth.users INSERT.
-      // RLS allows UPDATE on own row but blocks INSERT/UPSERT, so we must use .update().
-      const { error: updateError } = await supabase
-        .from('profiles')
-        .update({
-          drug: drug || null,
-          duration: duration || null,
-          taper_stage: taperStage || null,
-          has_clinician: hasClinician,
-          drug_signature: drugSignature || null,
-        })
-        .eq('id', user.id);
-
-      if (updateError) {
-        console.error('[onboarding] Profile update failed:', updateError.message);
-      } else {
-        console.log('[onboarding] Profile updated successfully');
-      }
-    }
-
+    await updateProfile({
+      drug: drug || null,
+      duration: duration || null,
+      taper_stage: taperStage || null,
+      has_clinician: hasClinician,
+      drug_signature: drugSignature || null,
+    });
     router.push('/forums');
   };
 

@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
-import { useForumThreads, useThreadSearch } from '@/hooks/useForumData';
+import { useForumStore } from '@/stores/forumStore';
 import { getDrug } from '@/lib/drugs';
 import Badge from '@/components/shared/Badge';
 import ThreadList from '@/components/forums/ThreadList';
@@ -17,6 +17,12 @@ export default function ForumPage() {
   const [forumLoading, setForumLoading] = useState(true);
   const supabase = createClient();
   const drug = getDrug(drugSlug);
+
+  const threadData = useForumStore((s) => s.threadPages[forum?.id]);
+  const searchState = useForumStore((s) => s.searchState[forum?.id]);
+  const fetchThreads = useForumStore((s) => s.fetchThreads);
+  const loadMoreThreads = useForumStore((s) => s.loadMoreThreads);
+  const searchFn = useForumStore((s) => s.search);
 
   useEffect(() => {
     const fetchForum = async () => {
@@ -41,8 +47,11 @@ export default function ForumPage() {
     fetchForum();
   }, [drugSlug]);
 
-  const { threads, loading: threadsLoading, hasMore, totalCount, loadMore } = useForumThreads(forum?.id);
-  const { results: searchResults, loading: searchLoading, query: searchQuery, search } = useThreadSearch(forum?.id);
+  useEffect(() => {
+    if (forum?.id) {
+      fetchThreads(forum.id);
+    }
+  }, [forum?.id, fetchThreads]);
 
   if (forumLoading) return <PageLoading />;
 
@@ -58,7 +67,18 @@ export default function ForumPage() {
     );
   }
 
+  const threads = threadData?.items || [];
+  const threadsLoading = threadData?.loading ?? true;
+  const hasMore = threadData?.hasMore || false;
+  const totalCount = threadData?.totalCount || 0;
+
+  const searchResults = searchState?.results || [];
+  const searchLoading = searchState?.loading || false;
+  const searchQuery = searchState?.query || '';
   const isSearching = searchQuery && searchQuery.trim().length >= 2;
+
+  const handleSearch = (q) => searchFn(forum.id, q);
+
   const displayThreads = isSearching ? searchResults : threads;
   const pinnedThreads = isSearching ? [] : displayThreads.filter((t) => t.pinned);
   const regularThreads = isSearching ? displayThreads : displayThreads.filter((t) => !t.pinned);
@@ -108,7 +128,7 @@ export default function ForumPage() {
       </div>
 
       {/* Search */}
-      <SearchBar onSearch={search} placeholder={`Search in ${forum.name}...`} />
+      <SearchBar onSearch={handleSearch} placeholder={`Search in ${forum.name}...`} />
 
       {isSearching && (
         <p className="text-sm text-text-muted">
@@ -130,7 +150,7 @@ export default function ForumPage() {
         loading={threadsLoading}
         hasMore={!isSearching && hasMore}
         totalCount={totalCount}
-        onLoadMore={loadMore}
+        onLoadMore={() => loadMoreThreads(forum.id)}
       />
     </div>
   );

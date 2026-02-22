@@ -1,72 +1,23 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { createClient } from '@/lib/supabase/client';
+import { useEffect } from 'react';
+import { useThreadStore } from '@/stores/threadStore';
 
 export default function HelpfulButton({ replyId, initialCount = 0 }) {
-  const [count, setCount] = useState(initialCount);
-  const [hasVoted, setHasVoted] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const supabase = createClient();
+  const helpfulData = useThreadStore((s) => s.helpfulState[replyId]);
+  const initHelpfulState = useThreadStore((s) => s.initHelpfulState);
+  const toggleHelpful = useThreadStore((s) => s.toggleHelpful);
+
+  const count = helpfulData?.count ?? initialCount;
+  const hasVoted = helpfulData?.hasVoted ?? false;
 
   useEffect(() => {
-    const checkVote = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const { data } = await supabase
-        .from('helpful_votes')
-        .select('user_id')
-        .eq('user_id', user.id)
-        .eq('reply_id', replyId)
-        .single();
-
-      if (data) setHasVoted(true);
-    };
-    checkVote();
-  }, [replyId]);
-
-  const handleClick = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user || loading) return;
-
-    setLoading(true);
-
-    if (hasVoted) {
-      await supabase
-        .from('helpful_votes')
-        .delete()
-        .eq('user_id', user.id)
-        .eq('reply_id', replyId);
-
-      await supabase
-        .from('replies')
-        .update({ helpful_count: count - 1 })
-        .eq('id', replyId);
-
-      setCount((c) => c - 1);
-      setHasVoted(false);
-    } else {
-      await supabase
-        .from('helpful_votes')
-        .insert({ user_id: user.id, reply_id: replyId });
-
-      await supabase
-        .from('replies')
-        .update({ helpful_count: count + 1 })
-        .eq('id', replyId);
-
-      setCount((c) => c + 1);
-      setHasVoted(true);
-    }
-
-    setLoading(false);
-  };
+    initHelpfulState(replyId, initialCount);
+  }, [replyId, initialCount, initHelpfulState]);
 
   return (
     <button
-      onClick={handleClick}
-      disabled={loading}
+      onClick={() => toggleHelpful(replyId, initialCount)}
       className={`flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs transition ${
         hasVoted
           ? 'border-accent-blue bg-accent-blue/10 text-accent-blue'
