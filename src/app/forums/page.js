@@ -73,32 +73,9 @@ export default function ForumsPage() {
     const cat = forum.category;
     if (cat === 'start') continue;
     if (forum.name?.toLowerCase().includes('read this first')) continue;
-    const normalizedCat = cat === 'general' ? 'community' : cat === 'resources' ? 'research' : cat;
-    if (!grouped[normalizedCat]) grouped[normalizedCat] = [];
-    grouped[normalizedCat].push(forum);
-  }
-
-  const DISPLAY_NAMES = {
-    'support': "I'm Struggling",
-    'success-stories': "I'm Crushing It",
-  };
-  for (const cat of Object.keys(grouped)) {
-    if (cat === 'community') {
-      const keepSlugs = ['introductions', 'support', 'success-stories'];
-      const kept = grouped[cat].filter((f) =>
-        keepSlugs.some((s) => f.slug?.includes(s) || f.name?.toLowerCase().includes(s.replace('-', ' ')))
-      );
-      grouped[cat] = kept.length > 0 ? kept : grouped[cat].slice(0, 3);
-      grouped[cat] = grouped[cat].map((f) => {
-        const override = Object.entries(DISPLAY_NAMES).find(([slug]) =>
-          f.slug?.includes(slug) || f.name?.toLowerCase().includes(slug.replace('-', ' '))
-        );
-        return override ? { ...f, name: override[1] } : f;
-      });
-    } else if (cat !== 'drug') {
-      grouped[cat].sort((a, b) => (b.post_count || 0) - (a.post_count || 0));
-      grouped[cat] = grouped[cat].slice(0, 1);
-    }
+    if (cat === 'drug') continue; // drug forums handled separately below
+    if (!grouped[cat]) grouped[cat] = [];
+    grouped[cat].push(forum);
   }
 
   return (
