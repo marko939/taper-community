@@ -77,7 +77,11 @@ export default function ForumsPage() {
     grouped[normalizedCat].push(forum);
   }
 
-  // Community keeps intro/support/success (3 forums), all others get 1
+  // Community keeps intro/struggling/crushing (3 forums), all others get 1
+  const DISPLAY_NAMES = {
+    'support': "I'm Struggling",
+    'success-stories': "I'm Crushing It",
+  };
   for (const cat of Object.keys(grouped)) {
     if (cat === 'community') {
       const keepSlugs = ['introductions', 'support', 'success-stories'];
@@ -85,6 +89,13 @@ export default function ForumsPage() {
         keepSlugs.some((s) => f.slug?.includes(s) || f.name?.toLowerCase().includes(s.replace('-', ' ')))
       );
       grouped[cat] = kept.length > 0 ? kept : grouped[cat].slice(0, 3);
+      // Apply display name overrides
+      grouped[cat] = grouped[cat].map((f) => {
+        const override = Object.entries(DISPLAY_NAMES).find(([slug]) =>
+          f.slug?.includes(slug) || f.name?.toLowerCase().includes(slug.replace('-', ' '))
+        );
+        return override ? { ...f, name: override[1] } : f;
+      });
     } else if (cat !== 'drug') {
       grouped[cat].sort((a, b) => (b.post_count || 0) - (a.post_count || 0));
       grouped[cat] = grouped[cat].slice(0, 1);
