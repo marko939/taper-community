@@ -10,7 +10,6 @@ import JournalEntryCard from '@/components/journal/JournalEntryCard';
 import DosePercentage from '@/components/journal/DosePercentage';
 import SymptomHeatmap from '@/components/journal/SymptomHeatmap';
 import HowOthersFelt from '@/components/journal/HowOthersFelt';
-import TaperScheduleBuilder from '@/components/journal/TaperScheduleBuilder';
 import { PageLoading } from '@/components/shared/LoadingSpinner';
 
 export default function JournalPage() {
@@ -119,9 +118,6 @@ export default function JournalPage() {
 
       {/* Symptom Heatmap */}
       <SymptomHeatmap entries={entries} />
-
-      {/* Taper Schedule Planner */}
-      <TaperScheduleBuilder entries={entries} />
 
       <div className="card">
         <h2 className="mb-4 text-lg font-semibold text-foreground">Log an Entry</h2>

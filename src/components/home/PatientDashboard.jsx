@@ -5,7 +5,6 @@ import Link from 'next/link';
 import { useJournalStore } from '@/stores/journalStore';
 import { useForumStore } from '@/stores/forumStore';
 import { MOOD_LABELS } from '@/lib/constants';
-import StreakTracker from './StreakTracker';
 import SymptomTrendAlert from './SymptomTrendAlert';
 import CommunityPulse from './CommunityPulse';
 
@@ -199,7 +198,7 @@ export default function PatientDashboard({ user, profile }) {
     <div className="space-y-6">
       {/* Welcome + Status Card */}
       <div
-        className="relative overflow-hidden rounded-[24px] px-10 py-10"
+        className="relative overflow-hidden rounded-[24px] px-12 py-12"
         style={{
           boxShadow: '0 12px 48px rgba(91, 46, 145, 0.25), 0 4px 16px rgba(0,0,0,0.1)',
         }}
@@ -209,15 +208,15 @@ export default function PatientDashboard({ user, profile }) {
         </div>
         <div className="pointer-events-none absolute inset-0" style={{ background: 'rgba(42,18,80,0.35)' }} />
         <div className="relative z-10">
-          <p className="text-base font-medium text-white/60">Welcome back</p>
-          <h1 className="mt-1.5 text-3xl font-bold text-white">
+          <p className="text-lg font-medium text-white/60">Welcome back</p>
+          <h1 className="mt-2 text-4xl font-bold text-white">
             {profile?.display_name || 'there'}
           </h1>
 
           {loading ? (
             <div className="mt-6 h-16 animate-pulse rounded-xl bg-white/10" />
           ) : lastEntry ? (
-            <div className="mt-6 flex items-center justify-between rounded-xl px-6 py-5" style={{ background: 'rgba(255,255,255,0.12)', backdropFilter: 'blur(12px)' }}>
+            <div className="mt-7 flex items-center justify-between rounded-2xl px-7 py-6" style={{ background: 'rgba(255,255,255,0.12)', backdropFilter: 'blur(12px)' }}>
               <div className="flex items-center gap-5">
                 {lastEntry.drug && (
                   <div>
@@ -303,52 +302,54 @@ export default function PatientDashboard({ user, profile }) {
         </section>
       )}
 
-      {/* Streak & Stability */}
-      {!loading && entries.length > 0 && <StreakTracker entries={entries} />}
-
       {/* Symptom Trend Alert */}
       <SymptomTrendAlert entries={entries} />
 
       {/* Community Pulse */}
       <CommunityPulse />
 
-      {/* Most Recent Post */}
+      {/* Recent Posts — top 3 */}
       <section>
-        <h2 className="mb-3 text-sm font-semibold text-foreground">Latest Post</h2>
+        <h2 className="mb-3 text-sm font-semibold text-foreground">Recent Posts</h2>
         {threadsLoading ? (
           <div className="h-16 animate-pulse rounded-xl" style={{ background: 'var(--surface-glass)' }} />
         ) : threads.length === 0 ? (
           <p className="text-sm text-text-muted">No posts yet. Be the first to start a discussion!</p>
         ) : (
-          <Link
-            href={`/thread/${threads[0].id}`}
-            className="group block rounded-xl border p-3.5 no-underline transition hover:border-purple hover:shadow-elevated"
-            style={{ borderColor: 'var(--border-subtle)', background: 'var(--surface-strong)' }}
-          >
-            <div className="flex items-start justify-between gap-4">
-              <div className="min-w-0">
-                <h3 className="text-sm font-semibold text-foreground transition group-hover:text-purple">
-                  {threads[0].title}
-                </h3>
-                <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-text-subtle">
-                  {threads[0].forums?.name && (
-                    <span
-                      className="rounded-full px-2 py-0.5 text-[10px] font-semibold"
-                      style={{ background: 'var(--purple-pale)', color: 'var(--purple)' }}
-                    >
-                      {threads[0].forums.name}
-                    </span>
-                  )}
-                  <span>{threads[0].profiles?.display_name}</span>
-                  <span>&middot;</span>
-                  <span>{timeAgo(threads[0].created_at)}</span>
+          <div className="space-y-2">
+            {threads.slice(0, 3).map((thread) => (
+              <Link
+                key={thread.id}
+                href={`/thread/${thread.id}`}
+                className="group block rounded-xl border p-3.5 no-underline transition hover:border-purple hover:shadow-elevated"
+                style={{ borderColor: 'var(--border-subtle)', background: 'var(--surface-strong)' }}
+              >
+                <div className="flex items-start justify-between gap-4">
+                  <div className="min-w-0">
+                    <h3 className="text-sm font-semibold text-foreground transition group-hover:text-purple">
+                      {thread.title}
+                    </h3>
+                    <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-text-subtle">
+                      {thread.forums?.name && (
+                        <span
+                          className="rounded-full px-2 py-0.5 text-[10px] font-semibold"
+                          style={{ background: 'var(--purple-pale)', color: 'var(--purple)' }}
+                        >
+                          {thread.forums.name}
+                        </span>
+                      )}
+                      <span>{thread.profiles?.display_name}</span>
+                      <span>&middot;</span>
+                      <span>{timeAgo(thread.created_at)}</span>
+                    </div>
+                  </div>
+                  <div className="shrink-0 text-right text-[11px] text-text-subtle">
+                    <div>{thread.reply_count ?? 0} replies</div>
+                  </div>
                 </div>
-              </div>
-              <div className="shrink-0 text-right text-[11px] text-text-subtle">
-                <div>{threads[0].reply_count ?? 0} replies</div>
-              </div>
-            </div>
-          </Link>
+              </Link>
+            ))}
+          </div>
         )}
       </section>
     </div>
