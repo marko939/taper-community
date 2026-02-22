@@ -37,21 +37,19 @@ export default function Hero() {
           </p>
           <div className="mt-8 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
             <Link
-              href="/forums"
+              href="/auth/signup"
               className="inline-flex items-center gap-2 rounded-xl px-8 py-3 text-[14px] font-semibold text-white no-underline transition hover:opacity-90"
               style={{ background: '#2EC4B6' }}
             >
-              Browse Forums
+              Sign Up
             </Link>
-            <a
-              href="https://tapermeds.com/education"
-              target="_blank"
-              rel="noopener noreferrer"
+            <Link
+              href="/auth/signin"
               className="inline-flex items-center gap-2 rounded-xl border border-white/15 px-8 py-3 text-[14px] font-semibold text-white/80 no-underline transition hover:border-white/30 hover:text-white"
               style={{ background: 'rgba(255,255,255,0.08)', backdropFilter: 'blur(12px)' }}
             >
-              Education
-            </a>
+              Sign In
+            </Link>
           </div>
         </div>
       </div>

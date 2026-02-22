@@ -55,11 +55,16 @@ export default function PatientDashboard({ user, profile }) {
     <div className="space-y-8">
       {/* Welcome + Status Card */}
       <div
-        className="relative overflow-hidden rounded-2xl p-6"
+        className="relative overflow-hidden rounded-[24px] p-6"
         style={{
-          background: 'linear-gradient(135deg, var(--purple) 0%, #7C3AED 50%, #2EC4B6 100%)',
+          boxShadow: '0 12px 48px rgba(91, 46, 145, 0.25), 0 4px 16px rgba(0,0,0,0.1)',
         }}
       >
+        {/* Background image — same as landing hero */}
+        <div className="absolute inset-0">
+          <img src="/hero-bg.jpg" alt="" className="h-full w-full object-cover" />
+        </div>
+        <div className="pointer-events-none absolute inset-0" style={{ background: 'rgba(42,18,80,0.35)' }} />
         <div className="relative z-10">
           <p className="text-sm font-medium text-white/60">Welcome back</p>
           <h1 className="mt-1 text-2xl font-bold text-white">
