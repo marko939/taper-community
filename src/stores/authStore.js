@@ -16,15 +16,20 @@ export const useAuthStore = create((set, get) => ({
     const supabase = createClient();
 
     const init = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        const { data } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', user.id)
-          .single();
-        set({ user, profile: data, loading: false });
-      } else {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const { data } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', user.id)
+            .single();
+          set({ user, profile: data, loading: false });
+        } else {
+          set({ loading: false });
+        }
+      } catch (e) {
+        console.error('[authStore] init failed:', e);
         set({ loading: false });
       }
     };
