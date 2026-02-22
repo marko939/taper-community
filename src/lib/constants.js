@@ -56,6 +56,15 @@ export const DRUG_CLASSES = [
   'Other',
 ];
 
+export const DRUG_CATEGORY_GROUPS = [
+  { key: 'SSRI', label: 'SSRIs', desc: 'Selective Serotonin Reuptake Inhibitors', classes: ['SSRI'] },
+  { key: 'SNRI', label: 'SNRIs', desc: 'Serotonin-Norepinephrine Reuptake Inhibitors', classes: ['SNRI'] },
+  { key: 'Benzo', label: 'Benzos', desc: 'Benzodiazepines', classes: ['Benzodiazepine'] },
+  { key: 'TCA', label: 'TCAs', desc: 'Tricyclic Antidepressants', classes: ['TCA'] },
+  { key: 'Antipsychotic', label: 'Antipsychotics', desc: 'Atypical Antipsychotics', classes: ['Atypical Antipsychotic'] },
+  { key: 'Other', label: 'Other', desc: 'NaSSAs, NDRIs, Gabapentinoids & more', classes: ['NaSSA', 'NDRI', 'Gabapentinoid', 'Other'] },
+];
+
 export const FORUM_SECTIONS = [
   {
     key: 'community',
