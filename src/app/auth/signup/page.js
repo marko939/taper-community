@@ -5,6 +5,9 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
 export default function SignUpPage() {
   const [displayName, setDisplayName] = useState('');
   const [email, setEmail] = useState('');
@@ -14,9 +17,9 @@ export default function SignUpPage() {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const router = useRouter();
-  const supabase = createClient();
 
   const handleGoogleSignUp = async () => {
+    const supabase = createClient();
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
@@ -43,60 +46,64 @@ export default function SignUpPage() {
     }
 
     setLoading(true);
-
-    // Step 1: Create the auth user
-    // The database trigger on auth.users automatically creates the profile row,
-    // so we do NOT need to insert into profiles manually (and RLS blocks it anyway).
     console.log('[signup] Creating account for:', email);
+    console.log('[signup] SUPABASE_URL:', SUPABASE_URL);
 
-    const { data, error: signUpError } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: { display_name: displayName },
-      },
-    });
+    try {
+      // Raw fetch to Supabase signup endpoint.
+      // Bypasses the @supabase/ssr client entirely — no cookies, no Authorization
+      // header, no client state that can corrupt the request.
+      const res = await fetch(`${SUPABASE_URL}/auth/v1/signup`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': SUPABASE_KEY,
+        },
+        body: JSON.stringify({
+          email,
+          password,
+          data: { display_name: displayName },
+        }),
+      });
 
-    if (signUpError) {
-      console.error('[signup] signUp failed:', signUpError.message);
-      setError(signUpError.message);
-      setLoading(false);
-      return;
-    }
+      const result = await res.json();
+      console.log('[signup] Response status:', res.status);
 
-    console.log('[signup] signUp succeeded — user:', data.user?.id, 'session:', !!data.session);
-
-    // Step 2: Check if email confirmation is required
-    if (data.user && !data.session) {
-      // mailer_autoconfirm is currently true, so this branch shouldn't trigger,
-      // but keeping it as a safety net in case the setting changes.
-      console.log('[signup] Email confirmation required');
-      setSuccess(true);
-      setLoading(false);
-      return;
-    }
-
-    // Step 3: Session created immediately — verify the profile was created by the trigger
-    if (data.user) {
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('id, display_name')
-        .eq('id', data.user.id)
-        .maybeSingle();
-
-      if (profileError) {
-        console.error('[signup] Profile check failed:', profileError.message);
-      } else if (profile) {
-        console.log('[signup] Profile confirmed:', profile.display_name);
-      } else {
-        console.warn('[signup] Profile not yet created by trigger — onboarding will handle it');
+      if (!res.ok) {
+        const msg = result.msg || result.message || result.error_description || 'Signup failed';
+        console.error('[signup] Error:', msg);
+        setError(msg);
+        setLoading(false);
+        return;
       }
-    }
 
-    // Step 4: Redirect to onboarding
-    console.log('[signup] Redirecting to /onboarding');
-    router.refresh();
-    router.push('/onboarding');
+      console.log('[signup] Account created, user:', result.id);
+
+      // Now set the session in the SSR client so cookies are written
+      // and the middleware/sidebar pick up the logged-in state.
+      if (result.access_token && result.refresh_token) {
+        const supabase = createClient();
+        const { error: sessionError } = await supabase.auth.setSession({
+          access_token: result.access_token,
+          refresh_token: result.refresh_token,
+        });
+        if (sessionError) {
+          console.error('[signup] setSession failed:', sessionError.message);
+        } else {
+          console.log('[signup] Session set in browser client');
+        }
+      }
+
+      // Redirect to onboarding
+      console.log('[signup] Redirecting to /onboarding');
+      router.refresh();
+      router.push('/onboarding');
+
+    } catch (err) {
+      console.error('[signup] Fetch error:', err.message);
+      setError(`Connection error: ${err.message}`);
+      setLoading(false);
+    }
   };
 
   if (success) {
