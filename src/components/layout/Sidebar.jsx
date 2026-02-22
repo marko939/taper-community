@@ -54,18 +54,18 @@ const NAV_ITEMS = [
       </svg>
     ),
   },
+  {
+    href: '/deprescribers',
+    label: 'Find a Provider',
+    icon: (
+      <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
+      </svg>
+    ),
+  },
 ];
 
-const BOTTOM_NAV_ITEM = {
-  href: '/deprescribers',
-  label: 'Find a Provider',
-  icon: (
-    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-      <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
-      <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
-    </svg>
-  ),
-};
 
 export default function Sidebar() {
   const [collapsed, setCollapsed] = useState(false);
@@ -121,25 +121,6 @@ export default function Sidebar() {
               </Tag>
             );
           })}
-          <div className="flex-1" />
-          {(() => {
-            const item = BOTTOM_NAV_ITEM;
-            const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
-            return (
-              <Link
-                href={item.href}
-                className="flex items-center gap-3 rounded-xl px-3 py-2.5 no-underline transition hover:bg-purple-ghost"
-                style={{
-                  color: isActive ? 'var(--purple)' : 'var(--text-muted)',
-                  background: isActive ? 'var(--purple-ghost)' : 'transparent',
-                }}
-                title={collapsed ? item.label : undefined}
-              >
-                <span className="shrink-0">{item.icon}</span>
-                {!collapsed && <span className="text-sm font-medium">{item.label}</span>}
-              </Link>
-            );
-          })()}
         </nav>
 
         {/* Collapse toggle */}
