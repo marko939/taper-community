@@ -5,7 +5,6 @@ import Link from 'next/link';
 import { useJournalStore } from '@/stores/journalStore';
 import { useForumStore } from '@/stores/forumStore';
 import { MOOD_LABELS } from '@/lib/constants';
-import SymptomTrendAlert from './SymptomTrendAlert';
 import CommunityPulse from './CommunityPulse';
 
 // SVG icon components for badges
@@ -301,9 +300,6 @@ export default function PatientDashboard({ user, profile }) {
           </div>
         </section>
       )}
-
-      {/* Symptom Trend Alert */}
-      <SymptomTrendAlert entries={entries} />
 
       {/* Community Pulse */}
       <CommunityPulse />
