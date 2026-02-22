@@ -197,7 +197,7 @@ export default function PatientDashboard({ user, profile }) {
     <div className="space-y-6">
       {/* Welcome + Status Card */}
       <div
-        className="relative overflow-hidden rounded-[24px] px-12 py-12"
+        className="relative overflow-hidden rounded-[24px] p-6"
         style={{
           boxShadow: '0 12px 48px rgba(91, 46, 145, 0.25), 0 4px 16px rgba(0,0,0,0.1)',
         }}
@@ -207,45 +207,67 @@ export default function PatientDashboard({ user, profile }) {
         </div>
         <div className="pointer-events-none absolute inset-0" style={{ background: 'rgba(42,18,80,0.35)' }} />
         <div className="relative z-10">
-          <p className="text-lg font-medium text-white/60">Welcome back</p>
-          <h1 className="mt-2 text-4xl font-bold text-white">
+          <p className="text-sm font-medium text-white/60">Welcome back</p>
+          <h1 className="mt-1 text-2xl font-bold text-white">
             {profile?.display_name || 'there'}
           </h1>
 
           {loading ? (
-            <div className="mt-6 h-16 animate-pulse rounded-xl bg-white/10" />
+            <div className="mt-6 h-20 animate-pulse rounded-xl bg-white/10" />
           ) : lastEntry ? (
-            <div className="mt-7 flex items-center justify-between rounded-2xl px-7 py-6" style={{ background: 'rgba(255,255,255,0.12)', backdropFilter: 'blur(12px)' }}>
-              <div className="flex items-center gap-5">
+            <>
+              <div className="mt-6 flex gap-3">
                 {lastEntry.drug && (
-                  <div>
-                    <p className="text-[11px] font-bold uppercase tracking-wider text-white/50">Dose</p>
-                    <p className="text-base font-bold text-white">{lastEntry.current_dose || '—'} <span className="font-normal text-white/60">{lastEntry.drug}</span></p>
+                  <div className="flex-1 rounded-xl p-4" style={{ background: 'rgba(255,255,255,0.12)', backdropFilter: 'blur(12px)' }}>
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-white/50">Current Dose</p>
+                    <p className="mt-1 text-lg font-bold text-white">{lastEntry.current_dose || '—'}</p>
+                    <p className="text-xs text-white/70">{lastEntry.drug}</p>
                   </div>
                 )}
-                <div className="h-8 w-px bg-white/20" />
-                <div>
-                  <p className="text-[11px] font-bold uppercase tracking-wider text-white/50">Mood</p>
-                  <p className="text-base font-bold" style={{ color: moodColor }}>{lastEntry.mood_score}/10 <span className="font-normal text-white/60">{MOOD_LABELS[lastEntry.mood_score]}</span></p>
+                <div className="flex-1 rounded-xl p-4" style={{ background: 'rgba(255,255,255,0.12)', backdropFilter: 'blur(12px)' }}>
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-white/50">Mood</p>
+                  <div className="mt-1 flex items-baseline gap-2">
+                    <span className="text-lg font-bold" style={{ color: moodColor }}>{lastEntry.mood_score}/10</span>
+                    <span className="text-xs text-white/70">{MOOD_LABELS[lastEntry.mood_score]}</span>
+                  </div>
                 </div>
-                <div className="h-8 w-px bg-white/20" />
-                <div>
-                  <p className="text-[11px] font-bold uppercase tracking-wider text-white/50">Last check-in</p>
-                  <p className="text-base text-white/80">{daysAgo === 0 ? 'Today' : `${daysAgo} day${daysAgo !== 1 ? 's' : ''} ago`}</p>
+                <div className="flex-1 rounded-xl p-4" style={{ background: 'rgba(255,255,255,0.12)', backdropFilter: 'blur(12px)' }}>
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-white/50">Symptoms</p>
+                  {lastEntry.symptoms && lastEntry.symptoms.length > 0 ? (
+                    <div className="mt-1.5 flex flex-wrap gap-1">
+                      {lastEntry.symptoms.slice(0, 3).map((s) => (
+                        <span key={s} className="rounded-full px-2 py-0.5 text-[10px] font-semibold text-white" style={{ background: 'rgba(255,255,255,0.2)' }}>
+                          {s}
+                        </span>
+                      ))}
+                      {lastEntry.symptoms.length > 3 && (
+                        <span className="text-[10px] text-white/50">+{lastEntry.symptoms.length - 3}</span>
+                      )}
+                    </div>
+                  ) : (
+                    <p className="mt-1 text-sm font-medium text-white/70">None reported</p>
+                  )}
                 </div>
               </div>
-              {daysAgo > 0 && (
-                <Link
-                  href="/journal"
-                  className="rounded-lg px-5 py-2.5 text-sm font-bold text-purple no-underline transition hover:opacity-90"
-                  style={{ background: 'white' }}
-                >
-                  Check in now
-                </Link>
-              )}
-            </div>
+              <div className="mt-4 flex items-center justify-between rounded-xl px-5 py-3" style={{ background: 'rgba(255,255,255,0.1)' }}>
+                <p className="text-sm text-white/80">
+                  {daysAgo === 0
+                    ? 'You checked in today'
+                    : `Your last check-in was ${daysAgo} day${daysAgo !== 1 ? 's' : ''} ago`}
+                </p>
+                {daysAgo > 0 && (
+                  <Link
+                    href="/journal"
+                    className="rounded-lg px-4 py-2 text-xs font-bold text-purple no-underline transition hover:opacity-90"
+                    style={{ background: 'white' }}
+                  >
+                    Check in now
+                  </Link>
+                )}
+              </div>
+            </>
           ) : (
-            <div className="mt-5 rounded-xl px-5 py-5 text-center" style={{ background: 'rgba(255,255,255,0.1)' }}>
+            <div className="mt-6 rounded-xl px-5 py-6 text-center" style={{ background: 'rgba(255,255,255,0.1)' }}>
               <p className="text-sm text-white/80">Start tracking your taper journey</p>
               <Link
                 href="/journal"
