@@ -7,7 +7,6 @@ import { useThreadStore } from '@/stores/threadStore';
 import ThreadView from '@/components/thread/ThreadView';
 import ReplyList from '@/components/thread/ReplyList';
 import ReplyForm from '@/components/thread/ReplyForm';
-import AISidebar from '@/components/thread/AISidebar';
 import DeprescriberCTA from '@/components/layout/DeprescriberCTA';
 import { PageLoading } from '@/components/shared/LoadingSpinner';
 
@@ -43,33 +42,27 @@ export default function ThreadPage() {
   }
 
   return (
-    <div className="grid gap-8 lg:grid-cols-[1fr_320px]">
-      <div className="space-y-6">
-        <Link href="/forums" className="text-sm text-text-subtle hover:text-foreground">
-          &larr; Back to Forums
-        </Link>
+    <div className="space-y-6">
+      <Link href="/forums" className="text-sm text-text-subtle hover:text-foreground">
+        &larr; Back to Forums
+      </Link>
 
-        <ThreadView thread={thread} />
+      <ThreadView thread={thread} />
 
-        <div className="space-y-4">
-          <h2 className="text-lg font-semibold text-foreground">
-            {replies.length} {replies.length === 1 ? 'Reply' : 'Replies'}
-          </h2>
-          <ReplyList
-            replies={replies}
-            hasMore={hasMoreReplies}
-            totalCount={totalReplies}
-            onLoadMore={() => loadMoreReplies(threadId)}
-          />
-          <ReplyForm threadId={threadId} />
-        </div>
-
-        <DeprescriberCTA className="mt-8" />
+      <div className="space-y-4">
+        <h2 className="text-lg font-semibold text-foreground">
+          {replies.length} {replies.length === 1 ? 'Reply' : 'Replies'}
+        </h2>
+        <ReplyList
+          replies={replies}
+          hasMore={hasMoreReplies}
+          totalCount={totalReplies}
+          onLoadMore={() => loadMoreReplies(threadId)}
+        />
+        <ReplyForm threadId={threadId} />
       </div>
 
-      <aside className="space-y-6">
-        <AISidebar threadId={threadId} />
-      </aside>
+      <DeprescriberCTA className="mt-8" />
     </div>
   );
 }
