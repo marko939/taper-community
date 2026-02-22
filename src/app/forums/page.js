@@ -68,13 +68,16 @@ export default function ForumsPage() {
   const grouped = {};
   for (const forum of forums) {
     const cat = forum.category;
+    // Skip "start" / "Read This First" entirely
+    if (cat === 'start') continue;
+    if (forum.name?.toLowerCase().includes('read this first')) continue;
     // Normalize: merge general → community, resources → research
     const normalizedCat = cat === 'general' ? 'community' : cat === 'resources' ? 'research' : cat;
     if (!grouped[normalizedCat]) grouped[normalizedCat] = [];
     grouped[normalizedCat].push(forum);
   }
 
-  // Limit each category to 1 forum, except community which keeps intro/support/success
+  // Community keeps intro/support/success (3 forums), all others get 1
   for (const cat of Object.keys(grouped)) {
     if (cat === 'community') {
       const keepSlugs = ['introductions', 'support', 'success-stories'];
@@ -83,7 +86,6 @@ export default function ForumsPage() {
       );
       grouped[cat] = kept.length > 0 ? kept : grouped[cat].slice(0, 3);
     } else if (cat !== 'drug') {
-      // Pick the forum with the most posts
       grouped[cat].sort((a, b) => (b.post_count || 0) - (a.post_count || 0));
       grouped[cat] = grouped[cat].slice(0, 1);
     }
