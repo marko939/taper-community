@@ -52,7 +52,7 @@ export function useJournal() {
     // Cross-post to forums as threads (best-effort — don't block the save)
     if (data && published_forums.length > 0 && entry.notes) {
       try {
-        const threadTitle = `${entry.drug || 'Journal'} — ${new Date(entry.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
+        const threadTitle = entry.title || `${entry.drug || 'Journal'} — ${new Date(entry.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
         const threadIds = [];
 
         for (const forumId of published_forums) {

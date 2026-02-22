@@ -6,6 +6,7 @@ import { SYMPTOMS, MOOD_LABELS } from '@/lib/constants';
 import { createClient } from '@/lib/supabase/client';
 
 export default function JournalEntryForm({ onSubmit, entryCount = 0 }) {
+  const [title, setTitle] = useState('');
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [drug, setDrug] = useState('');
   const [currentDose, setCurrentDose] = useState('');
@@ -97,6 +98,7 @@ export default function JournalEntryForm({ onSubmit, entryCount = 0 }) {
     const allForumIds = allPostingForums.map((f) => f.id);
 
     await onSubmit({
+      title: title || null,
       date,
       drug: drug || null,
       current_dose: currentDose || null,
@@ -108,6 +110,7 @@ export default function JournalEntryForm({ onSubmit, entryCount = 0 }) {
       published_forums: allForumIds,
     });
 
+    setTitle('');
     setCurrentDose('');
     setSymptoms([]);
     setMoodScore(5);
@@ -119,6 +122,18 @@ export default function JournalEntryForm({ onSubmit, entryCount = 0 }) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
+      {/* ── Title ── */}
+      <div>
+        <label className="mb-1.5 block text-sm font-medium text-foreground">Title</label>
+        <input
+          type="text"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          placeholder="e.g. Week 3 — feeling better"
+          className="input"
+        />
+      </div>
+
       {/* ── Share with Community ── */}
       <div
         className="relative overflow-hidden rounded-2xl p-5"
