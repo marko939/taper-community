@@ -5,9 +5,6 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
 export default function SignUpPage() {
   const [displayName, setDisplayName] = useState('');
   const [email, setEmail] = useState('');
@@ -15,7 +12,6 @@ export default function SignUpPage() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
   const router = useRouter();
 
   const handleGoogleSignUp = async () => {
@@ -47,39 +43,29 @@ export default function SignUpPage() {
 
     setLoading(true);
     console.log('[signup] Creating account for:', email);
-    console.log('[signup] SUPABASE_URL:', SUPABASE_URL);
 
     try {
-      // Raw fetch to Supabase signup endpoint.
-      // Bypasses the @supabase/ssr client entirely — no cookies, no Authorization
-      // header, no client state that can corrupt the request.
-      const res = await fetch(`${SUPABASE_URL}/auth/v1/signup`, {
+      // Call our own API route — the server handles the Supabase call.
+      // This avoids ALL browser-side header/cookie corruption issues.
+      const res = await fetch('/api/auth/signup', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'apikey': SUPABASE_KEY,
-        },
-        body: JSON.stringify({
-          email,
-          password,
-          data: { display_name: displayName },
-        }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password, displayName }),
       });
 
       const result = await res.json();
       console.log('[signup] Response status:', res.status);
 
       if (!res.ok) {
-        const msg = result.msg || result.message || result.error_description || 'Signup failed';
-        console.error('[signup] Error:', msg);
-        setError(msg);
+        console.error('[signup] Error:', result.error);
+        setError(result.error || 'Signup failed');
         setLoading(false);
         return;
       }
 
-      console.log('[signup] Account created, user:', result.id);
+      console.log('[signup] Account created');
 
-      // Now set the session in the SSR client so cookies are written
+      // Set the session in the browser client so cookies are written
       // and the middleware/sidebar pick up the logged-in state.
       if (result.access_token && result.refresh_token) {
         const supabase = createClient();
@@ -105,20 +91,6 @@ export default function SignUpPage() {
       setLoading(false);
     }
   };
-
-  if (success) {
-    return (
-      <div className="mx-auto max-w-md py-12">
-        <div className="glass-panel p-8 text-center">
-          <h1 className="mb-4 text-3xl font-semibold text-foreground">Check Your Email</h1>
-          <p className="text-text-muted">
-            We&apos;ve sent a confirmation link to <strong className="text-foreground">{email}</strong>.
-            Click the link to activate your account.
-          </p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="mx-auto max-w-md py-12">
