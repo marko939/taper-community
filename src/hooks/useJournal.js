@@ -44,14 +44,19 @@ export function useJournal() {
       .select()
       .single();
 
-    if (!error && data) {
-      // If forums selected, create threads for each
-      if (published_forums.length > 0 && entry.notes) {
+    if (error) {
+      console.error('[journal] Insert failed:', error.message);
+      return { data: null, error };
+    }
+
+    // Cross-post to forums as threads (best-effort — don't block the save)
+    if (data && published_forums.length > 0 && entry.notes) {
+      try {
         const threadTitle = `${entry.drug || 'Journal'} — ${new Date(entry.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
         const threadIds = [];
 
         for (const forumId of published_forums) {
-          const { data: thread } = await supabase
+          const { data: thread, error: threadErr } = await supabase
             .from('threads')
             .insert({
               forum_id: forumId,
@@ -63,10 +68,10 @@ export function useJournal() {
             .select('id')
             .single();
 
+          if (threadErr) console.warn('[journal] Thread creation failed for forum', forumId, threadErr.message);
           if (thread) threadIds.push(thread.id);
         }
 
-        // Update journal entry with thread IDs
         if (threadIds.length > 0) {
           await supabase
             .from('journal_entries')
@@ -74,11 +79,13 @@ export function useJournal() {
             .eq('id', data.id);
           data.thread_ids = threadIds;
         }
+      } catch (err) {
+        console.warn('[journal] Cross-post failed:', err.message);
       }
-
-      setEntries((prev) => [data, ...prev]);
     }
-    return { data, error };
+
+    if (data) setEntries((prev) => [data, ...prev]);
+    return { data, error: null };
   };
 
   const getShareLink = async () => {
