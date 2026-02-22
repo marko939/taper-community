@@ -34,8 +34,8 @@ export function createClient() {
     // Clear any corrupted cookies BEFORE creating the client
     clearSupabaseCookies();
 
-    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    const url = (process.env.NEXT_PUBLIC_SUPABASE_URL || '').trim();
+    const key = (process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '').replace(/\s+/g, '');
 
     console.log(
       '[supabase] createClient —',

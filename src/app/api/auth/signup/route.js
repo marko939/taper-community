@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
 
 export async function POST(request) {
-  const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const SUPABASE_URL = (process.env.NEXT_PUBLIC_SUPABASE_URL || '').trim();
+  const SUPABASE_KEY = (process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '').replace(/\s+/g, '');
 
   console.log('[api/auth/signup] SUPABASE_URL:', SUPABASE_URL ? SUPABASE_URL.substring(0, 30) + '...' : 'UNDEFINED');
   console.log('[api/auth/signup] SUPABASE_KEY:', SUPABASE_KEY ? `set (${SUPABASE_KEY.length} chars)` : 'UNDEFINED');
