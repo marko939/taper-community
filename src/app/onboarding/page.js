@@ -40,7 +40,9 @@ export default function OnboardingPage() {
     const { data: { user } } = await supabase.auth.getUser();
 
     if (user) {
-      await supabase
+      // Profile row is auto-created by database trigger on auth.users INSERT.
+      // RLS allows UPDATE on own row but blocks INSERT/UPSERT, so we must use .update().
+      const { error: updateError } = await supabase
         .from('profiles')
         .update({
           drug: drug || null,
@@ -50,6 +52,12 @@ export default function OnboardingPage() {
           drug_signature: drugSignature || null,
         })
         .eq('id', user.id);
+
+      if (updateError) {
+        console.error('[onboarding] Profile update failed:', updateError.message);
+      } else {
+        console.log('[onboarding] Profile updated successfully');
+      }
     }
 
     router.push('/forums');

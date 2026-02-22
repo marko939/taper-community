@@ -17,12 +17,16 @@ export default function SignUpPage() {
   const supabase = createClient();
 
   const handleGoogleSignUp = async () => {
-    await supabase.auth.signInWithOAuth({
+    const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
         redirectTo: `${window.location.origin}/auth/callback`,
       },
     });
+    if (error) {
+      console.error('[signup] Google OAuth error:', error.message);
+      setError(error.message);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -40,24 +44,59 @@ export default function SignUpPage() {
 
     setLoading(true);
 
-    const { data, error } = await supabase.auth.signUp({
+    // Step 1: Create the auth user
+    // The database trigger on auth.users automatically creates the profile row,
+    // so we do NOT need to insert into profiles manually (and RLS blocks it anyway).
+    console.log('[signup] Creating account for:', email);
+
+    const { data, error: signUpError } = await supabase.auth.signUp({
       email,
       password,
-      options: { data: { display_name: displayName } },
+      options: {
+        data: { display_name: displayName },
+      },
     });
 
-    if (error) {
-      setError(error.message);
+    if (signUpError) {
+      console.error('[signup] signUp failed:', signUpError.message);
+      setError(signUpError.message);
       setLoading(false);
       return;
     }
 
+    console.log('[signup] signUp succeeded — user:', data.user?.id, 'session:', !!data.session);
+
+    // Step 2: Check if email confirmation is required
     if (data.user && !data.session) {
+      // mailer_autoconfirm is currently true, so this branch shouldn't trigger,
+      // but keeping it as a safety net in case the setting changes.
+      console.log('[signup] Email confirmation required');
       setSuccess(true);
       setLoading(false);
-    } else {
-      router.push('/onboarding');
+      return;
     }
+
+    // Step 3: Session created immediately — verify the profile was created by the trigger
+    if (data.user) {
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('id, display_name')
+        .eq('id', data.user.id)
+        .maybeSingle();
+
+      if (profileError) {
+        console.error('[signup] Profile check failed:', profileError.message);
+      } else if (profile) {
+        console.log('[signup] Profile confirmed:', profile.display_name);
+      } else {
+        console.warn('[signup] Profile not yet created by trigger — onboarding will handle it');
+      }
+    }
+
+    // Step 4: Redirect to onboarding
+    console.log('[signup] Redirecting to /onboarding');
+    router.refresh();
+    router.push('/onboarding');
   };
 
   if (success) {

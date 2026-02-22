@@ -1,25 +1,38 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { Suspense, useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 
-export default function SignInPage() {
+function SignInForm() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const searchParams = useSearchParams();
   const supabase = createClient();
 
+  // Show error from OAuth callback redirect
+  useEffect(() => {
+    const callbackError = searchParams.get('error');
+    if (callbackError) {
+      setError(callbackError === 'auth' ? 'Authentication failed. Please try again.' : callbackError);
+    }
+  }, [searchParams]);
+
   const handleGoogleSignIn = async () => {
-    await supabase.auth.signInWithOAuth({
+    const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
         redirectTo: `${window.location.origin}/auth/callback`,
       },
     });
+    if (error) {
+      console.error('[signin] Google OAuth error:', error.message);
+      setError(error.message);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -27,15 +40,20 @@ export default function SignInPage() {
     setError('');
     setLoading(true);
 
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    console.log('[signin] Attempting sign in for:', email);
 
-    if (error) {
-      setError(error.message);
+    const { data, error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+
+    if (signInError) {
+      console.error('[signin] signInWithPassword failed:', signInError.message);
+      setError(signInError.message);
       setLoading(false);
-    } else {
-      router.refresh();
-      router.push('/forums');
+      return;
     }
+
+    console.log('[signin] Signed in, user:', data.user?.id);
+    router.refresh();
+    router.push('/');
   };
 
   return (
@@ -102,5 +120,13 @@ export default function SignInPage() {
         </p>
       </div>
     </div>
+  );
+}
+
+export default function SignInPage() {
+  return (
+    <Suspense>
+      <SignInForm />
+    </Suspense>
   );
 }
