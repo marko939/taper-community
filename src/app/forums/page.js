@@ -73,6 +73,21 @@ export default function ForumsPage() {
     grouped[normalizedCat].push(forum);
   }
 
+  // Limit each category to 1 forum, except community which keeps intro/support/success
+  for (const cat of Object.keys(grouped)) {
+    if (cat === 'community') {
+      const keepSlugs = ['introductions', 'support', 'success-stories'];
+      const kept = grouped[cat].filter((f) =>
+        keepSlugs.some((s) => f.slug?.includes(s) || f.name?.toLowerCase().includes(s.replace('-', ' ')))
+      );
+      grouped[cat] = kept.length > 0 ? kept : grouped[cat].slice(0, 3);
+    } else if (cat !== 'drug') {
+      // Pick the forum with the most posts
+      grouped[cat].sort((a, b) => (b.post_count || 0) - (a.post_count || 0));
+      grouped[cat] = grouped[cat].slice(0, 1);
+    }
+  }
+
   return (
     <div className="space-y-8">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
