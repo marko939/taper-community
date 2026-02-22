@@ -24,6 +24,7 @@ export default function SignInPage() {
       setError(error.message);
       setLoading(false);
     } else {
+      router.refresh();
       router.push('/forums');
     }
   };
