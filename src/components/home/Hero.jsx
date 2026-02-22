@@ -43,13 +43,15 @@ export default function Hero() {
             >
               Browse Forums
             </Link>
-            <Link
-              href="/education"
+            <a
+              href="https://tapermeds.com/education"
+              target="_blank"
+              rel="noopener noreferrer"
               className="inline-flex items-center gap-2 rounded-xl border border-white/15 px-8 py-3 text-[14px] font-semibold text-white/80 no-underline transition hover:border-white/30 hover:text-white"
               style={{ background: 'rgba(255,255,255,0.08)', backdropFilter: 'blur(12px)' }}
             >
               Education
-            </Link>
+            </a>
           </div>
         </div>
       </div>
