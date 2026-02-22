@@ -28,7 +28,7 @@ export default function RootLayout({ children }) {
       </head>
       <body className="min-h-screen antialiased">
         <StoreInitializer />
-        <div className="flex">
+        <div className="lg:flex">
           <Sidebar />
           <div className="min-w-0 flex-1">
             <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
