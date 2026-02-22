@@ -5,6 +5,9 @@ import Link from 'next/link';
 import { useJournalStore } from '@/stores/journalStore';
 import { useForumStore } from '@/stores/forumStore';
 import { MOOD_LABELS } from '@/lib/constants';
+import StreakTracker from './StreakTracker';
+import SymptomTrendAlert from './SymptomTrendAlert';
+import CommunityPulse from './CommunityPulse';
 
 // SVG icon components for badges
 const BadgeIcon = ({ id, achieved }) => {
@@ -299,6 +302,15 @@ export default function PatientDashboard({ user, profile }) {
           </div>
         </section>
       )}
+
+      {/* Streak & Stability */}
+      {!loading && entries.length > 0 && <StreakTracker entries={entries} />}
+
+      {/* Symptom Trend Alert */}
+      <SymptomTrendAlert entries={entries} />
+
+      {/* Community Pulse */}
+      <CommunityPulse />
 
       {/* Most Recent Post */}
       <section>

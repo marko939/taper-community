@@ -7,6 +7,10 @@ import { useJournalStore } from '@/stores/journalStore';
 import JournalEntryForm from '@/components/journal/JournalEntryForm';
 import JournalChart from '@/components/journal/JournalChart';
 import JournalEntryCard from '@/components/journal/JournalEntryCard';
+import DosePercentage from '@/components/journal/DosePercentage';
+import SymptomHeatmap from '@/components/journal/SymptomHeatmap';
+import HowOthersFelt from '@/components/journal/HowOthersFelt';
+import TaperScheduleBuilder from '@/components/journal/TaperScheduleBuilder';
 import { PageLoading } from '@/components/shared/LoadingSpinner';
 
 export default function JournalPage() {
@@ -104,6 +108,20 @@ export default function JournalPage() {
         <h2 className="mb-4 text-lg font-semibold text-foreground">Your Taper Progress</h2>
         <JournalChart entries={entries} />
       </div>
+
+      {/* Dose Progress + How Others Felt */}
+      {entries.length >= 2 && (
+        <div className="grid gap-4 lg:grid-cols-2">
+          <DosePercentage entries={entries} />
+          <HowOthersFelt entries={entries} />
+        </div>
+      )}
+
+      {/* Symptom Heatmap */}
+      <SymptomHeatmap entries={entries} />
+
+      {/* Taper Schedule Planner */}
+      <TaperScheduleBuilder entries={entries} />
 
       <div className="card">
         <h2 className="mb-4 text-lg font-semibold text-foreground">Log an Entry</h2>
