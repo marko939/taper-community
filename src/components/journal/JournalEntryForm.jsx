@@ -10,6 +10,7 @@ export default function JournalEntryForm({ onSubmit, entryCount = 0 }) {
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [drug, setDrug] = useState('');
   const [currentDose, setCurrentDose] = useState('');
+  const [doseUnit, setDoseUnit] = useState('mg');
   const [symptoms, setSymptoms] = useState([]);
   const [moodScore, setMoodScore] = useState(5);
   const [notes, setNotes] = useState('');
@@ -42,7 +43,15 @@ export default function JournalEntryForm({ onSubmit, entryCount = 0 }) {
         if (recent && recent.length > 0) {
           const last = recent[0];
           if (last.drug) setDrug(last.drug);
-          if (last.current_dose) setCurrentDose(last.current_dose);
+          if (last.current_dose) {
+            const unitMatch = last.current_dose.match(/^([\d.]+)\s*(mg|mcg|mL|drops|beads)$/i);
+            if (unitMatch) {
+              setCurrentDose(unitMatch[1]);
+              setDoseUnit(unitMatch[2].toLowerCase());
+            } else {
+              setCurrentDose(last.current_dose);
+            }
+          }
         }
       }
     };
@@ -101,7 +110,7 @@ export default function JournalEntryForm({ onSubmit, entryCount = 0 }) {
       title: title || null,
       date,
       drug: drug || null,
-      current_dose: currentDose || null,
+      current_dose: currentDose ? `${currentDose}${doseUnit}` : null,
       dose_numeric: currentDose ? parseFloat(currentDose) || null : null,
       symptoms,
       mood_score: moodScore,
@@ -217,13 +226,30 @@ export default function JournalEntryForm({ onSubmit, entryCount = 0 }) {
         </div>
         <div>
           <label className="mb-1.5 block text-sm font-medium text-foreground">Current Dose</label>
-          <input
-            type="text"
-            value={currentDose}
-            onChange={(e) => setCurrentDose(e.target.value)}
-            placeholder="e.g. 10mg"
-            className="input"
-          />
+          <div className="flex gap-0">
+            <input
+              type="number"
+              step="any"
+              min="0"
+              value={currentDose}
+              onChange={(e) => setCurrentDose(e.target.value)}
+              placeholder="10"
+              className="input rounded-r-none border-r-0"
+              style={{ flex: 1 }}
+            />
+            <select
+              value={doseUnit}
+              onChange={(e) => setDoseUnit(e.target.value)}
+              className="input rounded-l-none"
+              style={{ width: 'auto', minWidth: '5rem' }}
+            >
+              <option value="mg">mg</option>
+              <option value="mcg">mcg</option>
+              <option value="mL">mL</option>
+              <option value="drops">drops</option>
+              <option value="beads">beads</option>
+            </select>
+          </div>
         </div>
       </div>
 
