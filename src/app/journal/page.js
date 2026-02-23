@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { createClient } from '@/lib/supabase/client';
 import { useAuthStore } from '@/stores/authStore';
 import { useJournalStore } from '@/stores/journalStore';
 import { useAssessmentStore } from '@/stores/assessmentStore';
@@ -48,45 +49,49 @@ export default function JournalPage() {
 
   if (!user) {
     return (
-      <section
-        className="relative overflow-hidden rounded-[24px]"
-        style={{ boxShadow: '0 12px 48px rgba(91, 46, 145, 0.25), 0 4px 16px rgba(0,0,0,0.1)' }}
-      >
-        <div className="absolute inset-0">
-          <img src="/hero-bg.jpg" alt="" className="h-full w-full object-cover" />
-        </div>
-        <div className="pointer-events-none absolute inset-0" style={{ background: 'rgba(42,18,80,0.35)' }} />
-        <div className="relative z-10 px-6 py-16 sm:px-12 sm:py-20 lg:py-24">
-          <div className="mx-auto max-w-2xl text-center">
-            <p className="mb-4 text-[11px] font-bold uppercase tracking-[0.1em] text-white/50">
-              Taper Journal
-            </p>
-            <h1 className="font-serif text-[30px] font-semibold leading-tight text-white sm:text-[36px]">
-              Track your{' '}
-              <span style={{ color: '#2EC4B6' }}>taper journey</span>
-            </h1>
-            <p className="mx-auto mt-4 max-w-xl text-[15px] font-semibold leading-relaxed text-white/80">
-              Track your doses, symptoms, and mood over time. Sign in to start journaling.
-            </p>
-            <div className="mt-8 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
-              <Link
-                href="/auth/signup"
-                className="inline-flex items-center gap-2 rounded-xl px-8 py-3 text-[14px] font-semibold text-white no-underline transition hover:opacity-90"
-                style={{ background: '#2EC4B6' }}
-              >
-                Join Community
-              </Link>
-              <Link
-                href="/auth/signin"
-                className="inline-flex items-center gap-2 rounded-xl border border-white/15 px-8 py-3 text-[14px] font-semibold text-white/80 no-underline transition hover:border-white/30 hover:text-white"
-                style={{ background: 'rgba(255,255,255,0.08)', backdropFilter: 'blur(12px)' }}
-              >
-                Sign In
-              </Link>
+      <div className="space-y-6">
+        <section
+          className="relative overflow-hidden rounded-[24px]"
+          style={{ boxShadow: '0 12px 48px rgba(91, 46, 145, 0.25), 0 4px 16px rgba(0,0,0,0.1)' }}
+        >
+          <div className="absolute inset-0">
+            <img src="/hero-bg.jpg" alt="" className="h-full w-full object-cover" />
+          </div>
+          <div className="pointer-events-none absolute inset-0" style={{ background: 'rgba(42,18,80,0.35)' }} />
+          <div className="relative z-10 px-6 py-16 sm:px-12 sm:py-20 lg:py-24">
+            <div className="mx-auto max-w-2xl text-center">
+              <p className="mb-4 text-[11px] font-bold uppercase tracking-[0.1em] text-white/50">
+                Taper Journal
+              </p>
+              <h1 className="font-serif text-[30px] font-semibold leading-tight text-white sm:text-[36px]">
+                Track your{' '}
+                <span style={{ color: '#2EC4B6' }}>taper journey</span>
+              </h1>
+              <p className="mx-auto mt-4 max-w-xl text-[15px] font-semibold leading-relaxed text-white/80">
+                Track your doses, symptoms, and mood over time. Sign in to start journaling.
+              </p>
+              <div className="mt-8 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
+                <Link
+                  href="/auth/signup"
+                  className="inline-flex items-center gap-2 rounded-xl px-8 py-3 text-[14px] font-semibold text-white no-underline transition hover:opacity-90"
+                  style={{ background: '#2EC4B6' }}
+                >
+                  Join Community
+                </Link>
+                <Link
+                  href="/auth/signin"
+                  className="inline-flex items-center gap-2 rounded-xl border border-white/15 px-8 py-3 text-[14px] font-semibold text-white/80 no-underline transition hover:border-white/30 hover:text-white"
+                  style={{ background: 'rgba(255,255,255,0.08)', backdropFilter: 'blur(12px)' }}
+                >
+                  Sign In
+                </Link>
+              </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
+
+        <TaperStatsCard />
+      </div>
     );
   }
 
@@ -375,6 +380,78 @@ export default function JournalPage() {
           onClose={() => setActiveMilestone(null)}
         />
       )}
+    </div>
+  );
+}
+
+function TaperStatsCard() {
+  const [stats, setStats] = useState(null);
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      const supabase = createClient();
+      const { data } = await supabase
+        .from('journal_entries')
+        .select('user_id, drug, dose_numeric, date')
+        .not('dose_numeric', 'is', null)
+        .order('date', { ascending: true });
+
+      if (!data || data.length === 0) return;
+
+      const byUserDrug = {};
+      const uniqueDrugs = new Set();
+
+      data.forEach((e) => {
+        if (!e.drug || e.dose_numeric == null) return;
+        uniqueDrugs.add(e.drug);
+        const key = `${e.user_id}::${e.drug}`;
+        if (!byUserDrug[key]) byUserDrug[key] = { first: e.dose_numeric, latest: e.dose_numeric };
+        byUserDrug[key].latest = e.dose_numeric;
+      });
+
+      let totalReduced = 0;
+      Object.values(byUserDrug).forEach(({ first, latest }) => {
+        if (first > latest) totalReduced += first - latest;
+      });
+
+      setStats({
+        medications: uniqueDrugs.size,
+        totalReduced: Math.round(totalReduced * 10) / 10,
+      });
+    };
+    fetchStats();
+  }, []);
+
+  if (!stats) return null;
+
+  return (
+    <div
+      className="rounded-2xl border p-6"
+      style={{ borderColor: 'var(--border-subtle)', background: 'var(--surface-strong)' }}
+    >
+      <h2 className="mb-4 text-center text-sm font-bold uppercase tracking-wider" style={{ color: 'var(--purple)' }}>
+        Community Impact
+      </h2>
+      <div className="grid grid-cols-2 gap-4">
+        <div className="rounded-xl p-5 text-center" style={{ background: 'var(--purple-ghost)' }}>
+          <div className="flex items-center justify-center gap-2">
+            <svg className="h-5 w-5" style={{ color: 'var(--purple)' }} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3M14.25 3.104c.251.023.501.05.75.082M19.8 15.3l-1.57.393A9.065 9.065 0 0112 15a9.065 9.065 0 00-6.23.693L5 14.5m14.8.8l1.402 1.402c1.232 1.232.65 3.318-1.067 3.611A48.309 48.309 0 0112 21c-2.773 0-5.491-.235-8.135-.687-1.718-.293-2.3-2.379-1.067-3.61L5 14.5" />
+            </svg>
+          </div>
+          <p className="mt-2 text-3xl font-bold" style={{ color: 'var(--foreground)' }}>{stats.medications}</p>
+          <p className="mt-1 text-xs font-medium" style={{ color: 'var(--text-muted)' }}>Psychiatric Medications Tracked</p>
+        </div>
+        <div className="rounded-xl p-5 text-center" style={{ background: 'var(--purple-ghost)' }}>
+          <div className="flex items-center justify-center gap-2">
+            <svg className="h-5 w-5" style={{ color: 'var(--purple)' }} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 13.5L12 21m0 0l-7.5-7.5M12 21V3" />
+            </svg>
+          </div>
+          <p className="mt-2 text-3xl font-bold" style={{ color: 'var(--foreground)' }}>{stats.totalReduced} mg</p>
+          <p className="mt-1 text-xs font-medium" style={{ color: 'var(--text-muted)' }}>Total Medication Reduced</p>
+        </div>
+      </div>
     </div>
   );
 }
