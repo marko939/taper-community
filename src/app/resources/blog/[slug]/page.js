@@ -74,10 +74,20 @@ export default function BlogPostPage() {
         </div>
       </div>
 
-      <div
-        className="prose prose-sm max-w-none whitespace-pre-wrap text-sm leading-relaxed text-text-muted"
-      >
-        {post.body}
+      <div className="max-w-none space-y-4 text-sm leading-relaxed text-text-muted">
+        {post.body.split('\n\n').map((block, i) => {
+          const trimmed = block.trim();
+          if (!trimmed) return null;
+          const isHeading = trimmed.length < 80 && !trimmed.includes('. ') && /^[A-Z]/.test(trimmed);
+          if (isHeading) {
+            return (
+              <h2 key={i} className="mt-6 font-serif text-xl font-bold text-foreground">
+                {trimmed}
+              </h2>
+            );
+          }
+          return <p key={i}>{trimmed}</p>;
+        })}
       </div>
     </div>
   );

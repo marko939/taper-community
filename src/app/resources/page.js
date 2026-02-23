@@ -70,15 +70,15 @@ export default function ResourcesPage() {
             <button
               key={tab.key}
               onClick={() => setActiveTab(tab.key)}
-              className="group flex flex-col items-center gap-3 rounded-2xl border p-5 transition hover:border-emerald-500 hover:shadow-elevated"
+              className="group flex flex-col items-center gap-3 rounded-2xl border p-5 transition hover:border-purple hover:shadow-elevated"
               style={{
-                borderColor: isActive ? '#10b981' : 'var(--border-subtle)',
-                background: isActive ? '#ecfdf5' : 'var(--surface-strong)',
+                borderColor: isActive ? 'var(--purple)' : 'var(--border-subtle)',
+                background: isActive ? 'var(--purple-ghost)' : 'var(--surface-strong)',
               }}
             >
               <div
                 className="flex h-14 w-14 items-center justify-center rounded-2xl transition group-hover:scale-110"
-                style={{ background: isActive ? '#d1fae5' : '#f0fdf4', color: '#059669' }}
+                style={{ background: 'var(--purple-pale)', color: 'var(--purple)' }}
               >
                 {tab.icon}
               </div>
