@@ -14,22 +14,26 @@ function NewThreadContent() {
   const [forums, setForums] = useState([]);
   const [selectedForums, setSelectedForums] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [drugDropdownOpen, setDrugDropdownOpen] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
   const supabase = createClient();
 
   useEffect(() => {
     const fetchForums = async () => {
-      const { data } = await supabase
-        .from('forums')
-        .select('id, name, drug_slug, category')
-        .order('category')
-        .order('name');
-      setForums(data || []);
+      try {
+        const { data } = await supabase
+          .from('forums')
+          .select('id, name, slug, drug_slug, category')
+          .order('category')
+          .order('name');
+        setForums(data || []);
 
-      const forumId = searchParams.get('forum');
-      if (forumId) setSelectedForums([forumId]);
-
+        const forumId = searchParams.get('forum');
+        if (forumId) setSelectedForums([forumId]);
+      } catch (err) {
+        console.error('[NewThread] fetch forums error:', err);
+      }
       setLoading(false);
     };
     fetchForums();
@@ -37,22 +41,25 @@ function NewThreadContent() {
 
   if (authLoading || loading) return <PageLoading />;
 
-  // Build a slug→display name map from GENERAL_FORUMS
-  const displayNameBySlug = {};
-  GENERAL_FORUMS.forEach((f) => { displayNameBySlug[f.slug] = f.name; });
+  // Build set of GENERAL_FORUMS slugs for filtering
+  const generalSlugs = new Set(GENERAL_FORUMS.map((f) => f.slug));
 
-  // Group forums by category, using GENERAL_FORUMS for display names
+  // Match DB forums to GENERAL_FORUMS by slug
   const grouped = {};
-  for (const forum of forums) {
-    const cat = forum.category;
-    // Normalize legacy categories
-    const normalizedCat = cat === 'general' ? 'community' : cat === 'resources' ? 'research' : cat === 'start' ? 'community' : cat;
-    if (!grouped[normalizedCat]) grouped[normalizedCat] = [];
-    grouped[normalizedCat].push({
-      ...forum,
-      displayName: displayNameBySlug[forum.slug] || forum.name,
+  for (const gf of GENERAL_FORUMS) {
+    const dbForum = forums.find((f) => f.slug === gf.slug);
+    if (!dbForum) continue;
+    if (!grouped[gf.category]) grouped[gf.category] = [];
+    grouped[gf.category].push({
+      ...dbForum,
+      displayName: gf.name,
     });
   }
+
+  // Drug-specific forums = everything with a drug_slug (not in general forums)
+  const drugForums = forums
+    .filter((f) => f.drug_slug && !generalSlugs.has(f.slug))
+    .sort((a, b) => a.name.localeCompare(b.name));
 
   const toggleForum = (forumId) => {
     setSelectedForums((prev) =>
@@ -85,6 +92,9 @@ function NewThreadContent() {
     }
   };
 
+  // Selected drug forums for display
+  const selectedDrugForums = drugForums.filter((f) => selectedForums.includes(f.id));
+
   return (
     <div className="mx-auto max-w-2xl space-y-6">
       <div>
@@ -109,7 +119,7 @@ function NewThreadContent() {
         </label>
 
         <div className="space-y-4">
-          {FORUM_CATEGORY_ORDER.map(({ key, label }) => {
+          {FORUM_CATEGORY_ORDER.filter(({ key }) => key !== 'drug').map(({ key, label }) => {
             const catForums = grouped[key];
             if (!catForums || catForums.length === 0) return null;
             return (
@@ -139,6 +149,80 @@ function NewThreadContent() {
               </div>
             );
           })}
+
+          {/* Drug-specific dropdown */}
+          {drugForums.length > 0 && (
+            <div>
+              <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-text-subtle">
+                Drug-Specific Forums
+              </p>
+
+              {/* Show selected drug pills */}
+              {selectedDrugForums.length > 0 && (
+                <div className="mb-2 flex flex-wrap gap-2">
+                  {selectedDrugForums.map((forum) => (
+                    <button
+                      key={forum.id}
+                      type="button"
+                      onClick={() => toggleForum(forum.id)}
+                      className="rounded-full border border-purple bg-purple/10 px-3 py-1.5 text-xs font-medium text-purple transition"
+                    >
+                      {forum.name} &times;
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setDrugDropdownOpen(!drugDropdownOpen)}
+                  className="flex w-full items-center justify-between rounded-xl border px-4 py-2.5 text-sm transition hover:border-purple-pale"
+                  style={{ borderColor: 'var(--border-subtle)', color: 'var(--text-muted)' }}
+                >
+                  <span>Select a medication...</span>
+                  <svg
+                    className={`h-4 w-4 transition ${drugDropdownOpen ? 'rotate-180' : ''}`}
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth={1.5}
+                    stroke="currentColor"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+                  </svg>
+                </button>
+
+                {drugDropdownOpen && (
+                  <div
+                    className="absolute left-0 right-0 z-10 mt-1 max-h-60 overflow-y-auto rounded-xl border shadow-lg"
+                    style={{ borderColor: 'var(--border-subtle)', background: 'var(--surface-strong)' }}
+                  >
+                    {drugForums.map((forum) => {
+                      const isSelected = selectedForums.includes(forum.id);
+                      return (
+                        <button
+                          key={forum.id}
+                          type="button"
+                          onClick={() => {
+                            toggleForum(forum.id);
+                          }}
+                          className="flex w-full items-center gap-2 px-4 py-2.5 text-left text-sm transition hover:bg-purple-ghost/50"
+                          style={{ color: isSelected ? 'var(--purple)' : 'var(--foreground)' }}
+                        >
+                          {isSelected && (
+                            <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                            </svg>
+                          )}
+                          <span className={isSelected ? 'font-medium' : ''}>{forum.name}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       </div>
 

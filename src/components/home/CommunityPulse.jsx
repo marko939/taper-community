@@ -48,15 +48,11 @@ export default function CommunityPulse({ large }) {
     fetchStats();
   }, []);
 
-  const headingClass = large
-    ? 'mb-3 font-serif text-2xl font-semibold'
-    : 'mb-3 text-sm font-semibold text-foreground';
-
   if (loading) {
     return (
-      <section>
-        <h2 className={headingClass} style={{ color: 'var(--foreground)' }}>Community This Week</h2>
-        <div className="h-20 animate-pulse rounded-xl" style={{ background: 'var(--surface-glass)' }} />
+      <section className="space-y-3">
+        {large && <h2 className="font-serif text-2xl font-semibold" style={{ color: 'var(--foreground)' }}>Community This Week</h2>}
+        <div className="glass-panel h-20 animate-pulse" />
       </section>
     );
   }
@@ -64,29 +60,38 @@ export default function CommunityPulse({ large }) {
   if (!stats) return null;
 
   return (
-    <section>
-      <h2 className={headingClass} style={{ color: 'var(--foreground)' }}>Community This Week</h2>
-      <div
-        className="grid grid-cols-2 gap-px overflow-hidden rounded-xl border"
-        style={{ borderColor: 'var(--border-subtle)', background: 'var(--border-subtle)' }}
-      >
-        <StatCell
-          label="Meds reduced"
-          value={stats.totalReduced > 0 ? `${stats.totalReduced} mg` : '--'}
-          icon="reduced"
-        />
-        <StatCell label="New threads" value={stats.threads} icon="thread" />
-        <StatCell label="Replies" value={stats.replies} icon="reply" />
-        <StatCell label="Check-ins" value={stats.checkIns} icon="checkin" />
+    <section className="space-y-3">
+      {large && <h2 className="font-serif text-2xl font-semibold" style={{ color: 'var(--foreground)' }}>Community This Week</h2>}
+      <div className="glass-panel overflow-hidden">
+        {!large && (
+          <div
+            className="flex items-center gap-3 border-b px-5 py-3"
+            style={{ borderColor: 'var(--border-subtle)', background: 'var(--purple-ghost)' }}
+          >
+            <h3 className="text-sm font-bold uppercase tracking-wider" style={{ color: '#7B4FAF' }}>
+              Community This Week
+            </h3>
+          </div>
+        )}
+        <div className="divide-y" style={{ borderColor: 'var(--border-light)' }}>
+          <StatCell
+            label="Meds reduced"
+            value={stats.totalReduced > 0 ? `${stats.totalReduced} mg` : '--'}
+            icon="reduced"
+          />
+          <StatCell label="New threads" value={stats.threads} icon="thread" />
+          <StatCell label="Replies" value={stats.replies} icon="reply" />
+          <StatCell label="Check-ins" value={stats.checkIns} icon="checkin" />
+        </div>
       </div>
     </section>
   );
 }
 
 function StatCell({ label, value, icon, subtitle }) {
-  const iconColor = 'var(--purple)';
+  const iconColor = '#7B4FAF';
   return (
-    <div className="flex items-center gap-2.5 px-3.5 py-3" style={{ background: 'var(--surface-strong)' }}>
+    <div className="flex items-center gap-3 px-5 py-3">
       <div
         className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg"
         style={{ background: 'var(--purple-ghost)' }}
