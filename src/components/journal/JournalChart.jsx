@@ -203,8 +203,8 @@ export default function JournalChart({ entries = [], assessments = [] }) {
             type="monotone"
             dataKey="mood"
             name="Mood"
-            stroke="#2EC4B6"
-            fill="#2EC4B6"
+            stroke="#C47DB5"
+            fill="#C47DB5"
             fillOpacity={0.12}
             strokeWidth={2}
             connectNulls
