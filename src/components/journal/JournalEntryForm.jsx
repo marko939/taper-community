@@ -186,7 +186,101 @@ export default function JournalEntryForm({ onSubmit, entryCount = 0 }) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
-      {/* ── Title ── */}
+      {/* ── 1. Date / Drug / Dose ── */}
+      <div className="grid gap-4 sm:grid-cols-3">
+        <div>
+          <label className="mb-1.5 block text-sm font-medium text-foreground">Date</label>
+          <input
+            type="date"
+            value={date}
+            onChange={(e) => setDate(e.target.value)}
+            className="input"
+            required
+          />
+        </div>
+        <div>
+          <label className="mb-1.5 block text-sm font-medium text-foreground">Drug</label>
+          <select value={drug} onChange={(e) => setDrug(e.target.value)} className="input">
+            <option value="">Select...</option>
+            {DRUG_LIST.map((d) => (
+              <option key={d.slug} value={d.name}>{d.name} ({d.generic})</option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className="mb-1.5 block text-sm font-medium text-foreground">Current Dose</label>
+          <div className="flex gap-0">
+            <input
+              type="number"
+              step="any"
+              min="0"
+              value={currentDose}
+              onChange={(e) => setCurrentDose(e.target.value)}
+              placeholder="10"
+              className="input rounded-r-none border-r-0"
+              style={{ flex: 1 }}
+            />
+            <select
+              value={doseUnit}
+              onChange={(e) => setDoseUnit(e.target.value)}
+              className="input rounded-l-none"
+              style={{ width: 'auto', minWidth: '5rem' }}
+            >
+              <option value="mg">mg</option>
+              <option value="mcg">mcg</option>
+              <option value="mL">mL</option>
+              <option value="drops">drops</option>
+              <option value="beads">beads</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      {/* ── 2. Mood Slider (bordered lavender card) ── */}
+      <div
+        className="rounded-2xl border p-5"
+        style={{ borderColor: 'var(--purple-pale)', background: 'var(--purple-ghost)' }}
+      >
+        <label className="mb-2 block text-sm font-medium text-foreground">
+          Mood: <span style={{ color: 'var(--purple)' }}>{moodScore}/10 — {MOOD_LABELS[moodScore]}</span>
+        </label>
+        <input
+          type="range"
+          min="1"
+          max="10"
+          value={moodScore}
+          onChange={(e) => setMoodScore(parseInt(e.target.value))}
+          className="w-full"
+          style={{ accentColor: 'var(--purple)' }}
+        />
+        <div className="flex justify-between text-xs text-text-subtle">
+          <span>Crisis</span>
+          <span>Excellent</span>
+        </div>
+      </div>
+
+      {/* ── 3. Symptoms ── */}
+      <div>
+        <span className="mb-2 block text-sm font-medium text-foreground">Symptoms</span>
+        <div className="flex flex-wrap gap-2">
+          {SYMPTOMS.map((symptom) => (
+            <button
+              key={symptom}
+              type="button"
+              onClick={() => toggleSymptom(symptom)}
+              className={`rounded-full border px-3 py-1 text-xs transition ${
+                symptoms.includes(symptom)
+                  ? 'border-purple bg-purple/10 text-purple'
+                  : 'border-border-subtle text-text-subtle hover:border-slate-300'
+              }`}
+            >
+              {symptom}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* ── 4. Title ── */}
       <div>
         <label className="mb-1.5 block text-sm font-medium text-foreground">Title</label>
         <input
@@ -198,7 +292,19 @@ export default function JournalEntryForm({ onSubmit, entryCount = 0 }) {
         />
       </div>
 
-      {/* ── Share with Community ── */}
+      {/* ── 5. Notes ── */}
+      <div>
+        <label className="mb-1.5 block text-sm font-medium text-foreground">Notes</label>
+        <textarea
+          value={notes}
+          onChange={(e) => setNotes(e.target.value)}
+          placeholder="How are you feeling? Any observations?"
+          rows={3}
+          className="textarea"
+        />
+      </div>
+
+      {/* ── 6. Share with Community ── */}
       <div
         className="relative overflow-hidden rounded-2xl p-5"
         style={{
@@ -259,106 +365,7 @@ export default function JournalEntryForm({ onSubmit, entryCount = 0 }) {
         </div>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-3">
-        <div>
-          <label className="mb-1.5 block text-sm font-medium text-foreground">Date</label>
-          <input
-            type="date"
-            value={date}
-            onChange={(e) => setDate(e.target.value)}
-            className="input"
-            required
-          />
-        </div>
-        <div>
-          <label className="mb-1.5 block text-sm font-medium text-foreground">Drug</label>
-          <select value={drug} onChange={(e) => setDrug(e.target.value)} className="input">
-            <option value="">Select...</option>
-            {DRUG_LIST.map((d) => (
-              <option key={d.slug} value={d.name}>{d.name} ({d.generic})</option>
-            ))}
-          </select>
-        </div>
-        <div>
-          <label className="mb-1.5 block text-sm font-medium text-foreground">Current Dose</label>
-          <div className="flex gap-0">
-            <input
-              type="number"
-              step="any"
-              min="0"
-              value={currentDose}
-              onChange={(e) => setCurrentDose(e.target.value)}
-              placeholder="10"
-              className="input rounded-r-none border-r-0"
-              style={{ flex: 1 }}
-            />
-            <select
-              value={doseUnit}
-              onChange={(e) => setDoseUnit(e.target.value)}
-              className="input rounded-l-none"
-              style={{ width: 'auto', minWidth: '5rem' }}
-            >
-              <option value="mg">mg</option>
-              <option value="mcg">mcg</option>
-              <option value="mL">mL</option>
-              <option value="drops">drops</option>
-              <option value="beads">beads</option>
-            </select>
-          </div>
-        </div>
-      </div>
-
-      <div>
-        <label className="mb-1.5 block text-sm font-medium text-foreground">
-          Mood: <span style={{ color: 'var(--purple)' }}>{moodScore}/10 — {MOOD_LABELS[moodScore]}</span>
-        </label>
-        <input
-          type="range"
-          min="1"
-          max="10"
-          value={moodScore}
-          onChange={(e) => setMoodScore(parseInt(e.target.value))}
-          className="w-full"
-          style={{ accentColor: 'var(--purple)' }}
-        />
-        <div className="flex justify-between text-xs text-text-subtle">
-          <span>Crisis</span>
-          <span>Excellent</span>
-        </div>
-      </div>
-
-      <div>
-        <span className="mb-2 block text-sm font-medium text-foreground">Symptoms</span>
-        <div className="flex flex-wrap gap-2">
-          {SYMPTOMS.map((symptom) => (
-            <button
-              key={symptom}
-              type="button"
-              onClick={() => toggleSymptom(symptom)}
-              className={`rounded-full border px-3 py-1 text-xs transition ${
-                symptoms.includes(symptom)
-                  ? 'border-purple bg-purple/10 text-purple'
-                  : 'border-border-subtle text-text-subtle hover:border-slate-300'
-              }`}
-            >
-              {symptom}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <div>
-        <label className="mb-1.5 block text-sm font-medium text-foreground">Notes</label>
-        <textarea
-          value={notes}
-          onChange={(e) => setNotes(e.target.value)}
-          placeholder="How are you feeling? Any observations?"
-          rows={3}
-          className="textarea"
-        />
-      </div>
-
-      {/* Profile visibility toggle */}
+      {/* ── 7. Profile visibility toggle ── */}
       <div className="flex items-center justify-between rounded-xl border px-4 py-3" style={{ borderColor: 'var(--border-subtle)' }}>
         <div>
           <span className="text-sm font-medium text-foreground">Visible on your profile</span>
@@ -400,6 +407,7 @@ export default function JournalEntryForm({ onSubmit, entryCount = 0 }) {
         </div>
       )}
 
+      {/* ── 8. Submit ── */}
       <div className="flex justify-end">
         <button type="submit" disabled={loading} className="btn btn-primary disabled:opacity-50">
           {loading
