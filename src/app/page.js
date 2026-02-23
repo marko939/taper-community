@@ -30,7 +30,7 @@ export default function HomePage() {
   return (
     <div className="space-y-12">
       <Hero />
-      <CommunityPulse />
+      <CommunityPulse large />
       <ForumSections />
       <DeprescribingMap compact />
     </div>

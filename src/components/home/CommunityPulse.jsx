@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 
-export default function CommunityPulse() {
+export default function CommunityPulse({ large }) {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -51,7 +51,7 @@ export default function CommunityPulse() {
   if (loading) {
     return (
       <section>
-        <h2 className="mb-3 text-sm font-semibold text-foreground">Community This Week</h2>
+        <h2 className={large ? "mb-3 font-serif text-2xl font-semibold" : "mb-3 text-sm font-semibold text-foreground"} style={large ? { color: 'var(--foreground)' } : undefined}>Community This Week</h2>
         <div className="h-20 animate-pulse rounded-xl" style={{ background: 'var(--surface-glass)' }} />
       </section>
     );
