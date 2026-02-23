@@ -17,21 +17,24 @@ export default function ProviderPDFButton({ entries = [], profile = {}, assessme
       let moodChartImage = null;
       let assessmentChartImage = null;
 
-      // Find the mood chart container (first .recharts-wrapper inside the Dose & Mood card)
-      const moodChartEl = document.querySelector('[data-chart="mood"] .recharts-wrapper');
+      // Try hidden PDF charts first (always in DOM), fall back to visible ones
+      const moodChartEl =
+        document.querySelector('[data-chart="mood-pdf"] .recharts-wrapper') ||
+        document.querySelector('[data-chart="mood"] .recharts-wrapper');
       if (moodChartEl) {
         const canvas = await html2canvas(moodChartEl, { backgroundColor: '#ffffff', scale: 2 });
         moodChartImage = canvas.toDataURL('image/png');
       }
 
-      // Find the assessment chart container
-      const assessmentChartEl = document.querySelector('[data-chart="assessment"] .recharts-wrapper');
+      const assessmentChartEl =
+        document.querySelector('[data-chart="assessment-pdf"] .recharts-wrapper') ||
+        document.querySelector('[data-chart="assessment"] .recharts-wrapper');
       if (assessmentChartEl) {
         const canvas = await html2canvas(assessmentChartEl, { backgroundColor: '#ffffff', scale: 2 });
         assessmentChartImage = canvas.toDataURL('image/png');
       }
 
-      // 2. Get AI summary
+      // 2. Get AI summary for the data report
       setStatus('Generating summary...');
       let summary = '';
       try {
@@ -66,14 +69,14 @@ export default function ProviderPDFButton({ entries = [], profile = {}, assessme
         console.error('[pdf] AI summary failed:', err);
       }
 
-      // 3. Generate PDF
-      setStatus('Building PDF...');
+      // 3. Generate data report PDF
+      setStatus('Building report...');
       const [{ pdf }, { default: ProviderPDF }] = await Promise.all([
         import('@react-pdf/renderer'),
         import('./ProviderPDF'),
       ]);
 
-      const blob = await pdf(
+      const reportBlob = await pdf(
         <ProviderPDF
           entries={entries}
           profile={profile}
@@ -84,14 +87,64 @@ export default function ProviderPDFButton({ entries = [], profile = {}, assessme
         />
       ).toBlob();
 
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `taper-report-${profile.display_name || 'patient'}-${new Date().toISOString().split('T')[0]}.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+      // Download data report
+      const dateStr = new Date().toISOString().split('T')[0];
+      const patientName = profile.display_name || 'patient';
+      downloadBlob(reportBlob, `taper-report-${patientName}-${dateStr}.pdf`);
+
+      // 4. Generate AI clinical review PDF
+      setStatus('Writing clinical review...');
+      let review = '';
+      try {
+        const res = await fetch('/api/ai-review', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            entries: entries.map((e) => ({
+              date: e.date,
+              drug: e.drug,
+              current_dose: e.current_dose,
+              dose_numeric: e.dose_numeric,
+              mood_score: e.mood_score,
+              symptoms: e.symptoms,
+              notes: e.notes,
+            })),
+            assessments: assessments.map((a) => ({
+              date: a.date,
+              type: a.type,
+              score: a.score,
+            })),
+            profile: {
+              display_name: profile.display_name,
+              drug: profile.drug,
+              drug_signature: profile.drug_signature,
+            },
+            dataSummary: summary,
+          }),
+        });
+        const data = await res.json();
+        review = data.review || '';
+      } catch (err) {
+        console.error('[pdf] AI review failed:', err);
+      }
+
+      if (review) {
+        setStatus('Building review PDF...');
+        const { default: AIReviewPDF } = await import('./AIReviewPDF');
+
+        const reviewBlob = await pdf(
+          <AIReviewPDF
+            profile={profile}
+            review={review}
+            entries={entries}
+            assessments={assessments}
+            moodChartImage={moodChartImage}
+            assessmentChartImage={assessmentChartImage}
+          />
+        ).toBlob();
+
+        downloadBlob(reviewBlob, `taper-review-${patientName}-${dateStr}.pdf`);
+      }
     } catch (err) {
       console.error('[pdf] Generation failed:', err);
     }
@@ -108,4 +161,15 @@ export default function ProviderPDFButton({ entries = [], profile = {}, assessme
       {generating ? (status || 'Generating...') : 'Send to Provider'}
     </button>
   );
+}
+
+function downloadBlob(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
 }

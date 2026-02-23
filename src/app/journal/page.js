@@ -380,6 +380,20 @@ export default function JournalPage() {
           onClose={() => setActiveMilestone(null)}
         />
       )}
+
+      {/* Hidden off-screen charts for PDF capture (always in DOM) */}
+      {entries.length > 0 && (
+        <div style={{ position: 'fixed', left: '-9999px', top: 0, width: '700px', opacity: 0, pointerEvents: 'none' }} aria-hidden="true">
+          <div data-chart="mood-pdf" style={{ width: '700px', height: '350px' }}>
+            <JournalChart entries={entries} assessments={assessments} />
+          </div>
+          {assessments.length > 0 && (
+            <div data-chart="assessment-pdf" style={{ width: '700px', height: '350px' }}>
+              <AssessmentChart assessments={assessments} entries={entries} />
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
