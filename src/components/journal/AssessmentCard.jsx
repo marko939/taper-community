@@ -28,13 +28,13 @@ export default function AssessmentCard({ assessments }) {
           onClick={() => setActiveForm('phq9')}
           className="btn btn-primary w-full py-3 text-sm"
         >
-          Take PHQ-9
+          Take Standardized Depression Test
         </button>
         <button
           onClick={() => setActiveForm('gad7')}
           className="btn btn-primary w-full py-3 text-sm"
         >
-          Take GAD-7
+          Take Standardized Anxiety Test
         </button>
       </div>
     </div>
