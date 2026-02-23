@@ -17,7 +17,7 @@ export const useThreadStore = create((set, get) => ({
 
     const { data: threadData } = await supabase
       .from('threads')
-      .select('*, profiles:user_id(display_name, is_peer_advisor, drug, taper_stage, post_count, drug_signature, location, avatar_url)')
+      .select('*, profiles:user_id(display_name, is_peer_advisor, drug, taper_stage, post_count, drug_signature, location, avatar_url), thread_forums(forum_id, forums:forum_id(name, slug, drug_slug))')
       .eq('id', threadId)
       .single();
 

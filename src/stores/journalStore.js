@@ -69,35 +69,39 @@ export const useJournalStore = create((set, get) => ({
       return { data: null, error };
     }
 
-    // Cross-post to forums as threads (best-effort)
+    // Cross-post to forums as a single thread (best-effort)
     if (data && published_forums.length > 0 && entry.notes) {
       try {
         const threadTitle = entry.title || `${entry.drug || 'Journal'} — ${new Date(entry.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
-        const threadIds = [];
 
-        for (const forumId of published_forums) {
-          const { data: thread, error: threadErr } = await supabase
-            .from('threads')
-            .insert({
-              forum_id: forumId,
-              user_id: userId,
-              title: threadTitle,
-              body: entry.notes,
-              tags: ['taper update'],
-            })
-            .select('id')
-            .single();
+        // Create ONE thread (primary forum = first selected)
+        const { data: thread, error: threadErr } = await supabase
+          .from('threads')
+          .insert({
+            forum_id: published_forums[0],
+            user_id: userId,
+            title: threadTitle,
+            body: entry.notes,
+            tags: ['taper update'],
+          })
+          .select('id')
+          .single();
 
-          if (threadErr) console.warn('[journal] Thread creation failed for forum', forumId, threadErr.message);
-          if (thread) threadIds.push(thread.id);
-        }
+        if (threadErr) console.warn('[journal] Thread creation failed:', threadErr.message);
 
-        if (threadIds.length > 0) {
+        if (thread) {
+          // Link thread to ALL selected forums via junction table
+          const forumLinks = published_forums.map((forumId) => ({
+            thread_id: thread.id,
+            forum_id: forumId,
+          }));
+          await supabase.from('thread_forums').insert(forumLinks);
+
           await supabase
             .from('journal_entries')
-            .update({ thread_ids: threadIds })
+            .update({ thread_ids: [thread.id] })
             .eq('id', data.id);
-          data.thread_ids = threadIds;
+          data.thread_ids = [thread.id];
         }
       } catch (err) {
         console.warn('[journal] Cross-post failed:', err.message);

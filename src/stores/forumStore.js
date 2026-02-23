@@ -38,8 +38,6 @@ export const useForumStore = create((set, get) => ({
     if (!forumId) return;
 
     const supabase = createClient();
-    const from = 0;
-    const to = THREADS_PER_PAGE - 1;
 
     set((state) => ({
       threadPages: {
@@ -48,13 +46,14 @@ export const useForumStore = create((set, get) => ({
       },
     }));
 
+    // Query threads through junction table (one thread, many forums)
     const { data, count } = await supabase
       .from('threads')
-      .select('*, profiles:user_id(display_name, is_peer_advisor, drug, taper_stage, drug_signature, avatar_url)', { count: 'exact' })
-      .eq('forum_id', forumId)
+      .select('*, profiles:user_id(display_name, is_peer_advisor, drug, taper_stage, drug_signature, avatar_url), thread_forums!inner(forum_id)', { count: 'exact' })
+      .eq('thread_forums.forum_id', forumId)
       .order('pinned', { ascending: false })
       .order('created_at', { ascending: false })
-      .range(from, to);
+      .range(0, THREADS_PER_PAGE - 1);
 
     const rows = data || [];
     const total = count ?? rows.length;
@@ -86,8 +85,8 @@ export const useForumStore = create((set, get) => ({
 
     const { data, count } = await supabase
       .from('threads')
-      .select('*, profiles:user_id(display_name, is_peer_advisor, drug, taper_stage, drug_signature, avatar_url)', { count: 'exact' })
-      .eq('forum_id', forumId)
+      .select('*, profiles:user_id(display_name, is_peer_advisor, drug, taper_stage, drug_signature, avatar_url), thread_forums!inner(forum_id)', { count: 'exact' })
+      .eq('thread_forums.forum_id', forumId)
       .order('pinned', { ascending: false })
       .order('created_at', { ascending: false })
       .range(from, to);
@@ -109,19 +108,20 @@ export const useForumStore = create((set, get) => ({
     }));
   },
 
-  fetchRecentThreads: async (limit = 10) => {
+  fetchTopThreads: async (limit = 10) => {
     try {
       const supabase = createClient();
 
       const { data } = await supabase
         .from('threads')
         .select('*, profiles:user_id(display_name, is_peer_advisor, avatar_url), forums:forum_id(name, drug_slug, slug)')
+        .order('vote_score', { ascending: false })
         .order('created_at', { ascending: false })
         .limit(limit);
 
       set({ recentThreads: { items: data || [], loading: false } });
     } catch (err) {
-      console.error('[forumStore] fetchRecentThreads error:', err);
+      console.error('[forumStore] fetchTopThreads error:', err);
       set({ recentThreads: { items: [], loading: false } });
     }
   },
@@ -141,15 +141,19 @@ export const useForumStore = create((set, get) => ({
     }));
 
     const supabase = createClient();
+    const selectFields = forumId
+      ? '*, profiles:user_id(display_name, is_peer_advisor, avatar_url), forums:forum_id(name, slug, drug_slug), thread_forums!inner(forum_id)'
+      : '*, profiles:user_id(display_name, is_peer_advisor, avatar_url), forums:forum_id(name, slug, drug_slug)';
+
     let qb = supabase
       .from('threads')
-      .select('*, profiles:user_id(display_name, is_peer_advisor, avatar_url), forums:forum_id(name, slug, drug_slug)')
+      .select(selectFields)
       .textSearch('title', query)
       .order('created_at', { ascending: false })
       .limit(20);
 
     if (forumId) {
-      qb = qb.eq('forum_id', forumId);
+      qb = qb.eq('thread_forums.forum_id', forumId);
     }
 
     const { data } = await qb;

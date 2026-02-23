@@ -7,8 +7,11 @@ import DrugSignature from '@/components/shared/DrugSignature';
 import VoteButton from '@/components/shared/VoteButton';
 
 export default function ThreadView({ thread }) {
-  const { id, title, body, tags = [], view_count, vote_score, created_at, user_id, profiles } = thread;
+  const { id, title, body, tags = [], view_count, vote_score, created_at, user_id, profiles, thread_forums = [] } = thread;
   const displayName = profiles?.display_name || 'Anonymous';
+  const crossPostedForums = thread_forums
+    .map((tf) => tf.forums)
+    .filter(Boolean);
 
   return (
     <div className="card">
@@ -54,6 +57,22 @@ export default function ThreadView({ thread }) {
                 <span>&middot;</span>
                 <span>{view_count} views</span>
               </div>
+
+              {crossPostedForums.length > 1 && (
+                <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                  <span className="text-[11px] text-text-subtle">Posted in:</span>
+                  {crossPostedForums.map((forum) => (
+                    <Link
+                      key={forum.slug}
+                      href={`/forums/${forum.drug_slug || forum.slug}`}
+                      className="rounded-full px-2 py-0.5 text-[11px] font-semibold no-underline transition hover:opacity-80"
+                      style={{ background: 'var(--purple-ghost)', color: 'var(--purple)' }}
+                    >
+                      {forum.name}
+                    </Link>
+                  ))}
+                </div>
+              )}
 
               {tags.length > 0 && (
                 <div className="mt-3 flex flex-wrap gap-1.5">

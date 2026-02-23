@@ -70,26 +70,29 @@ function NewThreadContent() {
   const handleSubmit = async ({ title, body, tags }) => {
     if (selectedForums.length === 0) return;
 
-    // Insert a thread for each selected forum (cross-posting)
-    const insertPromises = selectedForums.map((forumId) =>
-      supabase
-        .from('threads')
-        .insert({
-          forum_id: forumId,
-          user_id: user.id,
-          title,
-          body,
-          tags,
-        })
-        .select('id')
-        .single()
-    );
+    // Create ONE thread (primary forum = first selected)
+    const { data: thread, error } = await supabase
+      .from('threads')
+      .insert({
+        forum_id: selectedForums[0],
+        user_id: user.id,
+        title,
+        body,
+        tags,
+      })
+      .select('id')
+      .single();
 
-    const results = await Promise.all(insertPromises);
-    const firstSuccess = results.find((r) => !r.error && r.data);
-    if (firstSuccess) {
-      router.push(`/thread/${firstSuccess.data.id}`);
-    }
+    if (error || !thread) return;
+
+    // Link thread to ALL selected forums via junction table
+    const forumLinks = selectedForums.map((forumId) => ({
+      thread_id: thread.id,
+      forum_id: forumId,
+    }));
+    await supabase.from('thread_forums').insert(forumLinks);
+
+    router.push(`/thread/${thread.id}`);
   };
 
   // Selected drug forums for display

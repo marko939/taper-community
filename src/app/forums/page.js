@@ -25,14 +25,14 @@ export default function ForumsPage() {
   const forumsLoading = useForumStore((s) => s.forumsLoading);
   const fetchForums = useForumStore((s) => s.fetchForums);
   const recentThreads = useForumStore((s) => s.recentThreads);
-  const fetchRecentThreads = useForumStore((s) => s.fetchRecentThreads);
+  const fetchTopThreads = useForumStore((s) => s.fetchTopThreads);
   const searchState = useForumStore((s) => s.searchState['global']);
   const searchFn = useForumStore((s) => s.search);
 
   useEffect(() => {
     fetchForums();
-    fetchRecentThreads(4);
-  }, [fetchForums, fetchRecentThreads]);
+    fetchTopThreads(4);
+  }, [fetchForums, fetchTopThreads]);
 
   if (forumsLoading) return <PageLoading />;
 
@@ -84,9 +84,9 @@ export default function ForumsPage() {
             style={{ borderColor: 'var(--border-subtle)', background: 'var(--purple-ghost)' }}
           >
             <svg className="h-5 w-5" style={{ color: 'var(--purple)' }} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6.633 10.5c.806 0 1.533-.446 2.031-1.08a9.041 9.041 0 012.861-2.4c.723-.384 1.35-.956 1.653-1.715a4.498 4.498 0 00.322-1.672V3a.75.75 0 01.75-.75A2.25 2.25 0 0116.5 4.5c0 1.152-.26 2.243-.723 3.218-.266.558.107 1.282.725 1.282h3.126c1.026 0 1.945.694 2.054 1.715.045.422.068.85.068 1.285a11.95 11.95 0 01-2.649 7.521c-.388.482-.987.729-1.605.729H13.48c-.483 0-.964-.078-1.423-.23l-3.114-1.04a4.501 4.501 0 00-1.423-.23H5.904M14.25 9h2.25M5.904 18.75c.083.205.173.405.27.602.197.4-.078.898-.523.898h-.908c-.889 0-1.713-.518-1.972-1.368a12 12 0 01-.521-3.507c0-1.553.295-3.036.831-4.398C3.387 9.953 4.167 9.5 5 9.5h.096c.5 0 .905.405.905.905 0 .714-.211 1.412-.608 2.006L4 14.25l1.904 4.5z" />
             </svg>
-            <h2 className="text-lg font-semibold text-foreground">Recent Activity</h2>
+            <h2 className="text-lg font-semibold text-foreground">Most Upvoted</h2>
           </div>
           <div className="divide-y" style={{ borderColor: 'var(--border-subtle)' }}>
             {recentThreads.items.map((thread) => (

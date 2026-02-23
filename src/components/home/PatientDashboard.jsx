@@ -171,12 +171,12 @@ export default function PatientDashboard({ user, profile }) {
   const journalLoading = useJournalStore((s) => s.loading);
   const fetchEntries = useJournalStore((s) => s.fetchEntries);
   const recentThreads = useForumStore((s) => s.recentThreads);
-  const fetchRecentThreads = useForumStore((s) => s.fetchRecentThreads);
+  const fetchTopThreads = useForumStore((s) => s.fetchTopThreads);
 
   useEffect(() => {
     fetchEntries();
-    fetchRecentThreads(5);
-  }, [fetchEntries, fetchRecentThreads]);
+    fetchTopThreads(5);
+  }, [fetchEntries, fetchTopThreads]);
 
   const loading = journalLoading;
   const threads = recentThreads.items;
@@ -350,9 +350,9 @@ export default function PatientDashboard({ user, profile }) {
       {/* Community Pulse */}
       <CommunityPulse />
 
-      {/* Recent Posts — top 3 */}
+      {/* Top Posts — most upvoted */}
       <section>
-        <h2 className="mb-3 text-sm font-semibold text-foreground">Recent Posts</h2>
+        <h2 className="mb-3 text-sm font-semibold text-foreground">Top Posts</h2>
         {threadsLoading ? (
           <div className="h-16 animate-pulse rounded-xl" style={{ background: 'var(--surface-glass)' }} />
         ) : threads.length === 0 ? (
@@ -386,6 +386,12 @@ export default function PatientDashboard({ user, profile }) {
                     </div>
                   </div>
                   <div className="shrink-0 text-right text-[11px] text-text-subtle">
+                    <div className="flex items-center justify-end gap-1">
+                      <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 15.75l7.5-7.5 7.5 7.5" />
+                      </svg>
+                      {thread.vote_score || 0}
+                    </div>
                     <div>{thread.reply_count ?? 0} replies</div>
                   </div>
                 </div>

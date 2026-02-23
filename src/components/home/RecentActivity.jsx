@@ -23,19 +23,19 @@ function timeAgo(dateStr) {
 
 export default function RecentActivity() {
   const recentThreads = useForumStore((s) => s.recentThreads);
-  const fetchRecentThreads = useForumStore((s) => s.fetchRecentThreads);
+  const fetchTopThreads = useForumStore((s) => s.fetchTopThreads);
 
   useEffect(() => {
-    fetchRecentThreads(3);
-  }, [fetchRecentThreads]);
+    fetchTopThreads(3);
+  }, [fetchTopThreads]);
 
   const threads = recentThreads.items;
   const loading = recentThreads.loading;
 
   return (
     <section>
-      <h2 className="mb-1 font-serif text-2xl font-semibold" style={{ color: 'var(--foreground)' }}>Latest Discussions</h2>
-      <p className="mb-6 text-sm" style={{ color: 'var(--text-muted)' }}>See what the community is talking about right now.</p>
+      <h2 className="mb-1 font-serif text-2xl font-semibold" style={{ color: 'var(--foreground)' }}>Top Discussions</h2>
+      <p className="mb-6 text-sm" style={{ color: 'var(--text-muted)' }}>The most upvoted posts from the community.</p>
 
       {loading ? (
         <LoadingSpinner className="py-8" />
@@ -70,8 +70,13 @@ export default function RecentActivity() {
                   </div>
                 </div>
                 <div className="shrink-0 text-right text-xs" style={{ color: 'var(--text-subtle)' }}>
+                  <div className="flex items-center justify-end gap-1">
+                    <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 15.75l7.5-7.5 7.5 7.5" />
+                    </svg>
+                    {thread.vote_score || 0}
+                  </div>
                   <div>{thread.reply_count} replies</div>
-                  <div>{thread.view_count} views</div>
                 </div>
               </div>
             </Link>
