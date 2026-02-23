@@ -13,13 +13,15 @@ function ordinal(n) {
 }
 
 export default function JournalEntryForm({ onSubmit, entryCount = 0 }) {
-  const [title, setTitle] = useState('');
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [drug, setDrug] = useState('');
   const [currentDose, setCurrentDose] = useState('');
   const [doseUnit, setDoseUnit] = useState('mg');
   const [symptoms, setSymptoms] = useState([]);
   const [moodScore, setMoodScore] = useState(5);
+  const [titleEdited, setTitleEdited] = useState(false);
+  const [notesEdited, setNotesEdited] = useState(false);
+  const [title, setTitle] = useState('');
   const [notes, setNotes] = useState('');
   const [isPublic, setIsPublic] = useState(true);
   const [crossPostForums, setCrossPostForums] = useState([]);
@@ -83,7 +85,7 @@ export default function JournalEntryForm({ onSubmit, entryCount = 0 }) {
     return () => { cancelled = true; };
   }, [drug]);
 
-  const notesPlaceholder = useMemo(() => {
+  const autoNotes = useMemo(() => {
     const moodTag = moodScore === 1 ? 'in a crisis' : MOOD_LABELS[moodScore]?.toLowerCase();
     const symptomPart = symptoms.length > 0
       ? `Been having bouts of ${symptoms.join(', ').toLowerCase()}.`
@@ -91,7 +93,7 @@ export default function JournalEntryForm({ onSubmit, entryCount = 0 }) {
     return `Feeling ${moodTag}. ${symptomPart}`;
   }, [moodScore, symptoms]);
 
-  const titlePlaceholder = useMemo(() => {
+  const autoTitle = useMemo(() => {
     const dateFmt = new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
     const moodTag = moodScore === 1 ? 'In a Crisis' : `Feeling ${MOOD_LABELS[moodScore]}`;
     if (drug) {
@@ -99,6 +101,15 @@ export default function JournalEntryForm({ onSubmit, entryCount = 0 }) {
     }
     return `Check-in - ${moodTag} - ${dateFmt}`;
   }, [drug, date, drugEntryCount, moodScore]);
+
+  // Auto-update title and notes when user hasn't manually edited them
+  useEffect(() => {
+    if (!titleEdited) setTitle(autoTitle);
+  }, [autoTitle, titleEdited]);
+
+  useEffect(() => {
+    if (!notesEdited) setNotes(autoNotes);
+  }, [autoNotes, notesEdited]);
 
   const toggleSymptom = (symptom) => {
     setSymptoms((prev) =>
@@ -170,25 +181,25 @@ export default function JournalEntryForm({ onSubmit, entryCount = 0 }) {
     const allForumIds = allPostingForums.filter((f) => f._hasDb !== false).map((f) => f.id);
 
     await onSubmit({
-      title: title || titlePlaceholder,
+      title,
       date,
       drug: drug || null,
       current_dose: currentDose ? `${currentDose}${doseUnit}` : null,
       dose_numeric: currentDose ? parseFloat(currentDose) || null : null,
       symptoms,
       mood_score: moodScore,
-      notes: notes || notesPlaceholder,
+      notes,
       is_public: isPublic || allForumIds.length > 0,
       published_forums: allForumIds,
     });
 
-    setTitle('');
     setCurrentDose('');
     setSymptoms([]);
     setMoodScore(5);
-    setNotes('');
     setIsPublic(true);
     setCrossPostForums([]);
+    setTitleEdited(false);
+    setNotesEdited(false);
     setLoading(false);
   };
 
@@ -294,8 +305,7 @@ export default function JournalEntryForm({ onSubmit, entryCount = 0 }) {
         <input
           type="text"
           value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          placeholder={titlePlaceholder}
+          onChange={(e) => { setTitle(e.target.value); setTitleEdited(true); }}
           className="input"
         />
       </div>
@@ -305,8 +315,7 @@ export default function JournalEntryForm({ onSubmit, entryCount = 0 }) {
         <label className="mb-1.5 block text-sm font-medium text-foreground">Notes</label>
         <textarea
           value={notes}
-          onChange={(e) => setNotes(e.target.value)}
-          placeholder={notesPlaceholder}
+          onChange={(e) => { setNotes(e.target.value); setNotesEdited(true); }}
           rows={3}
           className="textarea"
         />
