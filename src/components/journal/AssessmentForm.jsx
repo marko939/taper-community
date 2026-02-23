@@ -36,7 +36,7 @@ export default function AssessmentForm({ type, onComplete, onCancel }) {
   if (result) {
     const color = severityColor(result.severity);
     return (
-      <div className="rounded-2xl border p-6 text-center" style={{ borderColor: 'var(--border-subtle)' }}>
+      <div className="rounded-2xl border p-6 text-center" style={{ borderColor: 'var(--border-subtle)', background: 'var(--surface-strong)' }}>
         <p className="text-sm font-medium text-text-muted">{label} Score</p>
         <p className="mt-2 text-4xl font-bold" style={{ color }}>
           {result.score}
@@ -61,7 +61,7 @@ export default function AssessmentForm({ type, onComplete, onCancel }) {
   }
 
   return (
-    <div className="rounded-2xl border p-5" style={{ borderColor: 'var(--border-subtle)' }}>
+    <div className="rounded-2xl border p-5" style={{ borderColor: 'var(--border-subtle)', background: 'var(--surface-strong)' }}>
       <div className="mb-4 flex items-center justify-between">
         <div>
           <h3 className="text-base font-semibold text-foreground">{label} — {subtitle}</h3>
@@ -69,7 +69,7 @@ export default function AssessmentForm({ type, onComplete, onCancel }) {
             Over the last 2 weeks, how often have you been bothered by the following?
           </p>
         </div>
-        <button onClick={onCancel} className="text-xs text-text-subtle hover:text-foreground">
+        <button onClick={onCancel} className="btn btn-secondary text-xs">
           Cancel
         </button>
       </div>

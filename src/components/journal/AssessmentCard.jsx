@@ -29,7 +29,7 @@ export default function AssessmentCard({ assessments }) {
 
       <div className="grid grid-cols-2 gap-3">
         {/* PHQ-9 */}
-        <div className="rounded-xl border p-3" style={{ borderColor: 'var(--border-subtle)' }}>
+        <div className="rounded-xl border p-3" style={{ borderColor: 'var(--border-subtle)', background: 'var(--surface-strong)' }}>
           <div className="flex items-center justify-between">
             <p className="text-xs font-semibold text-foreground">PHQ-9</p>
             {latestPHQ && (
@@ -51,15 +51,14 @@ export default function AssessmentCard({ assessments }) {
           )}
           <button
             onClick={() => setActiveForm('phq9')}
-            className="mt-2 w-full rounded-lg py-1.5 text-xs font-semibold transition hover:opacity-90"
-            style={{ background: 'var(--purple-ghost)', color: 'var(--purple)' }}
+            className="btn btn-primary mt-2 w-full py-1.5 text-xs"
           >
             {latestPHQ ? 'Retake PHQ-9' : 'Take PHQ-9'}
           </button>
         </div>
 
         {/* GAD-7 */}
-        <div className="rounded-xl border p-3" style={{ borderColor: 'var(--border-subtle)' }}>
+        <div className="rounded-xl border p-3" style={{ borderColor: 'var(--border-subtle)', background: 'var(--surface-strong)' }}>
           <div className="flex items-center justify-between">
             <p className="text-xs font-semibold text-foreground">GAD-7</p>
             {latestGAD && (
@@ -81,8 +80,7 @@ export default function AssessmentCard({ assessments }) {
           )}
           <button
             onClick={() => setActiveForm('gad7')}
-            className="mt-2 w-full rounded-lg py-1.5 text-xs font-semibold transition hover:opacity-90"
-            style={{ background: 'var(--purple-ghost)', color: 'var(--purple)' }}
+            className="btn btn-primary mt-2 w-full py-1.5 text-xs"
           >
             {latestGAD ? 'Retake GAD-7' : 'Take GAD-7'}
           </button>
