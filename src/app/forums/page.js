@@ -8,16 +8,31 @@ import { getGeneralSections, getDrugClassGroups, CATEGORY_ICONS, DRUG_CLASS_ICON
 import SearchBar from '@/components/shared/SearchBar';
 import ThreadCard from '@/components/forums/ThreadCard';
 
+function timeAgo(dateStr) {
+  const seconds = Math.floor((new Date() - new Date(dateStr)) / 1000);
+  if (seconds < 60) return 'just now';
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  if (days < 30) return `${days}d ago`;
+  return `${Math.floor(days / 30)}mo ago`;
+}
+
 export default function ForumsPage() {
   const forums = useForumStore((s) => s.forums);
   const forumsLoading = useForumStore((s) => s.forumsLoading);
   const fetchForums = useForumStore((s) => s.fetchForums);
+  const recentThreads = useForumStore((s) => s.recentThreads);
+  const fetchRecentThreads = useForumStore((s) => s.fetchRecentThreads);
   const searchState = useForumStore((s) => s.searchState['global']);
   const searchFn = useForumStore((s) => s.search);
 
   useEffect(() => {
     fetchForums();
-  }, [fetchForums]);
+    fetchRecentThreads(4);
+  }, [fetchForums, fetchRecentThreads]);
 
   if (forumsLoading) return <PageLoading />;
 
@@ -59,6 +74,65 @@ export default function ForumsPage() {
             <ThreadCard key={thread.id} thread={thread} />
           ))}
         </div>
+      )}
+
+      {/* Recent Activity */}
+      {!isSearching && !recentThreads.loading && recentThreads.items.length > 0 && (
+        <section className="glass-panel overflow-hidden">
+          <div
+            className="flex items-center gap-3 border-b px-6 py-4"
+            style={{ borderColor: 'var(--border-subtle)', background: 'var(--purple-ghost)' }}
+          >
+            <svg className="h-5 w-5" style={{ color: 'var(--purple)' }} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
+            </svg>
+            <h2 className="text-lg font-semibold text-foreground">Recent Activity</h2>
+          </div>
+          <div className="divide-y" style={{ borderColor: 'var(--border-subtle)' }}>
+            {recentThreads.items.map((thread) => (
+              <Link
+                key={thread.id}
+                href={`/thread/${thread.id}`}
+                className="group flex items-center gap-4 bg-surface-strong p-5 no-underline transition hover:bg-purple-ghost/50"
+              >
+                <div className="h-8 w-1 shrink-0 rounded-full" style={{ background: 'var(--purple-pale)' }} />
+                <div className="min-w-0 flex-1">
+                  <p className="font-semibold text-foreground transition group-hover:text-purple">
+                    {thread.title}
+                  </p>
+                  <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-text-subtle">
+                    <span>{thread.profiles?.display_name || 'Anonymous'}</span>
+                    <span>·</span>
+                    <span>{timeAgo(thread.created_at)}</span>
+                    {thread.forums && (
+                      <>
+                        <span>·</span>
+                        <span
+                          className="rounded-full px-2 py-0.5 text-[11px] font-semibold"
+                          style={{ background: 'var(--purple-ghost)', color: 'var(--purple)' }}
+                        >
+                          {thread.forums.name}
+                        </span>
+                      </>
+                    )}
+                    {thread.reply_count > 0 && (
+                      <>
+                        <span>·</span>
+                        <span>{thread.reply_count} {thread.reply_count === 1 ? 'reply' : 'replies'}</span>
+                      </>
+                    )}
+                  </div>
+                </div>
+                <svg
+                  className="h-4 w-4 shrink-0 text-text-subtle transition group-hover:text-purple"
+                  fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                </svg>
+              </Link>
+            ))}
+          </div>
+        </section>
       )}
 
       {!isSearching && <div className="space-y-6">

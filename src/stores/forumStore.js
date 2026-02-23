@@ -16,16 +16,22 @@ export const useForumStore = create((set, get) => ({
   fetchForums: async () => {
     if (get().forumsLoaded) return get().forums;
 
-    const supabase = createClient();
-    const { data } = await supabase
-      .from('forums')
-      .select('*')
-      .order('category')
-      .order('name');
+    try {
+      const supabase = createClient();
+      const { data } = await supabase
+        .from('forums')
+        .select('*')
+        .order('category')
+        .order('name');
 
-    const forums = data || [];
-    set({ forums, forumsLoaded: true, forumsLoading: false });
-    return forums;
+      const forums = data || [];
+      set({ forums, forumsLoaded: true, forumsLoading: false });
+      return forums;
+    } catch (err) {
+      console.error('[forumStore] fetchForums error:', err);
+      set({ forumsLoaded: true, forumsLoading: false });
+      return [];
+    }
   },
 
   fetchThreads: async (forumId) => {
@@ -104,15 +110,20 @@ export const useForumStore = create((set, get) => ({
   },
 
   fetchRecentThreads: async (limit = 10) => {
-    const supabase = createClient();
+    try {
+      const supabase = createClient();
 
-    const { data } = await supabase
-      .from('threads')
-      .select('*, profiles:user_id(display_name, is_peer_advisor), forums:forum_id(name, drug_slug, slug)')
-      .order('created_at', { ascending: false })
-      .limit(limit);
+      const { data } = await supabase
+        .from('threads')
+        .select('*, profiles:user_id(display_name, is_peer_advisor), forums:forum_id(name, drug_slug, slug)')
+        .order('created_at', { ascending: false })
+        .limit(limit);
 
-    set({ recentThreads: { items: data || [], loading: false } });
+      set({ recentThreads: { items: data || [], loading: false } });
+    } catch (err) {
+      console.error('[forumStore] fetchRecentThreads error:', err);
+      set({ recentThreads: { items: [], loading: false } });
+    }
   },
 
   search: async (forumId, query) => {
