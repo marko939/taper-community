@@ -223,14 +223,76 @@ export default function ResourcesPage() {
       )}
 
       {activeTab === 'resources' && (
-        <div className="rounded-2xl border p-12 text-center" style={{ borderColor: 'var(--border-subtle)', background: 'var(--surface-strong)' }}>
-          <svg className="mx-auto h-12 w-12 text-text-subtle" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m13.35-.622l1.757-1.757a4.5 4.5 0 00-6.364-6.364l-4.5 4.5a4.5 4.5 0 001.242 7.244" />
-          </svg>
-          <p className="mt-4 text-sm font-semibold text-foreground">Coming soon</p>
-          <p className="mt-1 text-xs text-text-muted">
-            Curated guides, tools, and external resources will appear here.
-          </p>
+        <div className="grid gap-4 sm:grid-cols-2">
+          {/* Maudsley Deprescribing Guidelines */}
+          <a
+            href="https://www.sfu-ljubljana.si/sites/default/files/2025-04/Mark%20Horowitz%2C%20David%20M.%20Taylor%20-%20The%20Maudsley%20Deprescribing%20Guidelines_%20Antidepressants%2C%20Benzodiazepines%2C%20Gabapentinoids.pdf"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="group flex items-start gap-4 rounded-2xl border p-6 no-underline transition hover:border-purple hover:shadow-elevated"
+            style={{ borderColor: 'var(--border-subtle)', background: 'var(--surface-strong)' }}
+          >
+            <div
+              className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl transition group-hover:scale-110"
+              style={{ background: 'var(--purple-pale)', color: 'var(--purple)' }}
+            >
+              <svg className="h-7 w-7" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+              </svg>
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-bold text-foreground transition group-hover:text-purple">
+                The Maudsley Deprescribing Guidelines
+              </p>
+              <p className="mt-1 text-xs text-text-muted">
+                By Mark Horowitz & David Taylor. Evidence-based guidance for tapering antidepressants, benzodiazepines, and gabapentinoids.
+              </p>
+              <span
+                className="mt-3 inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-bold"
+                style={{ background: 'var(--purple-pale)', color: 'var(--purple)' }}
+              >
+                <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
+                </svg>
+                PDF
+              </span>
+            </div>
+          </a>
+
+          {/* Ashton Manual */}
+          <a
+            href="https://www.benzoinfo.com/wp-content/uploads/2022/07/Ashton-Manual.pdf"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="group flex items-start gap-4 rounded-2xl border p-6 no-underline transition hover:border-purple hover:shadow-elevated"
+            style={{ borderColor: 'var(--border-subtle)', background: 'var(--surface-strong)' }}
+          >
+            <div
+              className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl transition group-hover:scale-110"
+              style={{ background: 'var(--purple-pale)', color: 'var(--purple)' }}
+            >
+              <svg className="h-7 w-7" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+              </svg>
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-bold text-foreground transition group-hover:text-purple">
+                The Ashton Manual
+              </p>
+              <p className="mt-1 text-xs text-text-muted">
+                By Professor C. Heather Ashton. The definitive guide to benzodiazepine withdrawal and tapering protocols.
+              </p>
+              <span
+                className="mt-3 inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-bold"
+                style={{ background: 'var(--purple-pale)', color: 'var(--purple)' }}
+              >
+                <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
+                </svg>
+                PDF
+              </span>
+            </div>
+          </a>
         </div>
       )}
     </div>
