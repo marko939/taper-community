@@ -282,68 +282,79 @@ export default function PatientDashboard({ user, profile }) {
         </div>
       </div>
 
-      {/* Achievement Badges — show 3 at a time */}
-      {!loading && (
-        <section>
-          <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-foreground">Achievements</h2>
-            <div className="flex items-center gap-1.5">
-              <div className="h-1.5 w-16 overflow-hidden rounded-full" style={{ background: 'var(--purple-ghost)' }}>
-                <div
-                  className="h-full rounded-full transition-all duration-700"
-                  style={{ width: `${Math.round((achievedCount / BADGES.length) * 100)}%`, background: 'var(--purple)' }}
-                />
-              </div>
-              <span className="text-[11px] font-semibold text-text-subtle">{achievedCount}/{BADGES.length}</span>
-            </div>
-          </div>
-          <div className="grid grid-cols-3 gap-2">
-            {displayBadges.map((b) => (
-              <div
-                key={b.id}
-                className="flex items-center gap-2.5 rounded-xl border px-3 py-2.5 transition"
-                style={{
-                  borderColor: b.achieved ? 'var(--purple-pale)' : 'var(--border-subtle)',
-                  background: b.achieved ? 'var(--purple-ghost)' : 'var(--surface-strong)',
-                  opacity: b.achieved ? 1 : 0.45,
-                }}
-              >
-                <div
-                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg"
-                  style={{ background: b.achieved ? 'var(--purple-pale)' : 'var(--surface-glass)' }}
-                >
-                  <BadgeIcon id={b.id} achieved={b.achieved} />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-[11px] font-bold leading-tight text-foreground">{b.label}</p>
-                  <p className="text-[10px] leading-tight text-text-subtle">{b.desc}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
+      {/* Achievements & Milestones — side by side */}
+      {!loading && (() => {
+        const milestones = entries.length > 0 ? detectMilestones(entries, profile) : [];
+        const achievedMilestones = milestones.filter((m) => m.achieved).slice(0, 3);
+        const hasMilestones = achievedMilestones.length > 0;
 
-      {/* Taper Milestones */}
-      {!loading && entries.length > 0 && (() => {
-        const milestones = detectMilestones(entries, profile);
-        const achieved = milestones.filter((m) => m.achieved);
-        if (achieved.length === 0) return null;
         return (
-          <section>
-            <h2 className="mb-3 text-sm font-semibold text-foreground">Milestones</h2>
-            <div className="flex flex-wrap gap-2">
-              {achieved.map((m) => (
-                <span
-                  key={m.id}
-                  className="rounded-full px-3 py-1.5 text-xs font-semibold"
-                  style={{ background: 'var(--purple-ghost)', color: 'var(--purple)' }}
-                >
-                  {m.emoji} {m.label}
-                </span>
-              ))}
-            </div>
-          </section>
+          <div className={`grid gap-4 ${hasMilestones ? 'grid-cols-2' : 'grid-cols-1'}`}>
+            {/* Achievements */}
+            <section
+              className="rounded-xl border p-4"
+              style={{ borderColor: 'var(--border-subtle)', background: 'var(--surface-strong)' }}
+            >
+              <div className="mb-3 flex items-center justify-between">
+                <h2 className="text-sm font-semibold text-foreground">Achievements</h2>
+                <div className="flex items-center gap-1.5">
+                  <div className="h-1.5 w-12 overflow-hidden rounded-full" style={{ background: 'var(--purple-ghost)' }}>
+                    <div
+                      className="h-full rounded-full transition-all duration-700"
+                      style={{ width: `${Math.round((achievedCount / BADGES.length) * 100)}%`, background: 'var(--purple)' }}
+                    />
+                  </div>
+                  <span className="text-[11px] font-semibold text-text-subtle">{achievedCount}/{BADGES.length}</span>
+                </div>
+              </div>
+              <div className="space-y-2">
+                {displayBadges.map((b) => (
+                  <div
+                    key={b.id}
+                    className="flex items-center gap-2.5 rounded-xl border px-3 py-2.5 transition"
+                    style={{
+                      borderColor: b.achieved ? 'var(--purple-pale)' : 'var(--border-subtle)',
+                      background: b.achieved ? 'var(--purple-ghost)' : 'transparent',
+                      opacity: b.achieved ? 1 : 0.45,
+                    }}
+                  >
+                    <div
+                      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg"
+                      style={{ background: b.achieved ? 'var(--purple-pale)' : 'var(--surface-glass)' }}
+                    >
+                      <BadgeIcon id={b.id} achieved={b.achieved} />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-[11px] font-bold leading-tight text-foreground">{b.label}</p>
+                      <p className="text-[10px] leading-tight text-text-subtle">{b.desc}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+
+            {/* Milestones */}
+            {hasMilestones && (
+              <section
+                className="rounded-xl border p-4"
+                style={{ borderColor: 'var(--border-subtle)', background: 'var(--surface-strong)' }}
+              >
+                <h2 className="mb-3 text-sm font-semibold text-foreground">Milestones</h2>
+                <div className="space-y-2">
+                  {achievedMilestones.map((m) => (
+                    <div
+                      key={m.id}
+                      className="flex items-center gap-3 rounded-xl border px-3 py-2.5"
+                      style={{ borderColor: 'var(--purple-pale)', background: 'var(--purple-ghost)' }}
+                    >
+                      <span className="text-lg">{m.emoji}</span>
+                      <p className="text-[11px] font-bold text-foreground">{m.label}</p>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
+          </div>
         );
       })()}
 
