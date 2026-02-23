@@ -48,39 +48,45 @@ export default function JournalPage() {
 
   if (!user) {
     return (
-      <div className="mx-auto max-w-3xl py-12">
-        <div
-          className="relative overflow-hidden rounded-[24px] px-12 py-28 text-center"
-          style={{ boxShadow: '0 12px 48px rgba(91, 46, 145, 0.25), 0 4px 16px rgba(0,0,0,0.1)' }}
-        >
-          <div className="absolute inset-0">
-            <img src="/hero-bg.jpg" alt="" className="h-full w-full object-cover" />
-          </div>
-          <div className="pointer-events-none absolute inset-0" style={{ background: 'rgba(42,18,80,0.35)' }} />
-          <div className="relative z-10">
-            <h1 className="font-serif text-3xl font-semibold text-white">Taper Journal</h1>
-            <p className="mx-auto mt-3 max-w-md text-sm text-white/70">
+      <section
+        className="relative overflow-hidden rounded-[24px]"
+        style={{ boxShadow: '0 12px 48px rgba(91, 46, 145, 0.25), 0 4px 16px rgba(0,0,0,0.1)' }}
+      >
+        <div className="absolute inset-0">
+          <img src="/hero-bg.jpg" alt="" className="h-full w-full object-cover" />
+        </div>
+        <div className="pointer-events-none absolute inset-0" style={{ background: 'rgba(42,18,80,0.35)' }} />
+        <div className="relative z-10 px-6 py-16 sm:px-12 sm:py-20 lg:py-24">
+          <div className="mx-auto max-w-2xl text-center">
+            <p className="mb-4 text-[11px] font-bold uppercase tracking-[0.1em] text-white/50">
+              Taper Journal
+            </p>
+            <h1 className="font-serif text-[30px] font-semibold leading-tight text-white sm:text-[36px]">
+              Track your{' '}
+              <span style={{ color: '#2EC4B6' }}>taper journey</span>
+            </h1>
+            <p className="mx-auto mt-4 max-w-xl text-[15px] font-semibold leading-relaxed text-white/80">
               Track your doses, symptoms, and mood over time. Sign in to start journaling.
             </p>
-            <div className="mt-6 flex justify-center gap-3">
-              <Link
-                href="/auth/signin"
-                className="rounded-lg px-5 py-2.5 text-sm font-bold no-underline transition hover:opacity-90"
-                style={{ background: 'rgba(255,255,255,0.15)', color: 'white', backdropFilter: 'blur(8px)' }}
-              >
-                Sign In
-              </Link>
+            <div className="mt-8 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
               <Link
                 href="/auth/signup"
-                className="rounded-lg px-5 py-2.5 text-sm font-bold no-underline transition hover:opacity-90"
-                style={{ background: 'white', color: 'var(--purple)' }}
+                className="inline-flex items-center gap-2 rounded-xl px-8 py-3 text-[14px] font-semibold text-white no-underline transition hover:opacity-90"
+                style={{ background: '#2EC4B6' }}
               >
                 Join Community
+              </Link>
+              <Link
+                href="/auth/signin"
+                className="inline-flex items-center gap-2 rounded-xl border border-white/15 px-8 py-3 text-[14px] font-semibold text-white/80 no-underline transition hover:border-white/30 hover:text-white"
+                style={{ background: 'rgba(255,255,255,0.08)', backdropFilter: 'blur(12px)' }}
+              >
+                Sign In
               </Link>
             </div>
           </div>
         </div>
-      </div>
+      </section>
     );
   }
 
