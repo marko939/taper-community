@@ -171,12 +171,12 @@ export default function PatientDashboard({ user, profile }) {
   const journalLoading = useJournalStore((s) => s.loading);
   const fetchEntries = useJournalStore((s) => s.fetchEntries);
   const recentThreads = useForumStore((s) => s.recentThreads);
-  const fetchTopThreads = useForumStore((s) => s.fetchTopThreads);
+  const fetchHotThreads = useForumStore((s) => s.fetchHotThreads);
 
   useEffect(() => {
     fetchEntries();
-    fetchTopThreads(5);
-  }, [fetchEntries, fetchTopThreads]);
+    fetchHotThreads(5);
+  }, [fetchEntries, fetchHotThreads]);
 
   const loading = journalLoading;
   const threads = recentThreads.items;

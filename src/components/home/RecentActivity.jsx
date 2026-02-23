@@ -23,11 +23,11 @@ function timeAgo(dateStr) {
 
 export default function RecentActivity() {
   const recentThreads = useForumStore((s) => s.recentThreads);
-  const fetchTopThreads = useForumStore((s) => s.fetchTopThreads);
+  const fetchHotThreads = useForumStore((s) => s.fetchHotThreads);
 
   useEffect(() => {
-    fetchTopThreads(3);
-  }, [fetchTopThreads]);
+    fetchHotThreads(3);
+  }, [fetchHotThreads]);
 
   const threads = recentThreads.items;
   const loading = recentThreads.loading;

@@ -108,20 +108,52 @@ export const useForumStore = create((set, get) => ({
     }));
   },
 
-  fetchTopThreads: async (limit = 10) => {
+  fetchHotThreads: async (limit = 15) => {
     try {
       const supabase = createClient();
+      const sevenDaysAgo = new Date(Date.now() - 7 * 86400000).toISOString();
 
-      const { data } = await supabase
+      // Fetch recent threads with engagement data
+      let { data } = await supabase
         .from('threads')
         .select('*, profiles:user_id(display_name, is_peer_advisor, avatar_url), forums:forum_id(name, drug_slug, slug)')
-        .order('vote_score', { ascending: false })
+        .gte('created_at', sevenDaysAgo)
         .order('created_at', { ascending: false })
-        .limit(limit);
+        .limit(50);
 
-      set({ recentThreads: { items: data || [], loading: false } });
+      let threads = data || [];
+
+      // If not enough recent threads, backfill with top all-time
+      if (threads.length < limit) {
+        const existingIds = new Set(threads.map((t) => t.id));
+        const { data: topData } = await supabase
+          .from('threads')
+          .select('*, profiles:user_id(display_name, is_peer_advisor, avatar_url), forums:forum_id(name, drug_slug, slug)')
+          .order('vote_score', { ascending: false })
+          .limit(limit);
+        (topData || []).forEach((t) => {
+          if (!existingIds.has(t.id)) threads.push(t);
+        });
+      }
+
+      // Reddit-style hot score: combines votes, replies, and recency
+      const now = Date.now();
+      threads = threads.map((t) => {
+        const ageHours = Math.max((now - new Date(t.created_at).getTime()) / 3600000, 0.1);
+        const votes = Math.max(t.vote_score || 0, 0);
+        const replies = t.reply_count || 0;
+        const engagement = votes + replies * 0.5;
+        // Log of engagement boosted, divided by age decay (gravity)
+        const hotScore = (Math.log10(Math.max(engagement, 1)) + 1) / Math.pow(ageHours / 6 + 1, 0.5);
+        return { ...t, _hotScore: hotScore };
+      });
+
+      threads.sort((a, b) => b._hotScore - a._hotScore);
+      threads = threads.slice(0, limit);
+
+      set({ recentThreads: { items: threads, loading: false } });
     } catch (err) {
-      console.error('[forumStore] fetchTopThreads error:', err);
+      console.error('[forumStore] fetchHotThreads error:', err);
       set({ recentThreads: { items: [], loading: false } });
     }
   },

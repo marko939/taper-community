@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useForumStore } from '@/stores/forumStore';
 import { PageLoading } from '@/components/shared/LoadingSpinner';
@@ -25,14 +25,15 @@ export default function ForumsPage() {
   const forumsLoading = useForumStore((s) => s.forumsLoading);
   const fetchForums = useForumStore((s) => s.fetchForums);
   const recentThreads = useForumStore((s) => s.recentThreads);
-  const fetchTopThreads = useForumStore((s) => s.fetchTopThreads);
+  const fetchHotThreads = useForumStore((s) => s.fetchHotThreads);
   const searchState = useForumStore((s) => s.searchState['global']);
   const searchFn = useForumStore((s) => s.search);
+  const [hotExpanded, setHotExpanded] = useState(false);
 
   useEffect(() => {
     fetchForums();
-    fetchTopThreads(4);
-  }, [fetchForums, fetchTopThreads]);
+    fetchHotThreads(15);
+  }, [fetchForums, fetchHotThreads]);
 
   if (forumsLoading) return <PageLoading />;
 
@@ -76,64 +77,98 @@ export default function ForumsPage() {
         </div>
       )}
 
-      {/* Recent Activity */}
-      {!isSearching && !recentThreads.loading && recentThreads.items.length > 0 && (
-        <section className="glass-panel overflow-hidden">
-          <div
-            className="flex items-center gap-3 border-b px-6 py-4"
-            style={{ borderColor: 'var(--border-subtle)', background: 'var(--purple-ghost)' }}
-          >
-            <svg className="h-5 w-5" style={{ color: 'var(--purple)' }} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M6.633 10.5c.806 0 1.533-.446 2.031-1.08a9.041 9.041 0 012.861-2.4c.723-.384 1.35-.956 1.653-1.715a4.498 4.498 0 00.322-1.672V3a.75.75 0 01.75-.75A2.25 2.25 0 0116.5 4.5c0 1.152-.26 2.243-.723 3.218-.266.558.107 1.282.725 1.282h3.126c1.026 0 1.945.694 2.054 1.715.045.422.068.85.068 1.285a11.95 11.95 0 01-2.649 7.521c-.388.482-.987.729-1.605.729H13.48c-.483 0-.964-.078-1.423-.23l-3.114-1.04a4.501 4.501 0 00-1.423-.23H5.904M14.25 9h2.25M5.904 18.75c.083.205.173.405.27.602.197.4-.078.898-.523.898h-.908c-.889 0-1.713-.518-1.972-1.368a12 12 0 01-.521-3.507c0-1.553.295-3.036.831-4.398C3.387 9.953 4.167 9.5 5 9.5h.096c.5 0 .905.405.905.905 0 .714-.211 1.412-.608 2.006L4 14.25l1.904 4.5z" />
-            </svg>
-            <h2 className="text-lg font-semibold text-foreground">Most Upvoted</h2>
-          </div>
-          <div className="divide-y" style={{ borderColor: 'var(--border-subtle)' }}>
-            {recentThreads.items.map((thread) => (
-              <Link
-                key={thread.id}
-                href={`/thread/${thread.id}`}
-                className="group flex items-center gap-4 bg-surface-strong p-5 no-underline transition hover:bg-purple-ghost/50"
-              >
-                <div className="h-8 w-1 shrink-0 rounded-full" style={{ background: 'var(--purple-pale)' }} />
-                <div className="min-w-0 flex-1">
-                  <p className="font-semibold text-foreground transition group-hover:text-purple">
-                    {thread.title}
-                  </p>
-                  <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-text-subtle">
-                    <span>{thread.profiles?.display_name || 'Anonymous'}</span>
-                    <span>·</span>
-                    <span>{timeAgo(thread.created_at)}</span>
-                    {thread.forums && (
-                      <>
-                        <span>·</span>
-                        <span
-                          className="rounded-full px-2 py-0.5 text-[11px] font-semibold"
-                          style={{ background: 'var(--purple-ghost)', color: 'var(--purple)' }}
-                        >
-                          {thread.forums.name}
-                        </span>
-                      </>
-                    )}
-                    {thread.reply_count > 0 && (
-                      <>
-                        <span>·</span>
-                        <span>{thread.reply_count} {thread.reply_count === 1 ? 'reply' : 'replies'}</span>
-                      </>
-                    )}
+      {/* Hot Posts */}
+      {!isSearching && !recentThreads.loading && recentThreads.items.length > 0 && (() => {
+        const visibleThreads = hotExpanded ? recentThreads.items.slice(0, 10) : recentThreads.items.slice(0, 4);
+        const canExpand = recentThreads.items.length > 4;
+
+        return (
+          <section className="glass-panel overflow-hidden">
+            <div
+              className="flex items-center gap-3 border-b px-6 py-4"
+              style={{ borderColor: 'var(--border-subtle)', background: 'var(--purple-ghost)' }}
+            >
+              <svg className="h-5 w-5" style={{ color: '#EF6C00' }} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15.362 5.214A8.252 8.252 0 0112 21 8.25 8.25 0 016.038 7.048 8.287 8.287 0 009 9.6a8.983 8.983 0 013.361-6.867 8.21 8.21 0 003 2.48z" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 18a3.75 3.75 0 00.495-7.467 5.99 5.99 0 00-1.925 3.546 5.974 5.974 0 01-2.133-1.001A3.75 3.75 0 0012 18z" />
+              </svg>
+              <h2 className="text-lg font-semibold text-foreground">Hot Right Now</h2>
+              <span className="ml-1 text-xs text-text-subtle">trending this week</span>
+            </div>
+            <div className="divide-y" style={{ borderColor: 'var(--border-subtle)' }}>
+              {visibleThreads.map((thread, i) => (
+                <Link
+                  key={thread.id}
+                  href={`/thread/${thread.id}`}
+                  className="group flex items-center gap-4 bg-surface-strong p-5 no-underline transition hover:bg-purple-ghost/50"
+                >
+                  {/* Rank number */}
+                  <span
+                    className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-xs font-bold"
+                    style={{
+                      background: i < 3 ? 'var(--purple)' : 'var(--purple-pale)',
+                      color: i < 3 ? '#fff' : 'var(--purple)',
+                    }}
+                  >
+                    {i + 1}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="font-semibold text-foreground transition group-hover:text-purple">
+                      {thread.title}
+                    </p>
+                    <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-text-subtle">
+                      <span className="flex items-center gap-0.5">
+                        <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 15.75l7.5-7.5 7.5 7.5" />
+                        </svg>
+                        {thread.vote_score || 0}
+                      </span>
+                      <span>·</span>
+                      <span>{thread.reply_count || 0} replies</span>
+                      <span>·</span>
+                      <span>{thread.profiles?.display_name || 'Anonymous'}</span>
+                      <span>·</span>
+                      <span>{timeAgo(thread.created_at)}</span>
+                      {thread.forums && (
+                        <>
+                          <span>·</span>
+                          <span
+                            className="rounded-full px-2 py-0.5 text-[11px] font-semibold"
+                            style={{ background: 'var(--purple-ghost)', color: 'var(--purple)' }}
+                          >
+                            {thread.forums.name}
+                          </span>
+                        </>
+                      )}
+                    </div>
                   </div>
-                </div>
+                  <svg
+                    className="h-4 w-4 shrink-0 text-text-subtle transition group-hover:text-purple"
+                    fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                  </svg>
+                </Link>
+              ))}
+            </div>
+            {canExpand && (
+              <button
+                onClick={() => setHotExpanded(!hotExpanded)}
+                className="flex w-full items-center justify-center gap-2 border-t px-6 py-3 text-sm font-semibold transition hover:bg-purple-ghost/50"
+                style={{ borderColor: 'var(--border-subtle)', color: 'var(--purple)' }}
+              >
+                {hotExpanded ? 'Show less' : 'Show more'}
                 <svg
-                  className="h-4 w-4 shrink-0 text-text-subtle transition group-hover:text-purple"
+                  className={`h-4 w-4 transition ${hotExpanded ? 'rotate-180' : ''}`}
                   fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"
                 >
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
                 </svg>
-              </Link>
-            ))}
-          </div>
-        </section>
-      )}
+              </button>
+            )}
+          </section>
+        );
+      })()}
 
       {!isSearching && <div className="space-y-6">
         {/* General forum sections */}
