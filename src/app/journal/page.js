@@ -255,6 +255,13 @@ export default function JournalPage() {
                 <p className="mx-auto mt-2 max-w-md text-sm text-white/70">
                   Take the PHQ-9 (depression) and GAD-7 (anxiety) assessments to track your mental health over time.
                 </p>
+                <button
+                  onClick={() => document.getElementById('assessment-card')?.scrollIntoView({ behavior: 'smooth' })}
+                  className="mt-6 inline-block rounded-lg px-6 py-2.5 text-sm font-bold transition hover:opacity-90"
+                  style={{ background: 'white', color: 'var(--purple)' }}
+                >
+                  Take your first assessment
+                </button>
               </div>
             </div>
           ) : (
@@ -274,7 +281,9 @@ export default function JournalPage() {
           </div>
 
           {/* Take Assessment Card */}
-          <AssessmentCard assessments={assessments} />
+          <div id="assessment-card">
+            <AssessmentCard assessments={assessments} />
+          </div>
 
           {/* Assessment History */}
           {sortedAssessments.length > 0 && (
