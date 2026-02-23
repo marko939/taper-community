@@ -403,27 +403,6 @@ export default function JournalEntryForm({ onSubmit, entryCount = 0 }) {
         </button>
       </div>
 
-      {/* Posting summary */}
-      {allPostingForums.length > 0 && (
-        <div className="rounded-xl border px-4 py-3" style={{ borderColor: 'var(--purple-pale)', background: 'var(--purple-ghost)' }}>
-          <span className="text-xs font-semibold" style={{ color: 'var(--purple)' }}>Posting to:</span>
-          <div className="mt-1.5 flex flex-wrap gap-1.5">
-            {allPostingForums.map((forum) => (
-              <span
-                key={forum.id}
-                className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold"
-                style={{ background: 'var(--purple-pale)', color: 'var(--purple)' }}
-              >
-                <svg className="h-2.5 w-2.5" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                </svg>
-                {forum.name}
-              </span>
-            ))}
-          </div>
-        </div>
-      )}
-
       {/* ── 8. Submit ── */}
       <div className="flex justify-end">
         <button type="submit" disabled={loading} className="btn btn-primary disabled:opacity-50">
