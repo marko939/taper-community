@@ -22,7 +22,7 @@ export const useAssessmentStore = create((set, get) => ({
     set({ assessments: data || [], loading: false });
   },
 
-  submitAssessment: async ({ type, score, responses }) => {
+  submitAssessment: async ({ type, score, responses, date }) => {
     const supabase = createClient();
     const userId = useAuthStore.getState().user?.id;
     if (!userId) return null;
@@ -34,7 +34,7 @@ export const useAssessmentStore = create((set, get) => ({
         type,
         score,
         responses,
-        date: new Date().toISOString().split('T')[0],
+        date: date || new Date().toISOString().split('T')[0],
       })
       .select()
       .single();

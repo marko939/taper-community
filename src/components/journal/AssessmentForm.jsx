@@ -10,6 +10,7 @@ export default function AssessmentForm({ type, onComplete, onCancel }) {
   const subtitle = type === 'phq9' ? 'Depression Severity' : 'Anxiety Severity';
   const labelFn = type === 'phq9' ? labelPHQ : labelGAD;
 
+  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [responses, setResponses] = useState(Array(items.length).fill(null));
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState(null);
@@ -26,7 +27,7 @@ export default function AssessmentForm({ type, onComplete, onCancel }) {
     if (!allAnswered) return;
     setSubmitting(true);
     const score = responses.reduce((a, b) => a + b, 0);
-    const data = await submitAssessment({ type, score, responses });
+    const data = await submitAssessment({ type, score, responses, date });
     if (data) {
       setResult({ score, severity: labelFn(score) });
     }
@@ -72,6 +73,17 @@ export default function AssessmentForm({ type, onComplete, onCancel }) {
         <button onClick={onCancel} className="btn btn-secondary text-xs">
           Cancel
         </button>
+      </div>
+
+      {/* Date picker */}
+      <div className="mb-5">
+        <label className="mb-1.5 block text-sm font-medium text-foreground">Date</label>
+        <input
+          type="date"
+          value={date}
+          onChange={(e) => setDate(e.target.value)}
+          className="input"
+        />
       </div>
 
       <div className="space-y-4">
