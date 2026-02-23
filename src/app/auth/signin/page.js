@@ -44,16 +44,16 @@ function SignInForm() {
   };
 
   return (
-    <div className="mx-auto max-w-3xl py-12">
-      <div
-        className="relative overflow-hidden rounded-[24px] px-12 py-28"
-        style={{ boxShadow: '0 12px 48px rgba(91, 46, 145, 0.25), 0 4px 16px rgba(0,0,0,0.1)' }}
-      >
-        <div className="absolute inset-0">
-          <img src="/hero-bg.jpg" alt="" className="h-full w-full object-cover" />
-        </div>
-        <div className="pointer-events-none absolute inset-0" style={{ background: 'rgba(42,18,80,0.35)' }} />
-        <div className="relative z-10 mx-auto max-w-md">
+    <section
+      className="relative overflow-hidden rounded-[24px]"
+      style={{ boxShadow: '0 12px 48px rgba(91, 46, 145, 0.25), 0 4px 16px rgba(0,0,0,0.1)' }}
+    >
+      <div className="absolute inset-0">
+        <img src="/hero-bg.jpg" alt="" className="h-full w-full object-cover" />
+      </div>
+      <div className="pointer-events-none absolute inset-0" style={{ background: 'rgba(42,18,80,0.35)' }} />
+      <div className="relative z-10 px-6 py-16 sm:px-12 sm:py-20 lg:py-24">
+        <div className="mx-auto max-w-md">
           <div className="glass-panel p-8" style={{ background: 'rgba(255,255,255,0.95)', backdropFilter: 'blur(12px)' }}>
             <h1 className="mb-6 text-center text-3xl font-semibold text-foreground">Welcome Back</h1>
 
@@ -96,7 +96,7 @@ function SignInForm() {
           </div>
         </div>
       </div>
-    </div>
+    </section>
   );
 }
 
