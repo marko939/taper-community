@@ -84,11 +84,12 @@ export default function JournalEntryForm({ onSubmit, entryCount = 0 }) {
 
   const titlePlaceholder = useMemo(() => {
     const dateFmt = new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    const moodTag = moodScore === 1 ? 'In a Crisis' : `Feeling ${MOOD_LABELS[moodScore]}`;
     if (drug) {
-      return `Auto: ${ordinal(drugEntryCount + 1)} ${drug} Check-in — ${dateFmt}`;
+      return `${ordinal(drugEntryCount + 1)} ${drug} Update - ${moodTag} - ${dateFmt}`;
     }
-    return `Auto: Check-in — ${dateFmt}`;
-  }, [drug, date, drugEntryCount]);
+    return `Check-in - ${moodTag} - ${dateFmt}`;
+  }, [drug, date, drugEntryCount, moodScore]);
 
   const toggleSymptom = (symptom) => {
     setSymptoms((prev) =>
@@ -139,7 +140,7 @@ export default function JournalEntryForm({ onSubmit, entryCount = 0 }) {
     const allForumIds = allPostingForums.map((f) => f.id);
 
     await onSubmit({
-      title: title || null,
+      title: title || titlePlaceholder,
       date,
       drug: drug || null,
       current_dose: currentDose ? `${currentDose}${doseUnit}` : null,
