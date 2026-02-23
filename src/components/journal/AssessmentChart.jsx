@@ -121,6 +121,7 @@ export default function AssessmentChart({ assessments = [], entries = [] }) {
           <YAxis
             yAxisId="score"
             domain={[0, 27]}
+            reversed
             tick={{ fill: '#7C7591', fontSize: 12 }}
             axisLine={{ stroke: '#E8E5F0' }}
             label={{ value: 'Score', angle: -90, position: 'insideLeft', fill: '#7C7591', fontSize: 11 }}
