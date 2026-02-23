@@ -12,7 +12,7 @@ function moodColor(score) {
 
 export default function JournalEntryCard({ entry, forumNames }) {
   const {
-    date, drug, current_dose, dose_numeric, symptoms = [], mood_score, notes,
+    title, date, drug, current_dose, dose_numeric, symptoms = [], mood_score, notes,
     is_public, published_forums = [], thread_ids = [],
   } = entry;
 
@@ -20,6 +20,9 @@ export default function JournalEntryCard({ entry, forumNames }) {
     <div className="card">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0 flex-1">
+          {title && (
+            <h3 className="text-[15px] font-semibold text-foreground mb-1">{title}</h3>
+          )}
           <div className="flex items-center gap-3">
             <h3 className="font-semibold text-foreground">
               {new Date(date).toLocaleDateString('en-US', {

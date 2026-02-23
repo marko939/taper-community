@@ -1,9 +1,15 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { DRUG_LIST } from '@/lib/drugs';
 import { SYMPTOMS, MOOD_LABELS } from '@/lib/constants';
 import { createClient } from '@/lib/supabase/client';
+
+function ordinal(n) {
+  const s = ['th', 'st', 'nd', 'rd'];
+  const v = n % 100;
+  return n + (s[(v - 20) % 10] || s[v] || s[0]);
+}
 
 export default function JournalEntryForm({ onSubmit, entryCount = 0 }) {
   const [title, setTitle] = useState('');
@@ -18,6 +24,7 @@ export default function JournalEntryForm({ onSubmit, entryCount = 0 }) {
   const [crossPostForums, setCrossPostForums] = useState([]);
   const [forums, setForums] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [drugEntryCount, setDrugEntryCount] = useState(0);
 
   const supabase = createClient();
 
@@ -57,6 +64,31 @@ export default function JournalEntryForm({ onSubmit, entryCount = 0 }) {
     };
     init();
   }, []);
+
+  // Fetch count of existing entries for the selected drug (for title placeholder)
+  useEffect(() => {
+    if (!drug) { setDrugEntryCount(0); return; }
+    let cancelled = false;
+    (async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user || cancelled) return;
+      const { count } = await supabase
+        .from('journal_entries')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', user.id)
+        .eq('drug', drug);
+      if (!cancelled) setDrugEntryCount(count || 0);
+    })();
+    return () => { cancelled = true; };
+  }, [drug]);
+
+  const titlePlaceholder = useMemo(() => {
+    const dateFmt = new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    if (drug) {
+      return `Auto: ${ordinal(drugEntryCount + 1)} ${drug} Check-in — ${dateFmt}`;
+    }
+    return `Auto: Check-in — ${dateFmt}`;
+  }, [drug, date, drugEntryCount]);
 
   const toggleSymptom = (symptom) => {
     setSymptoms((prev) =>
@@ -138,7 +170,7 @@ export default function JournalEntryForm({ onSubmit, entryCount = 0 }) {
           type="text"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          placeholder="e.g. Week 3 — feeling better"
+          placeholder={titlePlaceholder}
           className="input"
         />
       </div>

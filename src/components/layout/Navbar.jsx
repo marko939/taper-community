@@ -2,14 +2,28 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import Avatar from '@/components/shared/Avatar';
+import { useNotificationStore } from '@/stores/notificationStore';
+import NotificationDropdown from '@/components/layout/NotificationDropdown';
 
 export default function Navbar() {
   const { user, profile, loading, signOut } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [notifOpen, setNotifOpen] = useState(false);
+  const { unreadCount, fetchUnreadCount, subscribeRealtime, unsubscribeRealtime } = useNotificationStore();
+
+  useEffect(() => {
+    if (user) {
+      fetchUnreadCount();
+      subscribeRealtime();
+      return () => unsubscribeRealtime();
+    }
+  }, [user, fetchUnreadCount, subscribeRealtime, unsubscribeRealtime]);
+
+  const closeNotif = useCallback(() => setNotifOpen(false), []);
 
   const navLinks = [
     { href: '/forums', label: 'Forums' },
@@ -61,6 +75,25 @@ export default function Navbar() {
           })}
 
           {loading ? null : user ? (
+            <>
+            {/* Notification bell */}
+            <div className="relative ml-1">
+              <button
+                onClick={() => setNotifOpen(!notifOpen)}
+                className="relative rounded-full p-2 transition hover:bg-purple-ghost"
+                style={{ color: 'var(--text-muted)' }}
+              >
+                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" />
+                </svg>
+                {unreadCount > 0 && (
+                  <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
+                    {unreadCount > 99 ? '99+' : unreadCount}
+                  </span>
+                )}
+              </button>
+              {notifOpen && <NotificationDropdown onClose={closeNotif} />}
+            </div>
             <div className="relative ml-1">
               <button
                 onClick={() => setDropdownOpen(!dropdownOpen)}
@@ -101,6 +134,7 @@ export default function Navbar() {
                 </div>
               )}
             </div>
+            </>
           ) : (
             <div className="flex items-center gap-2 ml-1">
               <Link href="/auth/signin" className="btn btn-secondary text-sm no-underline">
@@ -161,6 +195,18 @@ export default function Navbar() {
             )}
             {!loading && user && (
               <>
+                <button
+                  onClick={() => { setNotifOpen(!notifOpen); setMobileOpen(false); }}
+                  className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm hover:bg-purple-ghost"
+                  style={{ color: 'var(--text-muted)' }}
+                >
+                  Notifications
+                  {unreadCount > 0 && (
+                    <span className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-red-500 px-1.5 text-[10px] font-bold text-white">
+                      {unreadCount > 99 ? '99+' : unreadCount}
+                    </span>
+                  )}
+                </button>
                 <Link href={`/profile/${user.id}`} onClick={() => setMobileOpen(false)} className="rounded-lg px-3 py-2 text-sm no-underline hover:bg-purple-ghost" style={{ color: 'var(--text-muted)' }}>
                   My Profile
                 </Link>

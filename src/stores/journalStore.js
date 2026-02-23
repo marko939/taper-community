@@ -30,6 +30,26 @@ export const useJournalStore = create((set, get) => ({
     const userId = useAuthStore.getState().user?.id;
     if (!userId) return { data: null, error: { message: 'Not authenticated' } };
 
+    // Auto-generate title if not provided
+    if (!entry.title) {
+      const ordinal = (n) => {
+        const s = ['th', 'st', 'nd', 'rd'];
+        const v = n % 100;
+        return n + (s[(v - 20) % 10] || s[v] || s[0]);
+      };
+      const dateFmt = new Date(entry.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      if (entry.drug) {
+        const { count } = await supabase
+          .from('journal_entries')
+          .select('id', { count: 'exact', head: true })
+          .eq('user_id', userId)
+          .eq('drug', entry.drug);
+        entry.title = `${ordinal((count || 0) + 1)} ${entry.drug} Check-in — ${dateFmt}`;
+      } else {
+        entry.title = `Check-in — ${dateFmt}`;
+      }
+    }
+
     const { published_forums = [], ...entryData } = entry;
 
     const { data, error } = await supabase

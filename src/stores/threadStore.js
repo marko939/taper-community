@@ -123,6 +123,13 @@ export const useThreadStore = create((set, get) => ({
           },
         };
       });
+
+      // Fire email notifications (best-effort)
+      fetch('/api/notify-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reply_id: data.id, thread_id: threadId }),
+      }).catch(() => {});
     }
 
     return data;

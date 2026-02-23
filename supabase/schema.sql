@@ -284,3 +284,80 @@ create index idx_journal_user_date on public.journal_entries(user_id, date desc)
 create index idx_journal_shares_token on public.journal_shares(share_token);
 create index idx_forums_drug_slug on public.forums(drug_slug);
 create index idx_forums_slug on public.forums(slug);
+
+-- ============================================================
+-- NOTIFICATIONS
+-- ============================================================
+alter table public.profiles add column if not exists email_notifications boolean default true;
+
+create table public.notifications (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references public.profiles(id) on delete cascade,
+  type text not null check (type in ('thread_reply', 'reply_mention')),
+  thread_id uuid not null references public.threads(id) on delete cascade,
+  reply_id uuid not null references public.replies(id) on delete cascade,
+  actor_id uuid not null references public.profiles(id) on delete cascade,
+  title text not null,
+  body text,
+  read boolean default false,
+  emailed boolean default false,
+  created_at timestamptz default now()
+);
+
+alter table public.notifications enable row level security;
+
+create policy "Users read own notifications" on public.notifications
+  for select using (auth.uid() = user_id);
+
+create policy "Users update own notifications" on public.notifications
+  for update using (auth.uid() = user_id);
+
+create index idx_notifications_user_read on public.notifications(user_id, read, created_at desc);
+
+-- Trigger: create notifications when a reply is posted
+create or replace function public.handle_reply_notify()
+returns trigger as $$
+declare
+  v_thread record;
+  v_actor_name text;
+  v_recipients uuid[];
+  v_recipient uuid;
+  v_title text;
+  v_body text;
+begin
+  -- Get thread info
+  select id, user_id, title into v_thread
+    from public.threads where id = new.thread_id;
+
+  -- Get actor display name
+  select display_name into v_actor_name
+    from public.profiles where id = new.user_id;
+
+  -- Build notification text
+  v_title := v_actor_name || ' replied to "' || left(v_thread.title, 80) || '"';
+  v_body := left(new.body, 200);
+
+  -- Collect recipients: thread author + all previous repliers, excluding the reply author
+  select array_agg(distinct uid) into v_recipients
+  from (
+    select v_thread.user_id as uid
+    union
+    select r.user_id as uid from public.replies r where r.thread_id = new.thread_id
+  ) participants
+  where uid != new.user_id;
+
+  -- Insert a notification for each recipient
+  if v_recipients is not null then
+    foreach v_recipient in array v_recipients loop
+      insert into public.notifications (user_id, type, thread_id, reply_id, actor_id, title, body)
+      values (v_recipient, 'thread_reply', new.thread_id, new.id, new.user_id, v_title, v_body);
+    end loop;
+  end if;
+
+  return new;
+end;
+$$ language plpgsql security definer;
+
+create trigger on_reply_notify
+  after insert on public.replies
+  for each row execute function public.handle_reply_notify();

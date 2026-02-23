@@ -16,6 +16,7 @@ export default function SettingsPage() {
   const [bio, setBio] = useState('');
   const [avatarUrl, setAvatarUrl] = useState('');
   const [uploading, setUploading] = useState(false);
+  const [emailNotifications, setEmailNotifications] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const fileInputRef = useRef(null);
@@ -27,6 +28,7 @@ export default function SettingsPage() {
       setLocation(profile.location || '');
       setBio(profile.bio || '');
       setAvatarUrl(profile.avatar_url || '');
+      setEmailNotifications(profile.email_notifications !== false);
     }
   }, [profile]);
 
@@ -76,6 +78,7 @@ export default function SettingsPage() {
       drug_signature: drugSignature,
       location: location,
       bio: bio,
+      email_notifications: emailNotifications,
     });
     setSaving(false);
     setSaved(true);
@@ -177,6 +180,36 @@ export default function SettingsPage() {
             This appears under every post you make, like SA.org. Include drug names, doses,
             dates, and taper methods. Use | to separate multiple drugs.
           </p>
+        </div>
+
+        {/* Email Notifications */}
+        <div>
+          <label className="mb-1.5 block text-sm font-medium text-foreground">
+            Email Notifications
+          </label>
+          <div className="flex items-center justify-between rounded-xl border px-4 py-3" style={{ borderColor: 'var(--border-subtle)' }}>
+            <div>
+              <p className="text-sm" style={{ color: 'var(--foreground)' }}>
+                Email notifications
+              </p>
+              <p className="text-xs" style={{ color: 'var(--text-subtle)' }}>
+                Get notified when someone replies to your threads or discussions
+              </p>
+            </div>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={emailNotifications}
+              onClick={() => setEmailNotifications(!emailNotifications)}
+              className="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200"
+              style={{ background: emailNotifications ? 'var(--purple)' : 'var(--border-subtle)' }}
+            >
+              <span
+                className="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200"
+                style={{ transform: emailNotifications ? 'translateX(20px)' : 'translateX(0)' }}
+              />
+            </button>
+          </div>
         </div>
 
         {drugSignature && (
