@@ -48,18 +48,37 @@ export default function JournalPage() {
 
   if (!user) {
     return (
-      <div className="mx-auto max-w-lg py-20 text-center">
-        <h1 className="font-serif text-3xl font-semibold text-foreground">Taper Journal</h1>
-        <p className="mt-3 text-text-muted">
-          Track your doses, symptoms, and mood over time. Sign in to start journaling.
-        </p>
-        <div className="mt-6 flex justify-center gap-3">
-          <Link href="/auth/signin" className="btn btn-secondary text-sm no-underline">
-            Sign In
-          </Link>
-          <Link href="/auth/signup" className="btn btn-primary text-sm no-underline">
-            Join Community
-          </Link>
+      <div className="mx-auto max-w-2xl py-12">
+        <div
+          className="relative overflow-hidden rounded-[24px] px-8 py-16 text-center"
+          style={{ boxShadow: '0 12px 48px rgba(91, 46, 145, 0.25), 0 4px 16px rgba(0,0,0,0.1)' }}
+        >
+          <div className="absolute inset-0">
+            <img src="/hero-bg.jpg" alt="" className="h-full w-full object-cover" />
+          </div>
+          <div className="pointer-events-none absolute inset-0" style={{ background: 'rgba(42,18,80,0.35)' }} />
+          <div className="relative z-10">
+            <h1 className="font-serif text-3xl font-semibold text-white">Taper Journal</h1>
+            <p className="mx-auto mt-3 max-w-md text-sm text-white/70">
+              Track your doses, symptoms, and mood over time. Sign in to start journaling.
+            </p>
+            <div className="mt-6 flex justify-center gap-3">
+              <Link
+                href="/auth/signin"
+                className="rounded-lg px-5 py-2.5 text-sm font-bold no-underline transition hover:opacity-90"
+                style={{ background: 'rgba(255,255,255,0.15)', color: 'white', backdropFilter: 'blur(8px)' }}
+              >
+                Sign In
+              </Link>
+              <Link
+                href="/auth/signup"
+                className="rounded-lg px-5 py-2.5 text-sm font-bold no-underline transition hover:opacity-90"
+                style={{ background: 'white', color: 'var(--purple)' }}
+              >
+                Join Community
+              </Link>
+            </div>
+          </div>
         </div>
       </div>
     );
