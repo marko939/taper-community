@@ -81,12 +81,17 @@ export default function CommunityPulse() {
 }
 
 function StatCell({ label, value, icon, subtitle, highlight }) {
-  const iconColor = highlight ? 'rgba(255,255,255,0.9)' : 'var(--purple)';
+  // Meds reduced = medium purple from hero palette; others = light purple tint
+  const bg = highlight ? '#5B2E91' : '#EDE5F5';
+  const iconBg = highlight ? 'rgba(255,255,255,0.15)' : 'rgba(91,46,145,0.12)';
+  const iconColor = highlight ? 'rgba(255,255,255,0.9)' : '#5B2E91';
+  const textColor = highlight ? '#fff' : '#3D1D63';
+  const subtextColor = highlight ? 'rgba(255,255,255,0.7)' : '#7B4FAF';
   return (
-    <div className="flex items-center gap-2.5 px-3.5 py-3" style={{ background: highlight ? 'var(--purple-dark, #3D1D63)' : 'var(--surface-strong)' }}>
+    <div className="flex items-center gap-2.5 px-3.5 py-3" style={{ background: bg }}>
       <div
         className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg"
-        style={{ background: highlight ? 'rgba(255,255,255,0.15)' : 'var(--purple-ghost)' }}
+        style={{ background: iconBg }}
       >
         {icon === 'thread' && (
           <svg className="h-3.5 w-3.5" style={{ color: iconColor }} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
@@ -110,9 +115,9 @@ function StatCell({ label, value, icon, subtitle, highlight }) {
         )}
       </div>
       <div className="min-w-0">
-        <p className="text-lg font-bold leading-tight" style={{ color: highlight ? '#fff' : 'var(--foreground)' }}>{value}</p>
-        <p className="text-[10px] leading-tight" style={{ color: highlight ? 'rgba(255,255,255,0.7)' : 'var(--text-subtle)' }}>{label}</p>
-        {subtitle && <p className="text-[9px] leading-tight" style={{ color: highlight ? 'rgba(255,255,255,0.5)' : 'var(--text-subtle)' }}>{subtitle}</p>}
+        <p className="text-lg font-bold leading-tight" style={{ color: textColor }}>{value}</p>
+        <p className="text-[10px] leading-tight" style={{ color: subtextColor }}>{label}</p>
+        {subtitle && <p className="text-[9px] leading-tight" style={{ color: subtextColor }}>{subtitle}</p>}
       </div>
     </div>
   );
