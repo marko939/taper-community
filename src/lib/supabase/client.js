@@ -21,7 +21,15 @@ export function createClient() {
       return _client;
     }
 
-    _client = createBrowserClient(url, key);
+    _client = createBrowserClient(url, key, {
+      auth: {
+        flowType: 'pkce',
+        detectSessionInUrl: true,
+        persistSession: true,
+        // Bypass Navigator LockManager to prevent stale lock timeouts
+        lock: async (_name, _acquireTimeout, fn) => await fn(),
+      },
+    });
   }
   return _client;
 }
