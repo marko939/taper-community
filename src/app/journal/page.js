@@ -255,9 +255,6 @@ export default function JournalPage() {
                 <p className="mx-auto mt-2 max-w-md text-sm text-white/70">
                   Take the PHQ-9 (depression) and GAD-7 (anxiety) assessments to track your mental health over time.
                 </p>
-                <p className="mx-auto mt-4 max-w-sm rounded-lg px-4 py-2 text-xs text-white/60" style={{ background: 'rgba(255,255,255,0.1)' }}>
-                  Recommended: take assessments every 2-4 weeks to track meaningful changes
-                </p>
               </div>
             </div>
           ) : (
