@@ -5,6 +5,12 @@ const nextConfig = {
       { protocol: 'https', hostname: '*.supabase.co' },
     ],
   },
+  webpack: (config, { isServer }) => {
+    if (!isServer) {
+      config.resolve.alias['canvas'] = false;
+    }
+    return config;
+  },
 };
 
 export default nextConfig;

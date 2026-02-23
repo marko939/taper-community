@@ -11,6 +11,9 @@ export default function SettingsPage() {
   const { user, profile, loading: authLoading } = useRequireAuth();
   const updateProfile = useProfileStore((s) => s.updateProfile);
   const [displayName, setDisplayName] = useState('');
+  const [username, setUsername] = useState('');
+  const [usernameAvailable, setUsernameAvailable] = useState(null);
+  const [checkingUsername, setCheckingUsername] = useState(false);
   const [drugSignature, setDrugSignature] = useState('');
   const [location, setLocation] = useState('');
   const [bio, setBio] = useState('');
@@ -20,10 +23,12 @@ export default function SettingsPage() {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const fileInputRef = useRef(null);
+  const usernameTimerRef = useRef(null);
 
   useEffect(() => {
     if (profile) {
       setDisplayName(profile.display_name || '');
+      setUsername(profile.username || '');
       setDrugSignature(profile.drug_signature || '');
       setLocation(profile.location || '');
       setBio(profile.bio || '');
@@ -31,6 +36,37 @@ export default function SettingsPage() {
       setEmailNotifications(profile.email_notifications !== false);
     }
   }, [profile]);
+
+  const checkUsername = (value) => {
+    setUsername(value);
+    setUsernameAvailable(null);
+    if (usernameTimerRef.current) clearTimeout(usernameTimerRef.current);
+
+    const cleaned = value.toLowerCase().replace(/[^a-z0-9_-]/g, '');
+    if (cleaned !== value) {
+      setUsername(cleaned);
+    }
+    if (!cleaned || cleaned === profile?.username) {
+      setUsernameAvailable(null);
+      return;
+    }
+    if (cleaned.length < 3) {
+      setUsernameAvailable(false);
+      return;
+    }
+
+    usernameTimerRef.current = setTimeout(async () => {
+      setCheckingUsername(true);
+      const supabase = createClient();
+      const { data } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('username', cleaned)
+        .single();
+      setUsernameAvailable(!data);
+      setCheckingUsername(false);
+    }, 500);
+  };
 
   if (authLoading) return <PageLoading />;
 
@@ -73,13 +109,17 @@ export default function SettingsPage() {
   const handleSave = async () => {
     setSaving(true);
     setSaved(false);
-    await updateProfile({
+    const updates = {
       display_name: displayName,
       drug_signature: drugSignature,
       location: location,
       bio: bio,
       email_notifications: emailNotifications,
-    });
+    };
+    if (username && username !== profile?.username) {
+      updates.username = username;
+    }
+    await updateProfile(updates);
     setSaving(false);
     setSaved(true);
     setTimeout(() => setSaved(false), 3000);
@@ -131,6 +171,34 @@ export default function SettingsPage() {
             className="input"
             placeholder="Your community name"
           />
+        </div>
+
+        <div>
+          <label htmlFor="username" className="mb-1.5 block text-sm font-medium text-foreground">
+            Username
+          </label>
+          <input
+            id="username"
+            type="text"
+            value={username}
+            onChange={(e) => checkUsername(e.target.value)}
+            className="input"
+            placeholder="your-username"
+          />
+          <div className="mt-1 flex items-center gap-2">
+            {checkingUsername && <span className="text-xs text-text-subtle">Checking...</span>}
+            {!checkingUsername && usernameAvailable === true && (
+              <span className="text-xs text-accent-emerald">Available!</span>
+            )}
+            {!checkingUsername && usernameAvailable === false && (
+              <span className="text-xs text-red-500">Unavailable or too short</span>
+            )}
+            {username && (
+              <span className="text-xs text-text-subtle">
+                tapercommunity.com/journey/{username}
+              </span>
+            )}
+          </div>
         </div>
 
         <div>

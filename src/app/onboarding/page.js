@@ -3,8 +3,10 @@
 import { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useProfileStore } from '@/stores/profileStore';
+import { useAuthStore } from '@/stores/authStore';
 import { DRUG_LIST } from '@/lib/drugs';
 import { TAPER_STAGES } from '@/lib/constants';
+import { recordReferral } from '@/lib/invites';
 
 function buildSignature(medications, hasClinician) {
   if (medications.length === 0) return '';
@@ -43,6 +45,7 @@ export default function OnboardingPage() {
   const [hasClinician, setHasClinician] = useState(null);
   const [drugSignature, setDrugSignature] = useState('');
   const [signatureEdited, setSignatureEdited] = useState(false);
+  const [usernameInput, setUsernameInput] = useState('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const updateProfile = useProfileStore((s) => s.updateProfile);
@@ -84,12 +87,29 @@ export default function OnboardingPage() {
     setLoading(true);
     const primaryDrug = notOnMeds ? null : medications[0]?.drug || null;
     const primaryStage = notOnMeds ? 'supporting' : medications[0]?.stage || null;
-    await updateProfile({
+    const profileData = {
       drug: primaryDrug,
       taper_stage: primaryStage,
       has_clinician: hasClinician,
       drug_signature: drugSignature || null,
-    });
+    };
+    if (usernameInput && usernameInput.length >= 3) {
+      profileData.username = usernameInput;
+    }
+    await updateProfile(profileData);
+
+    // Record referral if present
+    try {
+      const ref = localStorage.getItem('taper_ref');
+      if (ref) {
+        const userId = useAuthStore.getState().user?.id;
+        if (userId) {
+          await recordReferral(ref, userId);
+        }
+        localStorage.removeItem('taper_ref');
+      }
+    } catch { /* ignore */ }
+
     router.push('/forums');
   };
 
@@ -356,7 +376,7 @@ export default function OnboardingPage() {
           </div>
         )}
 
-        {/* Step 4: Intro */}
+        {/* Step 4: Intro + Username */}
         {step === 4 && (
           <div className="space-y-4">
             <h2 className="text-lg font-semibold text-foreground">
@@ -375,6 +395,23 @@ export default function OnboardingPage() {
                 <li>Current dose, symptoms, and mood</li>
                 <li>What has helped or made things worse</li>
               </ul>
+            </div>
+
+            {/* Username */}
+            <div>
+              <label className="mb-1 block text-sm font-medium text-foreground">
+                Choose a username <span className="font-normal text-text-subtle">(optional)</span>
+              </label>
+              <input
+                type="text"
+                value={usernameInput}
+                onChange={(e) => setUsernameInput(e.target.value.toLowerCase().replace(/[^a-z0-9_-]/g, ''))}
+                className="input"
+                placeholder="e.g. sarah-taper"
+              />
+              <p className="mt-1 text-xs text-text-subtle">
+                This creates a public journey page others can follow.
+              </p>
             </div>
           </div>
         )}

@@ -4,30 +4,44 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useAuthStore } from '@/stores/authStore';
 import { useJournalStore } from '@/stores/journalStore';
+import { useAssessmentStore } from '@/stores/assessmentStore';
 import JournalEntryForm from '@/components/journal/JournalEntryForm';
 import JournalChart from '@/components/journal/JournalChart';
 import JournalEntryCard from '@/components/journal/JournalEntryCard';
 import DosePercentage from '@/components/journal/DosePercentage';
 import SymptomHeatmap from '@/components/journal/SymptomHeatmap';
 import HowOthersFelt from '@/components/journal/HowOthersFelt';
+import AssessmentCard from '@/components/journal/AssessmentCard';
+import AssessmentChart from '@/components/journal/AssessmentChart';
+import InvitePrompt from '@/components/journal/InvitePrompt';
+import ProviderPDFButton from '@/components/journal/ProviderPDFButton';
+import MilestoneShareModal from '@/components/journal/MilestoneShareModal';
+import { detectMilestones } from '@/lib/milestones';
 import { PageLoading } from '@/components/shared/LoadingSpinner';
 
 export default function JournalPage() {
   const user = useAuthStore((s) => s.user);
+  const profile = useAuthStore((s) => s.profile);
   const authLoading = useAuthStore((s) => s.loading);
   const entries = useJournalStore((s) => s.entries);
   const loading = useJournalStore((s) => s.loading);
   const fetchEntries = useJournalStore((s) => s.fetchEntries);
   const addEntry = useJournalStore((s) => s.addEntry);
   const getShareLink = useJournalStore((s) => s.getShareLink);
+  const assessments = useAssessmentStore((s) => s.assessments);
+  const fetchAssessments = useAssessmentStore((s) => s.fetchAssessments);
   const [shareUrl, setShareUrl] = useState(null);
   const [sharing, setSharing] = useState(false);
+  const [chartTab, setChartTab] = useState('doseMood'); // 'doseMood' | 'assessments'
+  const [inviteTrigger, setInviteTrigger] = useState(null);
+  const [activeMilestone, setActiveMilestone] = useState(null);
 
   useEffect(() => {
     if (user) {
       fetchEntries();
+      fetchAssessments();
     }
-  }, [user, fetchEntries]);
+  }, [user, fetchEntries, fetchAssessments]);
 
   if (authLoading) return <PageLoading />;
 
@@ -53,7 +67,29 @@ export default function JournalPage() {
   if (loading) return <PageLoading />;
 
   const handleSubmit = async (entry) => {
+    // Snapshot milestones before adding
+    const beforeMilestones = detectMilestones(entries, profile)
+      .filter((m) => m.achieved)
+      .map((m) => m.id);
+
     await addEntry(entry);
+
+    // Check for newly achieved milestones
+    const updatedEntries = useJournalStore.getState().entries;
+    const afterMilestones = detectMilestones(updatedEntries, profile);
+    const newlyAchieved = afterMilestones.find(
+      (m) => m.achieved && !beforeMilestones.includes(m.id)
+    );
+    if (newlyAchieved) {
+      setActiveMilestone(newlyAchieved);
+    }
+
+    // Check invite triggers
+    if (entry.mood_score <= 4) {
+      setInviteTrigger('low_mood');
+    } else if (entries.length === 2) {
+      setInviteTrigger('habit');
+    }
   };
 
   const handleShare = async () => {
@@ -75,6 +111,7 @@ export default function JournalPage() {
           </p>
         </div>
         <div className="flex items-center gap-3">
+          <ProviderPDFButton entries={entries} profile={profile || {}} assessments={assessments} />
           {shareUrl ? (
             <div className="flex items-center gap-2">
               <input
@@ -103,9 +140,38 @@ export default function JournalPage() {
         </div>
       </div>
 
+      {/* Chart with tab switcher */}
       <div className="card">
-        <h2 className="mb-4 text-lg font-semibold text-foreground">Your Taper Progress</h2>
-        <JournalChart entries={entries} />
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="text-lg font-semibold text-foreground">Your Taper Progress</h2>
+          <div className="flex rounded-lg border" style={{ borderColor: 'var(--border-subtle)' }}>
+            <button
+              onClick={() => setChartTab('doseMood')}
+              className="rounded-l-lg px-3 py-1.5 text-xs font-medium transition"
+              style={{
+                background: chartTab === 'doseMood' ? 'var(--purple)' : 'transparent',
+                color: chartTab === 'doseMood' ? 'white' : 'var(--text-muted)',
+              }}
+            >
+              Dose & Mood
+            </button>
+            <button
+              onClick={() => setChartTab('assessments')}
+              className="rounded-r-lg px-3 py-1.5 text-xs font-medium transition"
+              style={{
+                background: chartTab === 'assessments' ? 'var(--purple)' : 'transparent',
+                color: chartTab === 'assessments' ? 'white' : 'var(--text-muted)',
+              }}
+            >
+              Assessments
+            </button>
+          </div>
+        </div>
+        {chartTab === 'doseMood' ? (
+          <JournalChart entries={entries} assessments={assessments} />
+        ) : (
+          <AssessmentChart assessments={assessments} />
+        )}
       </div>
 
       {/* Dose Progress + How Others Felt */}
@@ -119,10 +185,16 @@ export default function JournalPage() {
       {/* Symptom Heatmap */}
       <SymptomHeatmap entries={entries} />
 
+      {/* Assessment Card */}
+      <AssessmentCard assessments={assessments} />
+
       <div className="card">
         <h2 className="mb-4 text-lg font-semibold text-foreground">Log an Entry</h2>
         <JournalEntryForm onSubmit={handleSubmit} entryCount={entries.length} />
       </div>
+
+      {/* Invite prompt after entry submission */}
+      {inviteTrigger && <InvitePrompt trigger={inviteTrigger} userId={user.id} />}
 
       <div>
         <h2 className="mb-4 text-lg font-semibold text-foreground">Entry History</h2>
@@ -138,6 +210,16 @@ export default function JournalPage() {
           </div>
         )}
       </div>
+
+      {/* Milestone share modal */}
+      {activeMilestone && (
+        <MilestoneShareModal
+          milestone={activeMilestone}
+          profile={profile}
+          entries={entries}
+          onClose={() => setActiveMilestone(null)}
+        />
+      )}
     </div>
   );
 }

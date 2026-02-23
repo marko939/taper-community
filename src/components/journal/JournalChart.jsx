@@ -33,6 +33,11 @@ function CustomTooltip({ active, payload, label }) {
           {annotation.icon} {annotation.label}
         </p>
       )}
+      {payload[0]?.payload?.assessmentInfo && (
+        <p className="mt-1 text-[11px]" style={{ color: '#7c3aed' }}>
+          {payload[0].payload.assessmentInfo}
+        </p>
+      )}
     </div>
   );
 }
@@ -87,11 +92,11 @@ function detectAnnotations(entries) {
   return annotations;
 }
 
-export default function JournalChart({ entries = [] }) {
+export default function JournalChart({ entries = [], assessments = [] }) {
   const [showAnnotations, setShowAnnotations] = useState(true);
 
-  const { chartData, annotations } = useMemo(() => {
-    if (entries.length === 0) return { chartData: [], annotations: [] };
+  const { chartData, annotations, assessmentDots } = useMemo(() => {
+    if (entries.length === 0) return { chartData: [], annotations: [], assessmentDots: [] };
 
     const annots = detectAnnotations(entries);
     const annotMap = {};
@@ -107,8 +112,29 @@ export default function JournalChart({ entries = [] }) {
         annotation: annotMap[entry.date] || null,
       }));
 
-    return { chartData: data, annotations: annots };
-  }, [entries]);
+    // Build assessment dots that align with chart dates
+    const dots = [];
+    if (assessments?.length) {
+      const dateToChartDate = {};
+      data.forEach((d) => { dateToChartDate[d.rawDate] = d.date; });
+      for (const a of assessments) {
+        const chartDate = dateToChartDate[a.date];
+        if (chartDate) {
+          const matchingEntry = data.find((d) => d.date === chartDate);
+          if (matchingEntry) {
+            dots.push({
+              x: chartDate,
+              y: matchingEntry.mood,
+              type: a.type,
+              score: a.score,
+            });
+          }
+        }
+      }
+    }
+
+    return { chartData: data, annotations: annots, assessmentDots: dots };
+  }, [entries, assessments]);
 
   if (entries.length === 0) {
     return (
@@ -197,6 +223,19 @@ export default function JournalChart({ entries = [] }) {
               }
               stroke="#fff"
               strokeWidth={2}
+            />
+          ))}
+          {assessmentDots.map((dot, i) => (
+            <ReferenceDot
+              key={`assess-${i}`}
+              x={dot.x}
+              y={dot.y}
+              yAxisId="mood"
+              r={5}
+              fill={dot.type === 'phq9' ? '#7c3aed' : '#0d9488'}
+              stroke="#fff"
+              strokeWidth={2}
+              shape="diamond"
             />
           ))}
         </ComposedChart>

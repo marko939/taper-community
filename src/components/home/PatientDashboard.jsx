@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useJournalStore } from '@/stores/journalStore';
 import { useForumStore } from '@/stores/forumStore';
 import { MOOD_LABELS } from '@/lib/constants';
+import { detectMilestones } from '@/lib/milestones';
 import CommunityPulse from './CommunityPulse';
 
 // SVG icon components for badges
@@ -322,6 +323,29 @@ export default function PatientDashboard({ user, profile }) {
           </div>
         </section>
       )}
+
+      {/* Taper Milestones */}
+      {!loading && entries.length > 0 && (() => {
+        const milestones = detectMilestones(entries, profile);
+        const achieved = milestones.filter((m) => m.achieved);
+        if (achieved.length === 0) return null;
+        return (
+          <section>
+            <h2 className="mb-3 text-sm font-semibold text-foreground">Milestones</h2>
+            <div className="flex flex-wrap gap-2">
+              {achieved.map((m) => (
+                <span
+                  key={m.id}
+                  className="rounded-full px-3 py-1.5 text-xs font-semibold"
+                  style={{ background: 'var(--purple-ghost)', color: 'var(--purple)' }}
+                >
+                  {m.emoji} {m.label}
+                </span>
+              ))}
+            </div>
+          </section>
+        );
+      })()}
 
       {/* Community Pulse */}
       <CommunityPulse />
