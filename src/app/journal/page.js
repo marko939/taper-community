@@ -239,8 +239,8 @@ export default function JournalPage() {
                 </div>
               )}
 
-              {/* Symptom Heatmap */}
-              <SymptomHeatmap entries={entries} />
+              {/* Symptom Heatmap — disabled, keep for future use */}
+              {/* <SymptomHeatmap entries={entries} /> */}
             </>
           )}
 
