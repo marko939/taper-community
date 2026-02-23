@@ -166,26 +166,26 @@ export default function JournalChart({ entries = [], assessments = [] }) {
       )}
       <ResponsiveContainer width="100%" height={300}>
         <ComposedChart data={chartData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+          <CartesianGrid strokeDasharray="3 3" stroke="#E8E5F0" />
           <XAxis
             dataKey="date"
-            tick={{ fill: '#64748b', fontSize: 12 }}
-            axisLine={{ stroke: '#e2e8f0' }}
+            tick={{ fill: '#7C7591', fontSize: 12 }}
+            axisLine={{ stroke: '#E8E5F0' }}
           />
           <YAxis
             yAxisId="dose"
             orientation="left"
-            tick={{ fill: '#64748b', fontSize: 12 }}
-            axisLine={{ stroke: '#e2e8f0' }}
-            label={{ value: 'Dose (mg)', angle: -90, position: 'insideLeft', fill: '#64748b', fontSize: 11 }}
+            tick={{ fill: '#7C7591', fontSize: 12 }}
+            axisLine={{ stroke: '#E8E5F0' }}
+            label={{ value: 'Dose (mg)', angle: -90, position: 'insideLeft', fill: '#7C7591', fontSize: 11 }}
           />
           <YAxis
             yAxisId="mood"
             orientation="right"
             domain={[1, 10]}
-            tick={{ fill: '#64748b', fontSize: 12 }}
-            axisLine={{ stroke: '#e2e8f0' }}
-            label={{ value: 'Mood', angle: 90, position: 'insideRight', fill: '#64748b', fontSize: 11 }}
+            tick={{ fill: '#7C7591', fontSize: 12 }}
+            axisLine={{ stroke: '#E8E5F0' }}
+            label={{ value: 'Mood', angle: 90, position: 'insideRight', fill: '#7C7591', fontSize: 11 }}
           />
           <Tooltip content={<CustomTooltip />} />
           <Line
@@ -193,9 +193,9 @@ export default function JournalChart({ entries = [], assessments = [] }) {
             type="monotone"
             dataKey="dose"
             name="Dose"
-            stroke="#2563eb"
+            stroke="#5B2E91"
             strokeWidth={2}
-            dot={{ fill: '#2563eb', r: 4 }}
+            dot={{ fill: '#5B2E91', r: 4 }}
             connectNulls
           />
           <Area
@@ -203,9 +203,9 @@ export default function JournalChart({ entries = [], assessments = [] }) {
             type="monotone"
             dataKey="mood"
             name="Mood"
-            stroke="#0f766e"
-            fill="#0f766e"
-            fillOpacity={0.1}
+            stroke="#2EC4B6"
+            fill="#2EC4B6"
+            fillOpacity={0.12}
             strokeWidth={2}
             connectNulls
           />

@@ -56,14 +56,19 @@ export default function RecentActivity() {
                     {thread.title}
                   </h3>
                   <div className="mt-1.5 flex flex-wrap items-center gap-2 text-xs" style={{ color: 'var(--text-subtle)' }}>
-                    {thread.forums?.name && (
-                      <span
-                        className="rounded-full px-2.5 py-0.5 text-xs font-semibold"
-                        style={{ background: 'var(--purple-pale)', color: 'var(--purple)' }}
-                      >
-                        {thread.forums.name}
-                      </span>
-                    )}
+                    {(() => {
+                      const allForums = thread.thread_forums?.map((tf) => tf.forums).filter(Boolean) || [];
+                      const forums = allForums.length > 0 ? allForums : thread.forums ? [thread.forums] : [];
+                      return forums.map((f, fi) => (
+                        <span
+                          key={fi}
+                          className="rounded-full px-2.5 py-0.5 text-xs font-semibold"
+                          style={{ background: 'var(--purple-pale)', color: 'var(--purple)' }}
+                        >
+                          {f.name}
+                        </span>
+                      ));
+                    })()}
                     <span>by {thread.profiles?.display_name}</span>
                     <span>&middot;</span>
                     <span>{timeAgo(thread.created_at)}</span>

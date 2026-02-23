@@ -44,8 +44,10 @@ export default function NotificationDropdown({ onClose }) {
     if (!notification.read) {
       markAsRead(notification.id);
     }
-    onClose();
-    router.push(`/thread/${notification.thread_id}`);
+    if (notification.thread_id) {
+      onClose();
+      router.push(`/thread/${notification.thread_id}`);
+    }
   };
 
   return (
@@ -81,39 +83,51 @@ export default function NotificationDropdown({ onClose }) {
             No notifications yet
           </div>
         ) : (
-          notifications.map((n) => (
-            <button
-              key={n.id}
-              onClick={() => handleClick(n)}
-              className="flex w-full items-start gap-3 px-4 py-3 text-left transition hover:bg-purple-ghost"
-              style={{
-                background: n.read ? 'transparent' : 'var(--purple-ghost)',
-                borderBottom: '1px solid var(--border-subtle)',
-              }}
-            >
-              <div className="flex-1 min-w-0">
-                <p className="text-sm leading-snug" style={{ color: 'var(--foreground)' }}>
-                  <span className="font-semibold">{n.actor?.display_name || 'Someone'}</span>
-                  {' replied to '}
-                  <span className="font-medium">"{(n.thread?.title || '').slice(0, 50)}{(n.thread?.title || '').length > 50 ? '...' : ''}"</span>
-                </p>
-                {n.body && (
-                  <p className="mt-0.5 text-xs truncate" style={{ color: 'var(--text-muted)' }}>
-                    {n.body}
+          notifications.map((n) => {
+            const isBadge = n.type === 'badge';
+            return (
+              <button
+                key={n.id}
+                onClick={() => isBadge ? (!n.read && markAsRead(n.id)) : handleClick(n)}
+                className={`flex w-full items-start gap-3 px-4 py-3 text-left transition ${isBadge ? '' : 'hover:bg-purple-ghost'}`}
+                style={{
+                  background: n.read ? 'transparent' : 'var(--purple-ghost)',
+                  borderBottom: '1px solid var(--border-subtle)',
+                  cursor: isBadge ? 'default' : 'pointer',
+                }}
+              >
+                <div className="flex-1 min-w-0">
+                  {isBadge ? (
+                    <p className="text-sm leading-snug" style={{ color: 'var(--foreground)' }}>
+                      {n.title}
+                    </p>
+                  ) : (
+                    <>
+                      <p className="text-sm leading-snug" style={{ color: 'var(--foreground)' }}>
+                        <span className="font-semibold">{n.actor?.display_name || 'Someone'}</span>
+                        {' replied to '}
+                        <span className="font-medium">&ldquo;{(n.thread?.title || '').slice(0, 50)}{(n.thread?.title || '').length > 50 ? '...' : ''}&rdquo;</span>
+                      </p>
+                      {n.body && (
+                        <p className="mt-0.5 text-xs truncate" style={{ color: 'var(--text-muted)' }}>
+                          {n.body}
+                        </p>
+                      )}
+                    </>
+                  )}
+                  <p className="mt-1 text-xs" style={{ color: 'var(--text-subtle)' }}>
+                    {timeAgo(n.created_at)}
                   </p>
+                </div>
+                {!n.read && (
+                  <div
+                    className="mt-1.5 h-2 w-2 flex-shrink-0 rounded-full"
+                    style={{ background: 'var(--purple)' }}
+                  />
                 )}
-                <p className="mt-1 text-xs" style={{ color: 'var(--text-subtle)' }}>
-                  {timeAgo(n.created_at)}
-                </p>
-              </div>
-              {!n.read && (
-                <div
-                  className="mt-1.5 h-2 w-2 flex-shrink-0 rounded-full"
-                  style={{ background: 'var(--purple)' }}
-                />
-              )}
-            </button>
-          ))
+              </button>
+            );
+          })
         )}
       </div>
     </div>

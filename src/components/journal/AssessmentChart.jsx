@@ -90,16 +90,16 @@ export default function AssessmentChart({ assessments = [], entries = [] }) {
     <div>
       <div className="mb-3 flex items-center gap-4">
         <div className="flex items-center gap-1.5">
-          <span className="inline-block h-2 w-2 rounded-full" style={{ background: '#7c3aed' }} />
+          <span className="inline-block h-2 w-2 rounded-full" style={{ background: '#5B2E91' }} />
           <span className="text-[11px] text-text-subtle">PHQ-9 (Depression)</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <span className="inline-block h-2 w-2 rounded-full" style={{ background: '#0d9488' }} />
+          <span className="inline-block h-2 w-2 rounded-full" style={{ background: '#2EC4B6' }} />
           <span className="text-[11px] text-text-subtle">GAD-7 (Anxiety)</span>
         </div>
         {hasDoseData && (
           <div className="flex items-center gap-1.5">
-            <span className="inline-block h-2 w-2 rounded-full" style={{ background: '#2563eb' }} />
+            <span className="inline-block h-2 w-2 rounded-full" style={{ background: '#7B4FAF' }} />
             <span className="text-[11px] text-text-subtle">Dose (mg)</span>
           </div>
         )}
@@ -112,26 +112,26 @@ export default function AssessmentChart({ assessments = [], entries = [] }) {
           <ReferenceArea yAxisId="score" y1={9} y2={14} fill="#f97316" fillOpacity={0.08} />
           <ReferenceArea yAxisId="score" y1={14} y2={27} fill="#ef4444" fillOpacity={0.08} />
 
-          <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+          <CartesianGrid strokeDasharray="3 3" stroke="#E8E5F0" />
           <XAxis
             dataKey="date"
-            tick={{ fill: '#64748b', fontSize: 12 }}
-            axisLine={{ stroke: '#e2e8f0' }}
+            tick={{ fill: '#7C7591', fontSize: 12 }}
+            axisLine={{ stroke: '#E8E5F0' }}
           />
           <YAxis
             yAxisId="score"
             domain={[0, 27]}
-            tick={{ fill: '#64748b', fontSize: 12 }}
-            axisLine={{ stroke: '#e2e8f0' }}
-            label={{ value: 'Score', angle: -90, position: 'insideLeft', fill: '#64748b', fontSize: 11 }}
+            tick={{ fill: '#7C7591', fontSize: 12 }}
+            axisLine={{ stroke: '#E8E5F0' }}
+            label={{ value: 'Score', angle: -90, position: 'insideLeft', fill: '#7C7591', fontSize: 11 }}
           />
           {hasDoseData && (
             <YAxis
               yAxisId="dose"
               orientation="right"
-              tick={{ fill: '#64748b', fontSize: 12 }}
-              axisLine={{ stroke: '#e2e8f0' }}
-              label={{ value: 'Dose (mg)', angle: 90, position: 'insideRight', fill: '#64748b', fontSize: 11 }}
+              tick={{ fill: '#7C7591', fontSize: 12 }}
+              axisLine={{ stroke: '#E8E5F0' }}
+              label={{ value: 'Dose (mg)', angle: 90, position: 'insideRight', fill: '#7C7591', fontSize: 11 }}
             />
           )}
           <Tooltip content={<AssessmentTooltip />} />
@@ -140,9 +140,9 @@ export default function AssessmentChart({ assessments = [], entries = [] }) {
             type="monotone"
             dataKey="phq9"
             name="PHQ-9"
-            stroke="#7c3aed"
+            stroke="#5B2E91"
             strokeWidth={2}
-            dot={{ fill: '#7c3aed', r: 5 }}
+            dot={{ fill: '#5B2E91', r: 5 }}
             connectNulls
           />
           <Line
@@ -150,9 +150,9 @@ export default function AssessmentChart({ assessments = [], entries = [] }) {
             type="monotone"
             dataKey="gad7"
             name="GAD-7"
-            stroke="#0d9488"
+            stroke="#2EC4B6"
             strokeWidth={2}
-            dot={{ fill: '#0d9488', r: 5 }}
+            dot={{ fill: '#2EC4B6', r: 5 }}
             connectNulls
           />
           {hasDoseData && (
@@ -161,10 +161,10 @@ export default function AssessmentChart({ assessments = [], entries = [] }) {
               type="monotone"
               dataKey="dose"
               name="Dose"
-              stroke="#2563eb"
+              stroke="#7B4FAF"
               strokeWidth={2}
               strokeDasharray="6 3"
-              dot={{ fill: '#2563eb', r: 3 }}
+              dot={{ fill: '#7B4FAF', r: 3 }}
               connectNulls
             />
           )}

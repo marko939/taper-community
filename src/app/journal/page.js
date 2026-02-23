@@ -18,6 +18,7 @@ import InvitePrompt from '@/components/journal/InvitePrompt';
 import ProviderPDFButton from '@/components/journal/ProviderPDFButton';
 import MilestoneShareModal from '@/components/journal/MilestoneShareModal';
 import { detectMilestones } from '@/lib/milestones';
+import { useNotificationStore } from '@/stores/notificationStore';
 import { labelPHQ, labelGAD, severityColor } from '@/lib/assessments';
 import { PageLoading } from '@/components/shared/LoadingSpinner';
 
@@ -111,6 +112,7 @@ export default function JournalPage() {
     );
     if (newlyAchieved) {
       setActiveMilestone(newlyAchieved);
+      useNotificationStore.getState().createBadgeNotification(newlyAchieved);
     }
 
     if (entry.mood_score <= 4) {

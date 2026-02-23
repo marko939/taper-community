@@ -21,6 +21,7 @@ export const useNotificationStore = create((set, get) => ({
       .from('notifications')
       .select('*, actor:actor_id(display_name, avatar_url), thread:thread_id(title)')
       .eq('user_id', userId)
+      .in('type', ['thread_reply', 'reply_mention', 'badge'])
       .order('created_at', { ascending: false })
       .limit(50);
 
@@ -37,7 +38,8 @@ export const useNotificationStore = create((set, get) => ({
       .from('notifications')
       .select('id', { count: 'exact', head: true })
       .eq('user_id', userId)
-      .eq('read', false);
+      .eq('read', false)
+      .in('type', ['thread_reply', 'reply_mention', 'badge']);
 
     set({ unreadCount: count || 0 });
   },
@@ -105,6 +107,27 @@ export const useNotificationStore = create((set, get) => ({
       .subscribe();
 
     set({ _realtimeChannel: channel });
+  },
+
+  createBadgeNotification: async (milestone) => {
+    const userId = useAuthStore.getState().user?.id;
+    if (!userId) return;
+
+    const supabase = createClient();
+    const title = `${milestone.emoji} Badge earned: ${milestone.label}`;
+
+    const { data } = await supabase
+      .from('notifications')
+      .insert({ user_id: userId, type: 'badge', title })
+      .select()
+      .single();
+
+    if (data) {
+      set((state) => ({
+        notifications: [data, ...state.notifications],
+        unreadCount: state.unreadCount + 1,
+      }));
+    }
   },
 
   unsubscribeRealtime: () => {

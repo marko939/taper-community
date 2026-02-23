@@ -129,17 +129,24 @@ export default function ForumsPage() {
                       <span>{thread.profiles?.display_name || 'Anonymous'}</span>
                       <span>·</span>
                       <span>{timeAgo(thread.created_at)}</span>
-                      {thread.forums && (
-                        <>
-                          <span>·</span>
-                          <span
-                            className="rounded-full px-2 py-0.5 text-[11px] font-semibold"
-                            style={{ background: 'var(--purple-ghost)', color: 'var(--purple)' }}
-                          >
-                            {thread.forums.name}
-                          </span>
-                        </>
-                      )}
+                      {(() => {
+                        const allForums = thread.thread_forums?.map((tf) => tf.forums).filter(Boolean) || [];
+                        const forums = allForums.length > 0 ? allForums : thread.forums ? [thread.forums] : [];
+                        return forums.length > 0 && (
+                          <>
+                            <span>·</span>
+                            {forums.map((f, fi) => (
+                              <span
+                                key={fi}
+                                className="rounded-full px-2 py-0.5 text-[11px] font-semibold"
+                                style={{ background: 'var(--purple-ghost)', color: 'var(--purple)' }}
+                              >
+                                {f.name}
+                              </span>
+                            ))}
+                          </>
+                        );
+                      })()}
                     </div>
                   </div>
                   <svg
