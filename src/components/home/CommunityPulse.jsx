@@ -11,18 +11,27 @@ export default function CommunityPulse({ large }) {
     const fetchStats = async () => {
       try {
         const supabase = createClient();
-        const oneWeekAgo = new Date(Date.now() - 7 * 86400000).toISOString();
+        const sevenDaysAgo = new Date(Date.now() - 7 * 86400000).toISOString();
 
-        const [threadsRes, repliesRes, journalWeekRes, journalAllRes] = await Promise.all([
-          supabase.from('threads').select('id', { count: 'exact', head: true }).gte('created_at', oneWeekAgo),
-          supabase.from('replies').select('id', { count: 'exact', head: true }).gte('created_at', oneWeekAgo),
-          supabase.from('journal_entries').select('id', { count: 'exact', head: true }).gte('created_at', oneWeekAgo),
+        // Rolling 7-day counts + all-time fallbacks
+        const [
+          threadsWeekRes, threadsAllRes,
+          repliesWeekRes, repliesAllRes,
+          journalWeekRes, journalAllRes,
+          journalDoseRes,
+        ] = await Promise.all([
+          supabase.from('threads').select('id', { count: 'exact', head: true }).gte('created_at', sevenDaysAgo),
+          supabase.from('threads').select('id', { count: 'exact', head: true }),
+          supabase.from('replies').select('id', { count: 'exact', head: true }).gte('created_at', sevenDaysAgo),
+          supabase.from('replies').select('id', { count: 'exact', head: true }),
+          supabase.from('journal_entries').select('id', { count: 'exact', head: true }).gte('created_at', sevenDaysAgo),
+          supabase.from('journal_entries').select('id', { count: 'exact', head: true }),
           supabase.from('journal_entries').select('user_id, drug, dose_numeric, date').not('dose_numeric', 'is', null).order('date', { ascending: true }),
         ]);
 
         // Calculate total mg reduced across all users/drugs
         const byUserDrug = {};
-        (journalAllRes.data || []).forEach((e) => {
+        (journalDoseRes.data || []).forEach((e) => {
           if (!e.drug || e.dose_numeric == null) return;
           const key = `${e.user_id}::${e.drug}`;
           if (!byUserDrug[key]) byUserDrug[key] = { first: e.dose_numeric, latest: e.dose_numeric };
@@ -33,11 +42,18 @@ export default function CommunityPulse({ large }) {
           if (first > latest) totalReduced += first - latest;
         });
 
+        // Use 7-day counts, but if all are 0 fall back to all-time
+        const weekThreads = threadsWeekRes.count || 0;
+        const weekReplies = repliesWeekRes.count || 0;
+        const weekCheckIns = journalWeekRes.count || 0;
+        const hasWeekActivity = weekThreads + weekReplies + weekCheckIns > 0;
+
         setStats({
-          threads: threadsRes.count || 0,
-          replies: repliesRes.count || 0,
-          checkIns: journalWeekRes.count || 0,
+          threads: hasWeekActivity ? weekThreads : (threadsAllRes.count || 0),
+          replies: hasWeekActivity ? weekReplies : (repliesAllRes.count || 0),
+          checkIns: hasWeekActivity ? weekCheckIns : (journalAllRes.count || 0),
           totalReduced: Math.round(totalReduced * 10) / 10,
+          isAllTime: !hasWeekActivity,
         });
       } catch (err) {
         console.error('[CommunityPulse] fetch error:', err);
@@ -51,7 +67,7 @@ export default function CommunityPulse({ large }) {
   if (loading) {
     return (
       <section className="space-y-3">
-        {large && <h2 className="font-serif text-2xl font-semibold" style={{ color: 'var(--foreground)' }}>Community This Week</h2>}
+        {large && <h2 className="font-serif text-2xl font-semibold" style={{ color: 'var(--foreground)' }}>Community Buzz</h2>}
         <div className="glass-panel h-20 animate-pulse" />
       </section>
     );
@@ -59,12 +75,14 @@ export default function CommunityPulse({ large }) {
 
   if (!stats) return null;
 
+  const heading = stats.isAllTime ? 'Community Stats' : 'Last 7 Days';
+
   return (
     <section className="space-y-3">
-      {large && <h2 className="font-serif text-2xl font-semibold" style={{ color: 'var(--foreground)' }}>Community This Week</h2>}
+      {large && <h2 className="font-serif text-2xl font-semibold" style={{ color: 'var(--foreground)' }}>{heading}</h2>}
       {!large && (
         <p className="text-sm font-bold uppercase tracking-wider" style={{ color: '#7B4FAF' }}>
-          Community This Week
+          {heading}
         </p>
       )}
       <div
