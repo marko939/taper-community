@@ -48,9 +48,9 @@ export default function JournalPage() {
 
   if (!user) {
     return (
-      <div className="mx-auto max-w-2xl py-12">
+      <div className="mx-auto max-w-3xl py-12">
         <div
-          className="relative overflow-hidden rounded-[24px] px-8 py-16 text-center"
+          className="relative overflow-hidden rounded-[24px] px-12 py-28 text-center"
           style={{ boxShadow: '0 12px 48px rgba(91, 46, 145, 0.25), 0 4px 16px rgba(0,0,0,0.1)' }}
         >
           <div className="absolute inset-0">
