@@ -13,57 +13,88 @@ export default function HowOthersFelt({ entries }) {
     return recent?.drug || null;
   }, [entries]);
 
-  const currentDose = useMemo(() => {
+  // Calculate what % of starting dose the user is at
+  const taperPct = useMemo(() => {
     if (!entries || entries.length === 0) return null;
-    const recent = entries.find((e) => e.dose_numeric);
-    return recent?.dose_numeric || null;
+    const withDose = entries.filter((e) => e.drug && e.dose_numeric);
+    if (withDose.length < 1) return null;
+    const startingDose = withDose[withDose.length - 1].dose_numeric; // oldest entry
+    const currentDose = withDose[0].dose_numeric; // most recent
+    if (!startingDose || startingDose === 0) return null;
+    return Math.round((currentDose / startingDose) * 100);
   }, [entries]);
 
   useEffect(() => {
-    if (!currentDrug || !currentDose) return;
+    if (!currentDrug || taperPct === null) return;
 
     const fetchCommunity = async () => {
       setLoading(true);
-      const supabase = createClient();
-      const doseRange = currentDose * 0.3; // +/- 30% range
+      try {
+        const supabase = createClient();
 
-      const { data } = await supabase
-        .from('journal_entries')
-        .select('mood_score, symptoms, dose_numeric')
-        .eq('drug', currentDrug)
-        .gte('dose_numeric', currentDose - doseRange)
-        .lte('dose_numeric', currentDose + doseRange)
-        .eq('is_public', true)
-        .limit(100);
+        // Fetch all public entries for this drug, grouped by user to calculate each user's taper %
+        const { data } = await supabase
+          .from('journal_entries')
+          .select('user_id, mood_score, symptoms, dose_numeric, date')
+          .eq('drug', currentDrug)
+          .not('dose_numeric', 'is', null)
+          .eq('is_public', true)
+          .order('date', { ascending: true });
 
-      if (data && data.length >= 3) {
-        const moods = data.filter((e) => e.mood_score).map((e) => e.mood_score);
-        const avgMood = moods.length > 0 ? (moods.reduce((a, b) => a + b, 0) / moods.length).toFixed(1) : null;
-
-        const symptomFreq = {};
-        data.forEach((e) => {
-          (e.symptoms || []).forEach((s) => {
-            symptomFreq[s] = (symptomFreq[s] || 0) + 1;
+        if (data && data.length > 0) {
+          // Group by user, compute their taper % at each entry
+          const byUser = {};
+          data.forEach((e) => {
+            if (!byUser[e.user_id]) byUser[e.user_id] = [];
+            byUser[e.user_id].push(e);
           });
-        });
-        const topSymptoms = Object.entries(symptomFreq)
-          .sort((a, b) => b[1] - a[1])
-          .slice(0, 5)
-          .map(([name, count]) => ({ name, pct: Math.round((count / data.length) * 100) }));
 
-        setCommunityData({
-          count: data.length,
-          avgMood,
-          topSymptoms,
-        });
+          // Find entries where the user was at a similar taper % (+/- 10%)
+          const matchingEntries = [];
+          const pctRange = 10;
+          Object.values(byUser).forEach((userEntries) => {
+            const startDose = userEntries[0].dose_numeric; // first entry = starting dose
+            if (!startDose || startDose === 0) return;
+            userEntries.forEach((e) => {
+              const entryPct = Math.round((e.dose_numeric / startDose) * 100);
+              if (Math.abs(entryPct - taperPct) <= pctRange) {
+                matchingEntries.push(e);
+              }
+            });
+          });
+
+          if (matchingEntries.length >= 3) {
+            const moods = matchingEntries.filter((e) => e.mood_score).map((e) => e.mood_score);
+            const avgMood = moods.length > 0 ? (moods.reduce((a, b) => a + b, 0) / moods.length).toFixed(1) : null;
+
+            const symptomFreq = {};
+            matchingEntries.forEach((e) => {
+              (e.symptoms || []).forEach((s) => {
+                symptomFreq[s] = (symptomFreq[s] || 0) + 1;
+              });
+            });
+            const topSymptoms = Object.entries(symptomFreq)
+              .sort((a, b) => b[1] - a[1])
+              .slice(0, 5)
+              .map(([name, count]) => ({ name, pct: Math.round((count / matchingEntries.length) * 100) }));
+
+            setCommunityData({
+              count: matchingEntries.length,
+              avgMood,
+              topSymptoms,
+            });
+          }
+        }
+      } catch (err) {
+        console.error('[HowOthersFelt] fetch error:', err);
       }
       setLoading(false);
     };
 
     fetchCommunity();
-  }, [currentDrug, currentDose]);
+  }, [currentDrug, taperPct]);
 
-  if (!currentDrug || !currentDose) return null;
+  if (!currentDrug || taperPct === null) return null;
   if (loading) {
     return (
       <div
@@ -81,10 +112,10 @@ export default function HowOthersFelt({ entries }) {
     >
       <div className="px-4 py-3" style={{ borderBottom: '1px solid var(--purple-pale)' }}>
         <h3 className="text-sm font-semibold" style={{ color: 'var(--purple)' }}>
-          How Others Felt at ~{currentDose}mg {currentDrug}
+          How Others Felt at {taperPct}% of Their {currentDrug}
         </h3>
         <p className="text-[11px] text-text-subtle">
-          Based on {communityData.count} public entries at similar doses
+          Based on {communityData.count} public entries at a similar taper stage
         </p>
       </div>
       <div className="px-4 py-3">
