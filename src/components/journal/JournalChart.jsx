@@ -150,20 +150,16 @@ export default function JournalChart({ entries = [], assessments = [] }) {
 
   return (
     <div>
-      {annotations.length > 0 && (
-        <div className="mb-3 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="text-[11px] text-text-subtle">{annotations.length} annotation{annotations.length !== 1 ? 's' : ''}</span>
-          </div>
-          <button
-            onClick={() => setShowAnnotations(!showAnnotations)}
-            className="text-[11px] font-medium"
-            style={{ color: 'var(--purple)' }}
-          >
-            {showAnnotations ? 'Hide annotations' : 'Show annotations'}
-          </button>
+      <div className="mb-3 flex items-center gap-4">
+        <div className="flex items-center gap-1.5">
+          <span className="inline-block h-2 w-2 rounded-full" style={{ background: '#5B2E91' }} />
+          <span className="text-[11px] text-text-subtle">Dose (mg)</span>
         </div>
-      )}
+        <div className="flex items-center gap-1.5">
+          <span className="inline-block h-2 w-2 rounded-full" style={{ background: '#C47DB5' }} />
+          <span className="text-[11px] text-text-subtle">Mood (/10)</span>
+        </div>
+      </div>
       <ResponsiveContainer width="100%" height={300}>
         <ComposedChart data={chartData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="#E8E5F0" />
@@ -240,16 +236,6 @@ export default function JournalChart({ entries = [], assessments = [] }) {
           ))}
         </ComposedChart>
       </ResponsiveContainer>
-      <div className="mt-2 flex justify-center gap-4 text-[11px] text-text-subtle">
-        <span className="flex items-center gap-1.5">
-          <span className="inline-block h-2 w-2 rounded-full" style={{ background: '#5B2E91' }} />
-          Dose (mg)
-        </span>
-        <span className="flex items-center gap-1.5">
-          <span className="inline-block h-2 w-2 rounded-full" style={{ background: '#C47DB5' }} />
-          Mood (/10)
-        </span>
-      </div>
     </div>
   );
 }
