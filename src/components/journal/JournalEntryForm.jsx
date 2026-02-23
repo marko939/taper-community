@@ -83,6 +83,14 @@ export default function JournalEntryForm({ onSubmit, entryCount = 0 }) {
     return () => { cancelled = true; };
   }, [drug]);
 
+  const notesPlaceholder = useMemo(() => {
+    const moodTag = moodScore === 1 ? 'in a crisis' : MOOD_LABELS[moodScore]?.toLowerCase();
+    const symptomPart = symptoms.length > 0
+      ? `Been having bouts of ${symptoms.join(', ').toLowerCase()}.`
+      : 'No specific symptoms.';
+    return `Feeling ${moodTag}. ${symptomPart}`;
+  }, [moodScore, symptoms]);
+
   const titlePlaceholder = useMemo(() => {
     const dateFmt = new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
     const moodTag = moodScore === 1 ? 'In a Crisis' : `Feeling ${MOOD_LABELS[moodScore]}`;
@@ -169,7 +177,7 @@ export default function JournalEntryForm({ onSubmit, entryCount = 0 }) {
       dose_numeric: currentDose ? parseFloat(currentDose) || null : null,
       symptoms,
       mood_score: moodScore,
-      notes: notes || null,
+      notes: notes || notesPlaceholder,
       is_public: isPublic || allForumIds.length > 0,
       published_forums: allForumIds,
     });
@@ -298,7 +306,7 @@ export default function JournalEntryForm({ onSubmit, entryCount = 0 }) {
         <textarea
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
-          placeholder="How are you feeling? Any observations?"
+          placeholder={notesPlaceholder}
           rows={3}
           className="textarea"
         />
