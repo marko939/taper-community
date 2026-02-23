@@ -1,11 +1,22 @@
 'use client';
 
-export default function Avatar({ name = 'A', size = 'md', className = '' }) {
+export default function Avatar({ name = 'A', avatarUrl, size = 'md', className = '' }) {
   const sizes = {
     sm: 'h-8 w-8 text-xs',
     md: 'h-10 w-10 text-sm',
     lg: 'h-12 w-12 text-base',
+    xl: 'h-20 w-20 text-2xl',
   };
+
+  if (avatarUrl) {
+    return (
+      <img
+        src={avatarUrl}
+        alt={name || 'Avatar'}
+        className={`rounded-full object-cover ${sizes[size]} ${className}`}
+      />
+    );
+  }
 
   const initial = name?.charAt(0)?.toUpperCase() || 'A';
 

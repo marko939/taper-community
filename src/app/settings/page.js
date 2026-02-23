@@ -1,8 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { useProfileStore } from '@/stores/profileStore';
+import { createClient } from '@/lib/supabase/client';
+import Avatar from '@/components/shared/Avatar';
 import { PageLoading } from '@/components/shared/LoadingSpinner';
 
 export default function SettingsPage() {
@@ -12,8 +14,11 @@ export default function SettingsPage() {
   const [drugSignature, setDrugSignature] = useState('');
   const [location, setLocation] = useState('');
   const [bio, setBio] = useState('');
+  const [avatarUrl, setAvatarUrl] = useState('');
+  const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const fileInputRef = useRef(null);
 
   useEffect(() => {
     if (profile) {
@@ -21,10 +26,47 @@ export default function SettingsPage() {
       setDrugSignature(profile.drug_signature || '');
       setLocation(profile.location || '');
       setBio(profile.bio || '');
+      setAvatarUrl(profile.avatar_url || '');
     }
   }, [profile]);
 
   if (authLoading) return <PageLoading />;
+
+  const handlePhotoUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+
+    setUploading(true);
+    try {
+      const supabase = createClient();
+      const ext = file.name.split('.').pop();
+      const path = `${user.id}/avatar.${ext}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(path, file, { upsert: true });
+
+      if (uploadError) {
+        console.error('[settings] upload error:', uploadError.message);
+        setUploading(false);
+        return;
+      }
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(path);
+
+      // Append cache-buster so the browser shows the new image
+      const url = `${publicUrl}?t=${Date.now()}`;
+      setAvatarUrl(url);
+
+      // Save to profile immediately
+      await updateProfile({ avatar_url: url });
+    } catch (err) {
+      console.error('[settings] photo upload error:', err);
+    }
+    setUploading(false);
+  };
 
   const handleSave = async () => {
     setSaving(true);
@@ -48,6 +90,32 @@ export default function SettingsPage() {
       </p>
 
       <div className="mt-8 space-y-6">
+        {/* Profile Photo */}
+        <div>
+          <label className="mb-1.5 block text-sm font-medium text-foreground">Profile Photo</label>
+          <div className="flex items-center gap-4">
+            <Avatar name={displayName || 'U'} avatarUrl={avatarUrl} size="xl" />
+            <div>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handlePhotoUpload}
+                className="hidden"
+              />
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading}
+                className="rounded-xl border px-4 py-2 text-sm font-medium transition hover:bg-purple-ghost disabled:opacity-50"
+                style={{ borderColor: 'var(--border-subtle)', color: 'var(--foreground)' }}
+              >
+                {uploading ? 'Uploading...' : 'Upload Photo'}
+              </button>
+              <p className="mt-1 text-xs text-text-subtle">JPG, PNG, or WebP. Max 2MB.</p>
+            </div>
+          </div>
+        </div>
+
         <div>
           <label htmlFor="displayName" className="mb-1.5 block text-sm font-medium text-foreground">
             Display Name

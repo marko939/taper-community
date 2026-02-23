@@ -66,26 +66,27 @@ export default function CommunityPulse() {
         className="grid grid-cols-2 gap-px overflow-hidden rounded-xl border"
         style={{ borderColor: 'var(--border-subtle)', background: 'var(--border-subtle)' }}
       >
-        <StatCell label="New threads" value={stats.threads} icon="thread" />
-        <StatCell label="Replies" value={stats.replies} icon="reply" />
-        <StatCell label="Check-ins" value={stats.checkIns} icon="checkin" />
         <StatCell
           label="Meds reduced"
           value={stats.totalReduced > 0 ? `${stats.totalReduced} mg` : '--'}
           icon="reduced"
+          highlight
         />
+        <StatCell label="New threads" value={stats.threads} icon="thread" />
+        <StatCell label="Replies" value={stats.replies} icon="reply" />
+        <StatCell label="Check-ins" value={stats.checkIns} icon="checkin" />
       </div>
     </section>
   );
 }
 
-function StatCell({ label, value, icon, subtitle }) {
-  const iconColor = 'var(--purple)';
+function StatCell({ label, value, icon, subtitle, highlight }) {
+  const iconColor = highlight ? 'rgba(255,255,255,0.9)' : 'var(--purple)';
   return (
-    <div className="flex items-center gap-2.5 px-3.5 py-3" style={{ background: 'var(--surface-strong)' }}>
+    <div className="flex items-center gap-2.5 px-3.5 py-3" style={{ background: highlight ? 'var(--purple-dark, #3D1D63)' : 'var(--surface-strong)' }}>
       <div
         className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg"
-        style={{ background: 'var(--purple-ghost)' }}
+        style={{ background: highlight ? 'rgba(255,255,255,0.15)' : 'var(--purple-ghost)' }}
       >
         {icon === 'thread' && (
           <svg className="h-3.5 w-3.5" style={{ color: iconColor }} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
@@ -109,9 +110,9 @@ function StatCell({ label, value, icon, subtitle }) {
         )}
       </div>
       <div className="min-w-0">
-        <p className="text-lg font-bold leading-tight text-foreground">{value}</p>
-        <p className="text-[10px] leading-tight text-text-subtle">{label}</p>
-        {subtitle && <p className="text-[9px] leading-tight text-text-subtle">{subtitle}</p>}
+        <p className="text-lg font-bold leading-tight" style={{ color: highlight ? '#fff' : 'var(--foreground)' }}>{value}</p>
+        <p className="text-[10px] leading-tight" style={{ color: highlight ? 'rgba(255,255,255,0.7)' : 'var(--text-subtle)' }}>{label}</p>
+        {subtitle && <p className="text-[9px] leading-tight" style={{ color: highlight ? 'rgba(255,255,255,0.5)' : 'var(--text-subtle)' }}>{subtitle}</p>}
       </div>
     </div>
   );
