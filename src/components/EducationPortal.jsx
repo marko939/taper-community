@@ -9,17 +9,19 @@ import { useEffect, useRef, useState } from 'react';
 */
 
 const PURPLE = '#5B2E91';
+const PURPLE_DARK = '#3D1D63';
 const PURPLE_LIGHT = '#EDE5F4';
 const PURPLE_BG = '#F7F3FB';
-const TEAL = '#2EC4B6';
-const TEAL_BG = '#F0FAF9';
-const AMBER = '#A56B00';
-const AMBER_BG = '#FDF8EC';
+const TEAL = '#0D9488';
+const TEAL_LIGHT = '#2EC4B6';
+const TEAL_BG = '#ECFDF5';
+const AMBER = '#B45309';
+const AMBER_BG = '#FFFBEB';
 const GRAY = '#6B6580';
 const LIGHT = '#F7F3FB';
 const BORDER = '#E8E5F0';
 const TEXT = '#1E1B2E';
-const MUTED = '#9B95A8';
+const MUTED = '#7C7591';
 
 // ─── All curriculum content ───
 const MODULES = [
@@ -591,28 +593,46 @@ function ContentBlock({ block }) {
   );
   if (block.type === "scenario") return (
     <div style={{
-      margin: "20px 0", padding: "20px 22px", borderRadius: 8,
-      borderLeft: `3px solid ${PURPLE}`, background: PURPLE_BG,
+      margin: "24px 0", padding: "22px 24px", borderRadius: 14,
+      borderLeft: `4px solid ${PURPLE}`, background: PURPLE_BG,
+      boxShadow: '0 2px 8px rgba(91,46,145,0.06)',
     }}>
-      <div style={{ fontSize: 13, fontWeight: 700, color: PURPLE, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 8 }}>Patient Scenario — {block.title}</div>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+        <div style={{ width: 28, height: 28, borderRadius: 8, background: PURPLE, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14 }}>
+          <span style={{ color: "#fff" }}>&#128100;</span>
+        </div>
+        <span style={{ fontSize: 12, fontWeight: 700, color: PURPLE, textTransform: "uppercase", letterSpacing: "0.06em" }}>Patient Scenario — {block.title}</span>
+      </div>
       <p style={{ fontSize: 15, color: TEXT, lineHeight: 1.7, margin: 0 }}>{block.text}</p>
     </div>
   );
   if (block.type === "pearl") return (
     <div style={{
-      margin: "20px 0", padding: "18px 22px", borderRadius: 8,
-      borderLeft: `3px solid ${TEAL}`, background: TEAL_BG,
+      margin: "24px 0", padding: "22px 24px", borderRadius: 14,
+      borderLeft: `4px solid ${TEAL}`, background: TEAL_BG,
+      boxShadow: '0 2px 8px rgba(13,148,136,0.06)',
     }}>
-      <div style={{ fontSize: 12, fontWeight: 700, color: TEAL, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 6 }}>Clinical Pearl</div>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+        <div style={{ width: 28, height: 28, borderRadius: 8, background: TEAL, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14 }}>
+          <span style={{ color: "#fff" }}>&#128161;</span>
+        </div>
+        <span style={{ fontSize: 12, fontWeight: 700, color: TEAL, textTransform: "uppercase", letterSpacing: "0.06em" }}>Clinical Pearl</span>
+      </div>
       <p style={{ fontSize: 15, color: TEXT, lineHeight: 1.7, margin: 0 }}>{block.text}</p>
     </div>
   );
   if (block.type === "warning") return (
     <div style={{
-      margin: "20px 0", padding: "18px 22px", borderRadius: 8,
-      borderLeft: `3px solid ${AMBER}`, background: AMBER_BG,
+      margin: "24px 0", padding: "22px 24px", borderRadius: 14,
+      borderLeft: `4px solid ${AMBER}`, background: AMBER_BG,
+      boxShadow: '0 2px 8px rgba(180,83,9,0.06)',
     }}>
-      <div style={{ fontSize: 12, fontWeight: 700, color: AMBER, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 6 }}>Caution</div>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+        <div style={{ width: 28, height: 28, borderRadius: 8, background: AMBER, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14 }}>
+          <span style={{ color: "#fff" }}>&#9888;</span>
+        </div>
+        <span style={{ fontSize: 12, fontWeight: 700, color: AMBER, textTransform: "uppercase", letterSpacing: "0.06em" }}>Caution</span>
+      </div>
       <p style={{ fontSize: 15, color: TEXT, lineHeight: 1.7, margin: 0 }}>{block.text}</p>
     </div>
   );
