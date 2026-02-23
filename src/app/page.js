@@ -3,7 +3,6 @@
 import dynamic from 'next/dynamic';
 import { useAuth } from '@/hooks/useAuth';
 import Hero from '@/components/home/Hero';
-import CommunityPulse from '@/components/home/CommunityPulse';
 import ForumSections from '@/components/home/ForumSections';
 import PatientDashboard from '@/components/home/PatientDashboard';
 
@@ -30,7 +29,6 @@ export default function HomePage() {
   return (
     <div className="space-y-12">
       <Hero />
-      <CommunityPulse />
       <ForumSections />
       <DeprescribingMap compact />
     </div>

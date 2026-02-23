@@ -13,32 +13,31 @@ export default function CommunityPulse() {
       const oneWeekAgo = new Date(Date.now() - 7 * 86400000).toISOString();
 
       // Parallel queries
-      const [threadsRes, repliesRes, journalWeekRes, journalAllRes] = await Promise.all([
+      const [threadsRes, repliesRes, journalRes] = await Promise.all([
         supabase.from('threads').select('id', { count: 'exact', head: true }).gte('created_at', oneWeekAgo),
         supabase.from('replies').select('id', { count: 'exact', head: true }).gte('created_at', oneWeekAgo),
-        supabase.from('journal_entries').select('id', { count: 'exact', head: true }).gte('created_at', oneWeekAgo),
-        supabase.from('journal_entries').select('user_id, drug, dose_numeric, date').not('dose_numeric', 'is', null).order('date', { ascending: true }),
+        supabase.from('journal_entries').select('mood_score, symptoms').gte('created_at', oneWeekAgo),
       ]);
 
-      // Calculate total mg reduced across all users/drugs
-      // Group by user+drug, then sum (first dose - latest dose) where positive
-      const byUserDrug = {};
-      (journalAllRes.data || []).forEach((e) => {
-        if (!e.drug || e.dose_numeric == null) return;
-        const key = `${e.user_id}::${e.drug}`;
-        if (!byUserDrug[key]) byUserDrug[key] = { first: e.dose_numeric, latest: e.dose_numeric };
-        byUserDrug[key].latest = e.dose_numeric; // ordered by date asc, so last = latest
+      const journalData = journalRes.data || [];
+      const moods = journalData.filter((e) => e.mood_score).map((e) => e.mood_score);
+      const avgMood = moods.length > 0 ? (moods.reduce((a, b) => a + b, 0) / moods.length).toFixed(1) : null;
+
+      // Find trending symptom
+      const symptomFreq = {};
+      journalData.forEach((e) => {
+        (e.symptoms || []).forEach((s) => {
+          symptomFreq[s] = (symptomFreq[s] || 0) + 1;
+        });
       });
-      let totalReduced = 0;
-      Object.values(byUserDrug).forEach(({ first, latest }) => {
-        if (first > latest) totalReduced += first - latest;
-      });
+      const topSymptom = Object.entries(symptomFreq).sort((a, b) => b[1] - a[1])[0];
 
       setStats({
         threads: threadsRes.count || 0,
         replies: repliesRes.count || 0,
-        checkIns: journalWeekRes.count || 0,
-        totalReduced: Math.round(totalReduced * 10) / 10,
+        checkIns: journalData.length,
+        avgMood,
+        topSymptom: topSymptom ? topSymptom[0] : null,
       });
       setLoading(false);
     };
@@ -68,9 +67,10 @@ export default function CommunityPulse() {
         <StatCell label="Replies" value={stats.replies} icon="reply" />
         <StatCell label="Check-ins" value={stats.checkIns} icon="checkin" />
         <StatCell
-          label="Meds reduced"
-          value={stats.totalReduced > 0 ? `${stats.totalReduced} mg` : '--'}
-          icon="reduced"
+          label="Avg mood"
+          value={stats.avgMood ? `${stats.avgMood}/10` : '--'}
+          icon="mood"
+          subtitle={stats.topSymptom ? `Top: ${stats.topSymptom}` : null}
         />
       </div>
     </section>
@@ -100,9 +100,9 @@ function StatCell({ label, value, icon, subtitle }) {
             <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
         )}
-        {icon === 'reduced' && (
+        {icon === 'mood' && (
           <svg className="h-3.5 w-3.5" style={{ color: iconColor }} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 13.5L12 21m0 0l-7.5-7.5M12 21V3" />
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15.182 15.182a4.5 4.5 0 01-6.364 0M21 12a9 9 0 11-18 0 9 9 0 0118 0zM9.75 9.75c0 .414-.168.75-.375.75S9 10.164 9 9.75 9.168 9 9.375 9s.375.336.375.75zm-.375 0h.008v.015h-.008V9.75zm5.625 0c0 .414-.168.75-.375.75s-.375-.336-.375-.75.168-.75.375-.75.375.336.375.75zm-.375 0h.008v.015h-.008V9.75z" />
           </svg>
         )}
       </div>

@@ -69,234 +69,131 @@ const NAV_ITEMS = [
 
 export default function Sidebar() {
   const [collapsed, setCollapsed] = useState(false);
-  const [mobileOpen, setMobileOpen] = useState(false);
   const pathname = usePathname();
   const { user, profile, loading, signOut } = useAuth();
 
-  const isActive = (item) =>
-    !item.external && (item.exact
-      ? pathname === item.href
-      : pathname === item.href || pathname.startsWith(item.href + '/'));
-
   return (
-    <>
-      {/* ── Mobile top bar ── */}
-      <header
-        className="sticky top-0 z-50 flex items-center justify-between border-b px-4 py-3 lg:hidden"
-        style={{ borderColor: 'var(--border-subtle)', background: 'var(--surface-strong)' }}
-      >
-        <Link href="/" className="flex items-center gap-2 no-underline">
-          <Image src="/tapercommunity-logo.png" alt="TaperCommunity" width={28} height={28} />
-          <span className="text-lg font-semibold" style={{ fontFamily: 'Fraunces, Georgia, serif', color: 'var(--foreground)', letterSpacing: '-0.02em' }}>
-            TaperCommunity
-          </span>
-        </Link>
-        <button
-          onClick={() => setMobileOpen(!mobileOpen)}
-          className="rounded-lg p-2 transition hover:bg-purple-ghost"
-          style={{ color: 'var(--text-muted)' }}
-        >
-          {mobileOpen ? (
-            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          ) : (
-            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
-            </svg>
-          )}
-        </button>
-      </header>
-
-      {/* ── Mobile dropdown menu ── */}
-      {mobileOpen && (
-        <div
-          className="fixed inset-0 top-[57px] z-40 lg:hidden"
-          onClick={() => setMobileOpen(false)}
-        >
-          <div
-            className="border-b shadow-lg"
-            style={{ background: 'var(--surface-strong)', borderColor: 'var(--border-subtle)' }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <nav className="flex flex-col gap-1 px-3 py-3">
-              {NAV_ITEMS.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  onClick={() => setMobileOpen(false)}
-                  className="flex items-center gap-3 rounded-xl px-3 py-2.5 no-underline transition hover:bg-purple-ghost"
-                  style={{
-                    color: isActive(item) ? 'var(--purple)' : 'var(--text-muted)',
-                    background: isActive(item) ? 'var(--purple-ghost)' : 'transparent',
-                  }}
-                >
-                  <span className="shrink-0">{item.icon}</span>
-                  <span className="text-sm font-medium">{item.label}</span>
-                </Link>
-              ))}
-            </nav>
-            {!loading && (
-              <div className="border-t px-3 py-3" style={{ borderColor: 'var(--border-subtle)' }}>
-                {user ? (
-                  <>
-                    <Link
-                      href={`/profile/${user.id}`}
-                      onClick={() => setMobileOpen(false)}
-                      className="flex items-center gap-3 rounded-xl px-3 py-2 no-underline transition hover:bg-purple-ghost"
-                    >
-                      <Avatar name={profile?.display_name || 'U'} size="sm" />
-                      <span className="text-sm font-medium text-foreground">{profile?.display_name || 'User'}</span>
-                    </Link>
-                    <button
-                      onClick={async () => { await signOut(); setMobileOpen(false); window.location.href = '/'; }}
-                      className="mt-1 flex w-full items-center gap-3 rounded-xl px-3 py-2 transition hover:bg-purple-ghost"
-                      style={{ color: 'var(--text-subtle)' }}
-                    >
-                      <svg className="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75" />
-                      </svg>
-                      <span className="text-sm font-medium">Sign Out</span>
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    <Link href="/auth/signin" onClick={() => setMobileOpen(false)} className="flex items-center gap-3 rounded-xl px-3 py-2 no-underline transition hover:bg-purple-ghost" style={{ color: 'var(--purple)' }}>
-                      <svg className="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" /></svg>
-                      <span className="text-sm font-semibold">Sign In</span>
-                    </Link>
-                    <Link href="/auth/signup" onClick={() => setMobileOpen(false)} className="flex items-center gap-3 rounded-xl px-3 py-2 no-underline transition hover:bg-purple-ghost" style={{ color: 'var(--text-muted)' }}>
-                      <svg className="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M19 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zM4 19.235v-.11a6.375 6.375 0 0112.75 0v.109A12.318 12.318 0 0110.374 21c-2.331 0-4.512-.645-6.374-1.766z" /></svg>
-                      <span className="text-sm font-medium">Sign Up</span>
-                    </Link>
-                  </>
-                )}
-              </div>
+    <aside
+      className="sticky top-0 h-screen shrink-0 border-r transition-all duration-200"
+      style={{
+        width: collapsed ? '64px' : '220px',
+        borderColor: 'var(--border-subtle)',
+        background: 'var(--surface-strong)',
+      }}
+    >
+      <div className="flex h-full flex-col">
+        {/* Logo */}
+        <div className="flex items-center gap-2.5 border-b px-4 py-4" style={{ borderColor: 'var(--border-subtle)' }}>
+          <Link href="/" className="flex items-center gap-2.5 no-underline">
+            <Image src="/tapercommunity-logo.png" alt="TaperCommunity" width={28} height={28} className="shrink-0" />
+            {!collapsed && (
+              <span className="text-lg font-semibold" style={{ fontFamily: 'Fraunces, Georgia, serif', color: 'var(--foreground)', letterSpacing: '-0.02em' }}>
+                TaperCommunity
+              </span>
             )}
-          </div>
+          </Link>
         </div>
-      )}
 
-      {/* ── Desktop sidebar ── */}
-      <aside
-        className="sticky top-0 hidden h-screen shrink-0 border-r transition-all duration-200 lg:block"
-        style={{
-          width: collapsed ? '64px' : '220px',
-          borderColor: 'var(--border-subtle)',
-          background: 'var(--surface-strong)',
-        }}
-      >
-        <div className="flex h-full flex-col">
-          {/* Logo */}
-          <div className="flex items-center gap-2.5 border-b px-4 py-4" style={{ borderColor: 'var(--border-subtle)' }}>
-            <Link href="/" className="flex items-center gap-2.5 no-underline">
-              <Image src="/tapercommunity-logo.png" alt="TaperCommunity" width={28} height={28} className="shrink-0" />
+        {/* Nav */}
+        <nav className="flex flex-1 flex-col gap-1 px-2 py-3">
+          {NAV_ITEMS.map((item) => {
+            const isActive = !item.external && (item.exact
+              ? pathname === item.href
+              : pathname === item.href || pathname.startsWith(item.href + '/'));
+            const Tag = item.external ? 'a' : Link;
+            const extraProps = item.external ? { target: '_blank', rel: 'noopener noreferrer' } : {};
+            return (
+              <Tag
+                key={item.href}
+                href={item.href}
+                className="flex items-center gap-3 rounded-xl px-3 py-2.5 no-underline transition hover:bg-purple-ghost"
+                style={{
+                  color: isActive ? 'var(--purple)' : 'var(--text-muted)',
+                  background: isActive ? 'var(--purple-ghost)' : 'transparent',
+                }}
+                title={collapsed ? item.label : undefined}
+                {...extraProps}
+              >
+                <span className="shrink-0">{item.icon}</span>
+                {!collapsed && (
+                  <span className="text-sm font-medium">{item.label}</span>
+                )}
+              </Tag>
+            );
+          })}
+        </nav>
+
+        {/* Collapse toggle */}
+        <div className="px-2 py-2">
+          <button
+            onClick={() => setCollapsed(!collapsed)}
+            className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 transition hover:bg-purple-ghost"
+            style={{ color: 'var(--text-subtle)' }}
+          >
+            <svg className={`h-5 w-5 shrink-0 transition ${collapsed ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M18.75 19.5l-7.5-7.5 7.5-7.5m-6 15L5.25 12l7.5-7.5" />
+            </svg>
+            {!collapsed && <span className="text-sm font-medium">Collapse</span>}
+          </button>
+        </div>
+
+        {/* User */}
+        {!loading && user && (
+          <div className="border-t px-2 py-3" style={{ borderColor: 'var(--border-subtle)' }}>
+            <Link
+              href={`/profile/${user.id}`}
+              className="flex items-center gap-3 rounded-xl px-3 py-2 no-underline transition hover:bg-purple-ghost"
+            >
+              <Avatar name={profile?.display_name || 'U'} size="sm" />
               {!collapsed && (
-                <span className="text-lg font-semibold" style={{ fontFamily: 'Fraunces, Georgia, serif', color: 'var(--foreground)', letterSpacing: '-0.02em' }}>
-                  TaperCommunity
-                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium text-foreground">{profile?.display_name || 'User'}</p>
+                  <p className="text-[11px] text-text-subtle">View profile</p>
+                </div>
               )}
             </Link>
-          </div>
-
-          {/* Nav */}
-          <nav className="flex flex-1 flex-col gap-1 px-2 py-3">
-            {NAV_ITEMS.map((item) => {
-              const Tag = item.external ? 'a' : Link;
-              const extraProps = item.external ? { target: '_blank', rel: 'noopener noreferrer' } : {};
-              return (
-                <Tag
-                  key={item.href}
-                  href={item.href}
-                  className="flex items-center gap-3 rounded-xl px-3 py-2.5 no-underline transition hover:bg-purple-ghost"
-                  style={{
-                    color: isActive(item) ? 'var(--purple)' : 'var(--text-muted)',
-                    background: isActive(item) ? 'var(--purple-ghost)' : 'transparent',
-                  }}
-                  title={collapsed ? item.label : undefined}
-                  {...extraProps}
-                >
-                  <span className="shrink-0">{item.icon}</span>
-                  {!collapsed && (
-                    <span className="text-sm font-medium">{item.label}</span>
-                  )}
-                </Tag>
-              );
-            })}
-          </nav>
-
-          {/* Collapse toggle */}
-          <div className="px-2 py-2">
             <button
-              onClick={() => setCollapsed(!collapsed)}
-              className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 transition hover:bg-purple-ghost"
+              onClick={async () => {
+                await signOut();
+                window.location.href = '/';
+              }}
+              className="mt-1 flex w-full items-center gap-3 rounded-xl px-3 py-2 transition hover:bg-purple-ghost"
               style={{ color: 'var(--text-subtle)' }}
+              title={collapsed ? 'Sign Out' : undefined}
             >
-              <svg className={`h-5 w-5 shrink-0 transition ${collapsed ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M18.75 19.5l-7.5-7.5 7.5-7.5m-6 15L5.25 12l7.5-7.5" />
+              <svg className="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75" />
               </svg>
-              {!collapsed && <span className="text-sm font-medium">Collapse</span>}
+              {!collapsed && <span className="text-sm font-medium">Sign Out</span>}
             </button>
           </div>
+        )}
 
-          {/* User */}
-          {!loading && user && (
-            <div className="border-t px-2 py-3" style={{ borderColor: 'var(--border-subtle)' }}>
-              <Link
-                href={`/profile/${user.id}`}
-                className="flex items-center gap-3 rounded-xl px-3 py-2 no-underline transition hover:bg-purple-ghost"
-              >
-                <Avatar name={profile?.display_name || 'U'} size="sm" />
-                {!collapsed && (
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium text-foreground">{profile?.display_name || 'User'}</p>
-                    <p className="text-[11px] text-text-subtle">View profile</p>
-                  </div>
-                )}
-              </Link>
-              <button
-                onClick={async () => {
-                  await signOut();
-                  window.location.href = '/';
-                }}
-                className="mt-1 flex w-full items-center gap-3 rounded-xl px-3 py-2 transition hover:bg-purple-ghost"
-                style={{ color: 'var(--text-subtle)' }}
-                title={collapsed ? 'Sign Out' : undefined}
-              >
-                <svg className="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75" />
-                </svg>
-                {!collapsed && <span className="text-sm font-medium">Sign Out</span>}
-              </button>
-            </div>
-          )}
-
-          {!loading && !user && (
-            <div className="border-t px-2 py-3 space-y-1" style={{ borderColor: 'var(--border-subtle)' }}>
-              <Link
-                href="/auth/signin"
-                className="flex items-center gap-3 rounded-xl px-3 py-2 no-underline transition hover:bg-purple-ghost"
-                style={{ color: 'var(--purple)' }}
-              >
-                <svg className="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
-                </svg>
-                {!collapsed && <span className="text-sm font-semibold">Sign In</span>}
-              </Link>
-              <Link
-                href="/auth/signup"
-                className="flex items-center gap-3 rounded-xl px-3 py-2 no-underline transition hover:bg-purple-ghost"
-                style={{ color: 'var(--text-muted)' }}
-              >
-                <svg className="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zM4 19.235v-.11a6.375 6.375 0 0112.75 0v.109A12.318 12.318 0 0110.374 21c-2.331 0-4.512-.645-6.374-1.766z" />
-                </svg>
-                {!collapsed && <span className="text-sm font-medium">Sign Up</span>}
-              </Link>
-            </div>
-          )}
-        </div>
-      </aside>
-    </>
+        {!loading && !user && (
+          <div className="border-t px-2 py-3 space-y-1" style={{ borderColor: 'var(--border-subtle)' }}>
+            <Link
+              href="/auth/signin"
+              className="flex items-center gap-3 rounded-xl px-3 py-2 no-underline transition hover:bg-purple-ghost"
+              style={{ color: 'var(--purple)' }}
+            >
+              <svg className="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
+              </svg>
+              {!collapsed && <span className="text-sm font-semibold">Sign In</span>}
+            </Link>
+            <Link
+              href="/auth/signup"
+              className="flex items-center gap-3 rounded-xl px-3 py-2 no-underline transition hover:bg-purple-ghost"
+              style={{ color: 'var(--text-muted)' }}
+            >
+              <svg className="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zM4 19.235v-.11a6.375 6.375 0 0112.75 0v.109A12.318 12.318 0 0110.374 21c-2.331 0-4.512-.645-6.374-1.766z" />
+              </svg>
+              {!collapsed && <span className="text-sm font-medium">Sign Up</span>}
+            </Link>
+          </div>
+        )}
+      </div>
+    </aside>
   );
 }
