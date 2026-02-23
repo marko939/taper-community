@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import { DRUG_LIST } from '@/lib/drugs';
 import { SYMPTOMS, MOOD_LABELS } from '@/lib/constants';
 import { createClient } from '@/lib/supabase/client';
+import { GENERAL_FORUMS } from '@/lib/forumCategories';
 
 function ordinal(n) {
   const s = ['th', 'st', 'nd', 'rd'];
@@ -107,13 +108,19 @@ export default function JournalEntryForm({ onSubmit, entryCount = 0 }) {
   const drugSlug = DRUG_LIST.find((d) => d.name === drug)?.slug;
   const drugForum = forums.find((f) => f.drug_slug === drugSlug);
 
-  // General forums only (no drug forums) for the cross-post picker
-  const generalForums = forums.filter((f) => !f.drug_slug && f.category !== 'start');
+  // General forums only — use GENERAL_FORUMS as source of truth for which forums to show and their display names
+  const generalForumSlugs = new Set(GENERAL_FORUMS.map((gf) => gf.slug));
+  const generalForums = forums
+    .filter((f) => !f.drug_slug && generalForumSlugs.has(f.slug))
+    .map((f) => {
+      const gf = GENERAL_FORUMS.find((g) => g.slug === f.slug);
+      return { ...f, displayName: gf?.name || f.name };
+    });
 
   // Auto-selected forums based on mood and first post
-  const introForum = forums.find((f) => f.slug === 'introductions' || f.name === 'Introductions');
-  const successForum = forums.find((f) => f.slug === 'success-stories' || f.name === 'Success Stories');
-  const supportForum = forums.find((f) => f.slug === 'support' || f.name === 'Support');
+  const introForum = forums.find((f) => f.slug === 'introductions');
+  const successForum = forums.find((f) => f.slug === 'success-stories');
+  const supportForum = forums.find((f) => f.slug === 'support');
 
   const autoForums = useMemo(() => {
     const auto = [];
@@ -229,7 +236,7 @@ export default function JournalEntryForm({ onSubmit, entryCount = 0 }) {
                   cursor: isAuto ? 'default' : 'pointer',
                 }}
               >
-                {forum.name}
+                {forum.displayName || forum.name}
                 {isAuto && <span className="ml-1 text-[10px] font-normal opacity-70">auto</span>}
               </button>
             );

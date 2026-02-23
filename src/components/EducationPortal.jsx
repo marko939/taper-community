@@ -8,18 +8,18 @@ import { useEffect, useRef, useState } from 'react';
   Purple brand (#5B2E91), system sans-serif body, Georgia headings.
 */
 
-const PURPLE = '#482BE7';
-const PURPLE_LIGHT = '#ECE8FF';
-const PURPLE_BG = '#F5F3FF';
-const TEAL = '#1A7F7A';
+const PURPLE = '#5B2E91';
+const PURPLE_LIGHT = '#EDE5F4';
+const PURPLE_BG = '#F7F3FB';
+const TEAL = '#2EC4B6';
 const TEAL_BG = '#F0FAF9';
 const AMBER = '#A56B00';
 const AMBER_BG = '#FDF8EC';
 const GRAY = '#6B6580';
-const LIGHT = '#F5F3F8';
-const BORDER = '#D5D7DE';
-const TEXT = '#1E0E62';
-const MUTED = '#8C8699';
+const LIGHT = '#F7F3FB';
+const BORDER = '#E8E5F0';
+const TEXT = '#1E1B2E';
+const MUTED = '#9B95A8';
 
 // ─── All curriculum content ───
 const MODULES = [
@@ -620,7 +620,7 @@ function ContentBlock({ block }) {
     <div style={{ margin: "24px 0" }}>
       <div style={{
         background: "#1A1625", borderRadius: 10, overflow: "hidden",
-        boxShadow: "0 2px 12px rgba(91,46,145,0.10)",
+        boxShadow: "0 2px 12px rgba(91,46,145,0.15)",
       }}>
         <div style={{ position: "relative", paddingBottom: "56.25%", height: 0 }}>
           <iframe
@@ -682,7 +682,7 @@ export default function TaperMedsEducation() {
         height: '100%',
         minHeight: 0,
         padding: isSmallScreen ? 0 : '20px 24px 24px',
-        background: 'linear-gradient(180deg,#faf9ff 0%,#f3f1fb 100%)',
+        background: 'linear-gradient(180deg,#F7F3FB 0%,#F0ECF5 100%)',
       }}>
         <div style={{
           display: 'flex',
@@ -694,7 +694,7 @@ export default function TaperMedsEducation() {
           borderRadius: isSmallScreen ? 0 : 28,
           overflow: 'hidden',
           background: '#fff',
-          boxShadow: isSmallScreen ? 'none' : '0 24px 72px rgba(30,14,98,0.10)',
+          boxShadow: isSmallScreen ? 'none' : '0 24px 72px rgba(91,46,145,0.10)',
         }}>
         {/* ─── Sidebar ─── */}
         {!isSmallScreen && <aside style={{
@@ -702,10 +702,10 @@ export default function TaperMedsEducation() {
           minWidth: 290,
           borderRight: `1px solid ${BORDER}`,
           display: "flex", flexDirection: "column", overflow: "hidden", minHeight: 0,
-          background: 'linear-gradient(180deg,#f7f5ff 0%,#f3f1fb 100%)',
+          background: 'linear-gradient(180deg,#F7F3FB 0%,#F0ECF5 100%)',
         }}>
           {/* Logo */}
-          <div style={{ padding: "20px 22px", borderBottom: `1px solid ${BORDER}`, display: "flex", alignItems: "center", gap: 10, background: '#f5f2ff' }}>
+          <div style={{ padding: "20px 22px", borderBottom: `1px solid ${BORDER}`, display: "flex", alignItems: "center", gap: 10, background: '#F7F3FB' }}>
             <div style={{ width: 28, height: 28, borderRadius: 7, background: PURPLE, display: "flex", alignItems: "center", justifyContent: "center" }}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="#fff"><path d="M3.5 18.49l6-6.01 4 4L22 6.92l-1.41-1.41-7.09 7.97-4-4L2 16.99z"/></svg>
             </div>
@@ -751,7 +751,7 @@ export default function TaperMedsEducation() {
         </aside>}
 
         {/* ─── Main Content ─── */}
-        <main ref={contentRef} style={{ flex: 1, minHeight: 0, overflow: "auto", background: '#fcfbff' }}>
+        <main ref={contentRef} style={{ flex: 1, minHeight: 0, overflow: "auto", background: '#FEFCFF' }}>
           {/* Top bar */}
           <div style={{
             position: "sticky", top: 0, zIndex: 10, background: 'rgba(247,247,247,0.96)',
