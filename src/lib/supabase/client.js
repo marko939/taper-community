@@ -44,10 +44,16 @@ export function createClient() {
     );
 
     if (!url || !key) {
-      throw new Error(
-        `Supabase client cannot be created: NEXT_PUBLIC_SUPABASE_URL=${url}, NEXT_PUBLIC_SUPABASE_ANON_KEY=${key ? 'set' : 'undefined'}. ` +
-        'These must be set in .env.local (locally) or Vercel Environment Variables (production) BEFORE building.'
+      console.error(
+        `[supabase] NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY is missing. ` +
+        'Set them in .env.local (locally) or Vercel Environment Variables (production) BEFORE building.'
       );
+      // Return a dummy client so the app doesn't crash — features that need Supabase will silently fail
+      _client = createBrowserClient(
+        url || 'https://placeholder.supabase.co',
+        key || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBsYWNlaG9sZGVyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MDAwMDAwMDAsImV4cCI6MjAwMDAwMDAwMH0.placeholder'
+      );
+      return _client;
     }
 
     _client = createBrowserClient(url, key);
