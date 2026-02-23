@@ -108,19 +108,31 @@ export default function JournalEntryForm({ onSubmit, entryCount = 0 }) {
   const drugSlug = DRUG_LIST.find((d) => d.name === drug)?.slug;
   const drugForum = forums.find((f) => f.drug_slug === drugSlug);
 
-  // General forums only — use GENERAL_FORUMS as source of truth for which forums to show and their display names
-  const generalForumSlugs = new Set(GENERAL_FORUMS.map((gf) => gf.slug));
-  const generalForums = forums
-    .filter((f) => !f.drug_slug && generalForumSlugs.has(f.slug))
-    .map((f) => {
-      const gf = GENERAL_FORUMS.find((g) => g.slug === f.slug);
-      return { ...f, displayName: gf?.name || f.name };
-    });
+  // GENERAL_FORUMS is always the source of truth — merge DB data in for IDs
+  const dbBySlug = useMemo(() => {
+    const map = {};
+    for (const f of forums) { if (f.slug) map[f.slug] = f; }
+    return map;
+  }, [forums]);
+
+  const generalForums = useMemo(() =>
+    GENERAL_FORUMS.map((gf) => {
+      const db = dbBySlug[gf.slug];
+      return {
+        id: db?.id || gf.slug,        // fallback to slug if DB row missing
+        slug: gf.slug,
+        name: gf.name,
+        displayName: gf.name,
+        category: gf.category,
+        _hasDb: !!db,                  // track whether DB row exists
+      };
+    }),
+  [dbBySlug]);
 
   // Auto-selected forums based on mood and first post
-  const introForum = forums.find((f) => f.slug === 'introductions');
-  const successForum = forums.find((f) => f.slug === 'success-stories');
-  const supportForum = forums.find((f) => f.slug === 'support');
+  const introForum = generalForums.find((f) => f.slug === 'introductions');
+  const successForum = generalForums.find((f) => f.slug === 'success-stories');
+  const supportForum = generalForums.find((f) => f.slug === 'support');
 
   const autoForums = useMemo(() => {
     const auto = [];
@@ -132,19 +144,22 @@ export default function JournalEntryForm({ onSubmit, entryCount = 0 }) {
 
   const autoForumIds = autoForums.map((f) => f.id);
 
-  // All forums that will be posted to
+  // All forums that will be posted to (look up from both DB forums and generalForums)
   const allPostingForums = useMemo(() => {
     const ids = new Set([...crossPostForums, ...autoForumIds]);
     if (drugForum) ids.add(drugForum.id);
-    return [...ids].map((id) => forums.find((f) => f.id === id)).filter(Boolean);
-  }, [crossPostForums, autoForumIds, drugForum, forums]);
+    return [...ids].map((id) => {
+      return forums.find((f) => f.id === id) || generalForums.find((f) => f.id === id);
+    }).filter(Boolean);
+  }, [crossPostForums, autoForumIds, drugForum, forums, generalForums]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (loading) return;
     setLoading(true);
 
-    const allForumIds = allPostingForums.map((f) => f.id);
+    // Only post to forums that have a real DB row (skip slug-only fallbacks)
+    const allForumIds = allPostingForums.filter((f) => f._hasDb !== false).map((f) => f.id);
 
     await onSubmit({
       title: title || titlePlaceholder,
