@@ -63,8 +63,8 @@ export default function CommunityPulse() {
     <section>
       <h2 className="mb-3 text-sm font-semibold text-foreground">Community This Week</h2>
       <div
-        className="grid grid-cols-2 gap-px overflow-hidden rounded-xl border"
-        style={{ borderColor: 'var(--border-subtle)', background: 'var(--border-subtle)' }}
+        className="grid grid-cols-2 overflow-hidden rounded-xl border"
+        style={{ borderColor: '#3D1D6B', background: '#3D1D6B', gap: '1.5px' }}
       >
         <StatCell
           label="Meds reduced"
