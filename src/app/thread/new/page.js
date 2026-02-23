@@ -7,19 +7,7 @@ import { createClient } from '@/lib/supabase/client';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
 import NewThreadForm from '@/components/forums/NewThreadForm';
 import { PageLoading } from '@/components/shared/LoadingSpinner';
-
-const CATEGORY_LABELS = {
-  start: 'Getting Started',
-  community: 'Community',
-  general: 'Community',
-  tapering: 'Tapering & Symptoms',
-  lifestyle: 'Lifestyle & Wellness',
-  drug: 'Drug-Specific',
-  research: 'Research & News',
-  resources: 'Research & News',
-};
-
-const CATEGORY_ORDER = ['start', 'community', 'tapering', 'lifestyle', 'drug', 'research'];
+import { GENERAL_FORUMS, FORUM_CATEGORY_ORDER } from '@/lib/forumCategories';
 
 function NewThreadContent() {
   const { user, loading: authLoading } = useRequireAuth();
@@ -49,14 +37,21 @@ function NewThreadContent() {
 
   if (authLoading || loading) return <PageLoading />;
 
-  // Group forums by category
+  // Build a slug→display name map from GENERAL_FORUMS
+  const displayNameBySlug = {};
+  GENERAL_FORUMS.forEach((f) => { displayNameBySlug[f.slug] = f.name; });
+
+  // Group forums by category, using GENERAL_FORUMS for display names
   const grouped = {};
   for (const forum of forums) {
     const cat = forum.category;
-    // Merge general into community, resources into research
-    const normalizedCat = cat === 'general' ? 'community' : cat === 'resources' ? 'research' : cat;
+    // Normalize legacy categories
+    const normalizedCat = cat === 'general' ? 'community' : cat === 'resources' ? 'research' : cat === 'start' ? 'community' : cat;
     if (!grouped[normalizedCat]) grouped[normalizedCat] = [];
-    grouped[normalizedCat].push(forum);
+    grouped[normalizedCat].push({
+      ...forum,
+      displayName: displayNameBySlug[forum.slug] || forum.name,
+    });
   }
 
   const toggleForum = (forumId) => {
@@ -114,13 +109,13 @@ function NewThreadContent() {
         </label>
 
         <div className="space-y-4">
-          {CATEGORY_ORDER.map((cat) => {
-            const catForums = grouped[cat];
+          {FORUM_CATEGORY_ORDER.map(({ key, label }) => {
+            const catForums = grouped[key];
             if (!catForums || catForums.length === 0) return null;
             return (
-              <div key={cat}>
+              <div key={key}>
                 <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-text-subtle">
-                  {CATEGORY_LABELS[cat]}
+                  {label}
                 </p>
                 <div className="flex flex-wrap gap-2">
                   {catForums.map((forum) => {
@@ -136,7 +131,7 @@ function NewThreadContent() {
                             : 'border-border-subtle text-text-muted hover:border-purple-pale hover:text-purple'
                         }`}
                       >
-                        {forum.name}
+                        {forum.displayName}
                       </button>
                     );
                   })}
