@@ -27,12 +27,12 @@ export const useThreadStore = create((set, get) => ({
       }));
 
       // Increment view count (best-effort)
-      supabase.rpc('increment_view_count', { tid: threadId }).catch(() => {
-        supabase
-          .from('threads')
-          .update({ view_count: (threadData.view_count || 0) + 1 })
-          .eq('id', threadId);
-      });
+      supabase
+        .from('threads')
+        .update({ view_count: (threadData.view_count || 0) + 1 })
+        .eq('id', threadId)
+        .then(() => {})
+        .catch(() => {});
     }
 
     return threadData;
