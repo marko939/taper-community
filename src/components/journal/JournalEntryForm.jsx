@@ -87,8 +87,13 @@ export default function JournalEntryForm({ onSubmit, entryCount = 0 }) {
 
   const autoNotes = useMemo(() => {
     const moodTag = moodScore === 1 ? 'in a crisis' : MOOD_LABELS[moodScore]?.toLowerCase();
+    let symptomList = '';
+    const lower = symptoms.map((s) => s.toLowerCase());
+    if (lower.length === 1) symptomList = lower[0];
+    else if (lower.length === 2) symptomList = `${lower[0]} and ${lower[1]}`;
+    else symptomList = `${lower.slice(0, -1).join(', ')}, and ${lower[lower.length - 1]}`;
     const symptomPart = symptoms.length > 0
-      ? `Been having bouts of ${symptoms.join(', ').toLowerCase()}.`
+      ? `Been having bouts of ${symptomList}.`
       : 'No specific symptoms.';
     return `Feeling ${moodTag}. ${symptomPart}`;
   }, [moodScore, symptoms]);
