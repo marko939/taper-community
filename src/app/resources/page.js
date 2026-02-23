@@ -229,15 +229,16 @@ export default function ResourcesPage() {
             href="https://www.sfu-ljubljana.si/sites/default/files/2025-04/Mark%20Horowitz%2C%20David%20M.%20Taylor%20-%20The%20Maudsley%20Deprescribing%20Guidelines_%20Antidepressants%2C%20Benzodiazepines%2C%20Gabapentinoids.pdf"
             target="_blank"
             rel="noopener noreferrer"
-            className="group flex items-start gap-4 rounded-2xl border p-6 no-underline transition hover:border-purple hover:shadow-elevated"
-            style={{ borderColor: 'var(--border-subtle)', background: 'var(--surface-strong)' }}
+            className="group flex items-start gap-4 rounded-2xl border p-6 no-underline transition hover:shadow-elevated"
+            style={{ borderColor: 'var(--purple-pale)', background: 'var(--surface-strong)' }}
           >
             <div
               className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl transition group-hover:scale-110"
-              style={{ background: 'var(--purple-pale)', color: 'var(--purple)' }}
+              style={{ background: 'var(--purple)', color: 'white' }}
             >
+              {/* Medical scales / evidence-based icon */}
               <svg className="h-7 w-7" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v17.25m0 0c-1.472 0-2.882.265-4.185.75M12 20.25c1.472 0 2.882.265 4.185.75M18.75 4.97A48.416 48.416 0 0012 4.5c-2.291 0-4.545.16-6.75.47m13.5 0c1.01.143 2.01.317 3 .52m-3-.52l2.62 10.726c.122.499-.106 1.028-.589 1.202a5.988 5.988 0 01-2.031.352 5.988 5.988 0 01-2.031-.352c-.483-.174-.711-.703-.59-1.202L18.75 4.971zm-16.5.52c.99-.203 1.99-.377 3-.52m0 0l2.62 10.726c.122.499-.106 1.028-.589 1.202a5.989 5.989 0 01-2.031.352 5.989 5.989 0 01-2.031-.352c-.483-.174-.711-.703-.59-1.202L5.25 4.971z" />
               </svg>
             </div>
             <div className="min-w-0 flex-1">
@@ -248,11 +249,11 @@ export default function ResourcesPage() {
                 By Mark Horowitz & David Taylor. Evidence-based guidance for tapering antidepressants, benzodiazepines, and gabapentinoids.
               </p>
               <span
-                className="mt-3 inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-bold"
-                style={{ background: 'var(--purple-pale)', color: 'var(--purple)' }}
+                className="mt-3 inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-bold text-white"
+                style={{ background: 'var(--purple)' }}
               >
                 <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
                 </svg>
                 PDF
               </span>
@@ -264,15 +265,16 @@ export default function ResourcesPage() {
             href="https://www.benzoinfo.com/wp-content/uploads/2022/07/Ashton-Manual.pdf"
             target="_blank"
             rel="noopener noreferrer"
-            className="group flex items-start gap-4 rounded-2xl border p-6 no-underline transition hover:border-purple hover:shadow-elevated"
-            style={{ borderColor: 'var(--border-subtle)', background: 'var(--surface-strong)' }}
+            className="group flex items-start gap-4 rounded-2xl border p-6 no-underline transition hover:shadow-elevated"
+            style={{ borderColor: 'var(--purple-pale)', background: 'var(--surface-strong)' }}
           >
             <div
               className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl transition group-hover:scale-110"
-              style={{ background: 'var(--purple-pale)', color: 'var(--purple)' }}
+              style={{ background: 'var(--purple)', color: 'white' }}
             >
+              {/* Brain / neuroscience icon */}
               <svg className="h-7 w-7" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3M14.25 3.104c.251.023.501.05.75.082M19.8 15.3l-1.57.393A9.065 9.065 0 0112 15a9.065 9.065 0 00-6.23.693L5 14.5m14.8.8l1.402 1.402c1.232 1.232.65 3.318-1.067 3.611A48.309 48.309 0 0112 21c-2.773 0-5.491-.235-8.135-.687-1.718-.293-2.3-2.379-1.067-3.61L5 14.5" />
               </svg>
             </div>
             <div className="min-w-0 flex-1">
@@ -283,11 +285,11 @@ export default function ResourcesPage() {
                 By Professor C. Heather Ashton. The definitive guide to benzodiazepine withdrawal and tapering protocols.
               </p>
               <span
-                className="mt-3 inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-bold"
-                style={{ background: 'var(--purple-pale)', color: 'var(--purple)' }}
+                className="mt-3 inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-bold text-white"
+                style={{ background: 'var(--purple)' }}
               >
                 <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
                 </svg>
                 PDF
               </span>
