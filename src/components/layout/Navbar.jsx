@@ -16,7 +16,7 @@ export default function Navbar() {
     { href: '/journal', label: 'Journal' },
     { href: 'https://tapermeds.com/education', label: 'Education', external: true },
     { href: '/deprescribers', label: 'Find a Provider' },
-    { href: '/drugs', label: 'Drug Profiles' },
+    { href: '/resources', label: 'Resources' },
   ];
 
   return (
