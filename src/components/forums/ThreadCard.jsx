@@ -61,7 +61,7 @@ export default function ThreadCard({ thread }) {
 
         <div className="mt-2.5 flex items-center gap-3 text-xs" style={{ color: 'var(--text-subtle)' }}>
           <div className="flex items-center gap-1.5">
-            <Avatar name={displayName} size="sm" />
+            <Avatar name={displayName} avatarUrl={profiles?.avatar_url} size="sm" />
             <Link href={`/profile/${user_id}`} className="font-medium no-underline transition hover:text-purple" style={{ color: 'var(--text-muted)' }}>
               {displayName}
             </Link>

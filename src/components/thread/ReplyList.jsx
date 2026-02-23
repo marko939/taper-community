@@ -35,7 +35,7 @@ export default function ReplyList({ replies = [], hasMore = false, totalCount, o
 
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2 text-sm">
-                  <Avatar name={displayName} size="sm" />
+                  <Avatar name={displayName} avatarUrl={reply.profiles?.avatar_url} size="sm" />
                   <Link href={`/profile/${reply.user_id}`} className="font-semibold text-foreground no-underline hover:text-accent-blue">
                     {displayName}
                   </Link>

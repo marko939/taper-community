@@ -17,7 +17,7 @@ export const useThreadStore = create((set, get) => ({
 
     const { data: threadData } = await supabase
       .from('threads')
-      .select('*, profiles:user_id(display_name, is_peer_advisor, drug, taper_stage, post_count, drug_signature, location)')
+      .select('*, profiles:user_id(display_name, is_peer_advisor, drug, taper_stage, post_count, drug_signature, location, avatar_url)')
       .eq('id', threadId)
       .single();
 
@@ -45,7 +45,7 @@ export const useThreadStore = create((set, get) => ({
 
     const { data, count } = await supabase
       .from('replies')
-      .select('*, profiles:user_id(display_name, is_peer_advisor, drug, taper_stage, post_count, drug_signature, location)', { count: 'exact' })
+      .select('*, profiles:user_id(display_name, is_peer_advisor, drug, taper_stage, post_count, drug_signature, location, avatar_url)', { count: 'exact' })
       .eq('thread_id', threadId)
       .order('created_at')
       .range(from, to);
@@ -77,7 +77,7 @@ export const useThreadStore = create((set, get) => ({
 
     const { data, count } = await supabase
       .from('replies')
-      .select('*, profiles:user_id(display_name, is_peer_advisor, drug, taper_stage, post_count, drug_signature, location)', { count: 'exact' })
+      .select('*, profiles:user_id(display_name, is_peer_advisor, drug, taper_stage, post_count, drug_signature, location, avatar_url)', { count: 'exact' })
       .eq('thread_id', threadId)
       .order('created_at')
       .range(from, to);
@@ -106,7 +106,7 @@ export const useThreadStore = create((set, get) => ({
     const { data, error } = await supabase
       .from('replies')
       .insert({ thread_id: threadId, user_id: userId, body: body.trim() })
-      .select('*, profiles:user_id(display_name, is_peer_advisor, drug, taper_stage, post_count, drug_signature)')
+      .select('*, profiles:user_id(display_name, is_peer_advisor, drug, taper_stage, post_count, drug_signature, avatar_url)')
       .single();
 
     if (!error && data) {

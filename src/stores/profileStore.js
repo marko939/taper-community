@@ -66,10 +66,15 @@ export const useProfileStore = create((set, get) => ({
     const userId = useAuthStore.getState().user?.id;
     if (!userId) return;
 
-    await supabase
+    const { error } = await supabase
       .from('profiles')
       .update(partial)
       .eq('id', userId);
+
+    if (error) {
+      console.error('[profileStore] updateProfile error:', error.message);
+      return;
+    }
 
     // Update local profile cache
     set((state) => {
