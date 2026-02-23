@@ -48,10 +48,14 @@ export default function CommunityPulse({ large }) {
     fetchStats();
   }, []);
 
+  const headingClass = large
+    ? 'mb-3 font-serif text-2xl font-semibold'
+    : 'mb-3 text-sm font-semibold text-foreground';
+
   if (loading) {
     return (
       <section>
-        <h2 className={large ? "mb-3 font-serif text-2xl font-semibold" : "mb-3 text-sm font-semibold text-foreground"} style={large ? { color: 'var(--foreground)' } : undefined}>Community This Week</h2>
+        <h2 className={headingClass} style={{ color: 'var(--foreground)' }}>Community This Week</h2>
         <div className="h-20 animate-pulse rounded-xl" style={{ background: 'var(--surface-glass)' }} />
       </section>
     );
@@ -61,16 +65,15 @@ export default function CommunityPulse({ large }) {
 
   return (
     <section>
-      <h2 className="mb-3 text-sm font-semibold text-foreground">Community This Week</h2>
+      <h2 className={headingClass} style={{ color: 'var(--foreground)' }}>Community This Week</h2>
       <div
-        className="grid grid-cols-2 overflow-hidden rounded-xl border"
-        style={{ borderColor: '#3D1D6B', background: '#3D1D6B', gap: '1.5px' }}
+        className="grid grid-cols-2 gap-px overflow-hidden rounded-xl border"
+        style={{ borderColor: 'var(--border-subtle)', background: 'var(--border-subtle)' }}
       >
         <StatCell
           label="Meds reduced"
           value={stats.totalReduced > 0 ? `${stats.totalReduced} mg` : '--'}
           icon="reduced"
-          highlight
         />
         <StatCell label="New threads" value={stats.threads} icon="thread" />
         <StatCell label="Replies" value={stats.replies} icon="reply" />
@@ -80,18 +83,13 @@ export default function CommunityPulse({ large }) {
   );
 }
 
-function StatCell({ label, value, icon, subtitle, highlight }) {
-  // Meds reduced = medium purple from hero palette; others = light purple tint
-  const bg = highlight ? '#5B2E91' : '#EDE5F5';
-  const iconBg = highlight ? 'rgba(255,255,255,0.15)' : 'rgba(91,46,145,0.12)';
-  const iconColor = highlight ? 'rgba(255,255,255,0.9)' : '#5B2E91';
-  const textColor = highlight ? '#fff' : '#3D1D63';
-  const subtextColor = highlight ? 'rgba(255,255,255,0.7)' : '#7B4FAF';
+function StatCell({ label, value, icon, subtitle }) {
+  const iconColor = 'var(--purple)';
   return (
-    <div className="flex items-center gap-2.5 px-3.5 py-3" style={{ background: bg }}>
+    <div className="flex items-center gap-2.5 px-3.5 py-3" style={{ background: 'var(--surface-strong)' }}>
       <div
         className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg"
-        style={{ background: iconBg }}
+        style={{ background: 'var(--purple-ghost)' }}
       >
         {icon === 'thread' && (
           <svg className="h-3.5 w-3.5" style={{ color: iconColor }} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
@@ -115,9 +113,9 @@ function StatCell({ label, value, icon, subtitle, highlight }) {
         )}
       </div>
       <div className="min-w-0">
-        <p className="text-lg font-bold leading-tight" style={{ color: textColor }}>{value}</p>
-        <p className="text-[10px] leading-tight" style={{ color: subtextColor }}>{label}</p>
-        {subtitle && <p className="text-[9px] leading-tight" style={{ color: subtextColor }}>{subtitle}</p>}
+        <p className="text-lg font-bold leading-tight text-foreground">{value}</p>
+        <p className="text-[10px] leading-tight text-text-subtle">{label}</p>
+        {subtitle && <p className="text-[9px] leading-tight text-text-subtle">{subtitle}</p>}
       </div>
     </div>
   );
