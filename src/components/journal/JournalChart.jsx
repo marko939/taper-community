@@ -240,6 +240,16 @@ export default function JournalChart({ entries = [], assessments = [] }) {
           ))}
         </ComposedChart>
       </ResponsiveContainer>
+      <div className="mt-2 flex justify-center gap-4 text-[11px] text-text-subtle">
+        <span className="flex items-center gap-1.5">
+          <span className="inline-block h-2 w-2 rounded-full" style={{ background: '#5B2E91' }} />
+          Dose (mg)
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span className="inline-block h-2 w-2 rounded-full" style={{ background: '#C47DB5' }} />
+          Mood (/10)
+        </span>
+      </div>
     </div>
   );
 }
