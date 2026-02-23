@@ -215,7 +215,7 @@ export default function JournalPage() {
           ) : (
             <>
               {/* Chart */}
-              <div className="card">
+              <div className="card" data-chart="mood">
                 <h2 className="mb-4 text-lg font-semibold text-foreground">Your Taper Progress</h2>
                 <JournalChart entries={entries} assessments={assessments} />
               </div>
@@ -285,9 +285,9 @@ export default function JournalPage() {
             </div>
           ) : (
             /* Assessment Chart */
-            <div className="card">
+            <div className="card" data-chart="assessment">
               <h2 className="mb-4 text-lg font-semibold text-foreground">Assessment Scores</h2>
-              <AssessmentChart assessments={assessments} />
+              <AssessmentChart assessments={assessments} entries={entries} />
             </div>
           )}
 
