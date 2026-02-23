@@ -2,6 +2,7 @@ import { DM_Sans } from 'next/font/google';
 import Sidebar from '@/components/layout/Sidebar';
 import Footer from '@/components/layout/Footer';
 import StoreInitializer from '@/components/layout/StoreInitializer';
+import NotificationFab from '@/components/layout/NotificationFab';
 import './globals.css';
 
 const dmSans = DM_Sans({
@@ -37,6 +38,7 @@ export default function RootLayout({ children }) {
             <Footer />
           </div>
         </div>
+        <NotificationFab />
       </body>
     </html>
   );

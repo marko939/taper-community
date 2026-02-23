@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server';
+import { createClient } from '@supabase/supabase-js';
 import { NextResponse } from 'next/server';
 
 export async function POST(request) {
@@ -8,27 +8,40 @@ export async function POST(request) {
     return NextResponse.json({ error: 'reply_id and thread_id required' }, { status: 400 });
   }
 
-  const apiKey = process.env.RESEND_API_KEY;
-  if (!apiKey) {
+  const resendKey = process.env.RESEND_API_KEY;
+  if (!resendKey) {
     return NextResponse.json({ skipped: true, reason: 'RESEND_API_KEY not configured' });
   }
 
-  try {
-    const supabase = await createClient();
+  const supabaseUrl = (process.env.NEXT_PUBLIC_SUPABASE_URL || '').trim();
+  const serviceKey = (process.env.SUPABASE_SERVICE_ROLE_KEY || '').trim();
 
+  if (!supabaseUrl || !serviceKey) {
+    return NextResponse.json({ skipped: true, reason: 'SUPABASE_SERVICE_ROLE_KEY not configured' });
+  }
+
+  // Use service role client to bypass RLS — we need to read all recipients' notifications
+  const supabase = createClient(supabaseUrl, serviceKey);
+
+  try {
     // Fetch all un-emailed notifications for this reply
-    const { data: notifications } = await supabase
+    const { data: notifications, error: fetchErr } = await supabase
       .from('notifications')
       .select('id, user_id, title, body, thread_id')
       .eq('reply_id', reply_id)
       .eq('emailed', false);
+
+    if (fetchErr) {
+      console.error('[notify-email] fetch error:', fetchErr);
+      return NextResponse.json({ error: fetchErr.message }, { status: 500 });
+    }
 
     if (!notifications || notifications.length === 0) {
       return NextResponse.json({ sent: 0 });
     }
 
     const { Resend } = await import('resend');
-    const resend = new Resend(apiKey);
+    const resend = new Resend(resendKey);
 
     let sent = 0;
     const notificationIds = [];
@@ -46,7 +59,8 @@ export async function POST(request) {
         continue;
       }
 
-      const threadUrl = `${process.env.NEXT_PUBLIC_SITE_URL || 'https://tapercommunity.com'}/thread/${notification.thread_id}`;
+      const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://taper-community.vercel.app';
+      const threadUrl = `${siteUrl}/thread/${notification.thread_id}`;
 
       try {
         await resend.emails.send({
@@ -58,7 +72,7 @@ export async function POST(request) {
               <p style="color: #333; font-size: 15px; line-height: 1.5;">${notification.title}</p>
               ${notification.body ? `<blockquote style="border-left: 3px solid #8b5cf6; margin: 12px 0; padding: 8px 12px; color: #666; font-size: 14px;">${notification.body}</blockquote>` : ''}
               <p><a href="${threadUrl}" style="display: inline-block; padding: 8px 16px; background: #8b5cf6; color: white; text-decoration: none; border-radius: 8px; font-size: 14px;">View Thread</a></p>
-              <p style="color: #999; font-size: 12px; margin-top: 24px;">You can turn off email notifications in your <a href="${process.env.NEXT_PUBLIC_SITE_URL || 'https://tapercommunity.com'}/settings" style="color: #8b5cf6;">settings</a>.</p>
+              <p style="color: #999; font-size: 12px; margin-top: 24px;">You can turn off email notifications in your <a href="${siteUrl}/settings" style="color: #8b5cf6;">settings</a>.</p>
             </div>
           `,
         });
