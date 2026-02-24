@@ -230,7 +230,7 @@ export const useThreadStore = create((set, get) => ({
   // Vote on thread or reply
   vote: async (type, targetId, voteType) => {
     const userId = useAuthStore.getState().user?.id;
-    if (!userId) return;
+    if (!userId || !targetId) return;
 
     const supabase = createClient();
     const table = type === 'thread' ? 'thread_votes' : 'reply_votes';
@@ -278,6 +278,7 @@ export const useThreadStore = create((set, get) => ({
 
   // Initialize vote state for a target (called on mount)
   initVoteState: async (type, targetId, initialScore) => {
+    if (!targetId) return;
     const key = `${type}_${targetId}`;
     // Already initialized
     if (get().voteState[key]) return;
@@ -289,24 +290,28 @@ export const useThreadStore = create((set, get) => ({
     const userId = useAuthStore.getState().user?.id;
     if (!userId) return;
 
-    const supabase = createClient();
-    const table = type === 'thread' ? 'thread_votes' : 'reply_votes';
-    const idColumn = type === 'thread' ? 'thread_id' : 'reply_id';
+    try {
+      const supabase = createClient();
+      const table = type === 'thread' ? 'thread_votes' : 'reply_votes';
+      const idColumn = type === 'thread' ? 'thread_id' : 'reply_id';
 
-    const { data } = await supabase
-      .from(table)
-      .select('vote_type')
-      .eq('user_id', userId)
-      .eq(idColumn, targetId)
-      .maybeSingle();
+      const { data } = await supabase
+        .from(table)
+        .select('vote_type')
+        .eq('user_id', userId)
+        .eq(idColumn, targetId)
+        .maybeSingle();
 
-    if (data) {
-      set((state) => ({
-        voteState: {
-          ...state.voteState,
-          [key]: { ...state.voteState[key], userVote: data.vote_type },
-        },
-      }));
+      if (data) {
+        set((state) => ({
+          voteState: {
+            ...state.voteState,
+            [key]: { ...state.voteState[key], userVote: data.vote_type },
+          },
+        }));
+      }
+    } catch (err) {
+      console.error('[threadStore] initVoteState error:', err);
     }
   },
 
@@ -337,7 +342,7 @@ export const useThreadStore = create((set, get) => ({
 
   // Initialize helpful state for a reply (called on mount)
   initHelpfulState: async (replyId, initialCount) => {
-    if (get().helpfulState[replyId]) return;
+    if (!replyId || get().helpfulState[replyId]) return;
 
     set((state) => ({
       helpfulState: { ...state.helpfulState, [replyId]: { hasVoted: false, count: initialCount ?? 0 } },
