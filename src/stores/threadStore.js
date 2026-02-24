@@ -198,7 +198,7 @@ export const useThreadStore = create((set, get) => ({
       .select('vote_type')
       .eq('user_id', userId)
       .eq(idColumn, targetId)
-      .single();
+      .maybeSingle();
 
     if (data) {
       set((state) => ({
@@ -252,7 +252,7 @@ export const useThreadStore = create((set, get) => ({
       .select('user_id')
       .eq('user_id', userId)
       .eq('reply_id', replyId)
-      .single();
+      .maybeSingle();
 
     if (data) {
       set((state) => ({
