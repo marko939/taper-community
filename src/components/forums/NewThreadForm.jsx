@@ -8,6 +8,7 @@ export default function NewThreadForm({ forumId, onSubmit, disabled = false }) {
   const [body, setBody] = useState('');
   const [selectedTags, setSelectedTags] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   const toggleTag = (tag) => {
     setSelectedTags((prev) =>
@@ -20,9 +21,12 @@ export default function NewThreadForm({ forumId, onSubmit, disabled = false }) {
     if (!title.trim() || !body.trim() || loading) return;
 
     setLoading(true);
+    setError(null);
     try {
       await onSubmit({ title: title.trim(), body: body.trim(), tags: selectedTags });
-    } finally {
+    } catch (err) {
+      console.error('[NewThreadForm] submit error:', err);
+      setError(err.message || 'Failed to create thread. Please try again.');
       setLoading(false);
     }
   };
@@ -78,6 +82,10 @@ export default function NewThreadForm({ forumId, onSubmit, disabled = false }) {
           ))}
         </div>
       </div>
+
+      {error && (
+        <p className="rounded-lg bg-red-50 px-4 py-2 text-sm text-red-600">{error}</p>
+      )}
 
       <div className="flex justify-end">
         <button

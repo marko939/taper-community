@@ -68,7 +68,7 @@ function NewThreadContent() {
   };
 
   const handleSubmit = async ({ title, body, tags }) => {
-    if (selectedForums.length === 0) return;
+    if (selectedForums.length === 0) throw new Error('Please select at least one community.');
 
     // Create ONE thread (primary forum = first selected)
     const { data: thread, error } = await supabase
@@ -83,9 +83,12 @@ function NewThreadContent() {
       .select('id')
       .maybeSingle();
 
-    if (error || !thread) {
+    if (error) {
       console.error('[NewThread] insert error:', error);
-      return;
+      throw new Error(error.message || 'Failed to create thread.');
+    }
+    if (!thread) {
+      throw new Error('Thread was not created. Please try again.');
     }
 
     // Link thread to ALL selected forums via junction table
