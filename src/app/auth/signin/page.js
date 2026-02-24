@@ -66,11 +66,8 @@ function SignInForm() {
       router.refresh();
       router.push('/');
     } catch (err) {
-      if (err?.name === 'AbortError' || err?.message?.includes('fetch')) {
-        setError('Network error. Please check your connection and try again.');
-      } else {
-        setError('Something went wrong. Please try again.');
-      }
+      console.error('[signin] error:', err?.message);
+      setError(err?.message || 'Sign in failed. Please try again.');
       setLoading(false);
     }
   };

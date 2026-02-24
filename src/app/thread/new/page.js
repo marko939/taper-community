@@ -110,7 +110,7 @@ function NewThreadContent() {
       ]);
     } catch (err) {
       if (err?.message === 'timeout') {
-        throw new Error('Posting is taking too long. Please check your connection and try again.');
+        throw new Error('Posting timed out. Please try again.');
       }
       throw err;
     }

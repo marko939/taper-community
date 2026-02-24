@@ -119,9 +119,9 @@ export default function QuickPost({ user, profile }) {
       setSuccess({ id: thread.id });
     } catch (err) {
       if (err?.message === 'timeout') {
-        setError('Posting is taking too long. Please check your connection and try again.');
+        setError('Posting timed out. Please try again.');
       } else {
-        setError(err?.message || 'Something went wrong. Please try again.');
+        setError(err?.message || 'Failed to create post. Please try again.');
       }
     } finally {
       setLoading(false);

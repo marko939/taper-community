@@ -43,9 +43,9 @@ export default function ReplyForm({ threadId }) {
       }
     } catch (err) {
       if (err?.message === 'timeout') {
-        setError('Posting is taking too long. Please check your connection and try again.');
+        setError('Posting timed out. Please try again.');
       } else {
-        setError('Something went wrong. Please try again.');
+        setError(err?.message || 'Failed to post reply. Please try again.');
       }
     }
     setLoading(false);
