@@ -1,13 +1,32 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import Avatar from '@/components/shared/Avatar';
 import Badge, { PeerAdvisorBadge } from '@/components/shared/Badge';
 import DrugSignature from '@/components/shared/DrugSignature';
 import VoteButton from '@/components/shared/VoteButton';
+import { useAuthStore } from '@/stores/authStore';
+import { createClient } from '@/lib/supabase/client';
+import { ADMIN_USER_ID } from '@/lib/blog';
 
 export default function ThreadView({ thread }) {
-  const { id, title, body, tags = [], view_count, vote_score, created_at, user_id, profiles, thread_forums = [] } = thread;
+  const { id, title, body, tags = [], view_count, vote_score, created_at, user_id, profiles, thread_forums = [], pinned } = thread;
+  const currentUser = useAuthStore((s) => s.user);
+  const isAdmin = currentUser?.id === ADMIN_USER_ID;
+  const [isPinned, setIsPinned] = useState(!!pinned);
+  const [pinLoading, setPinLoading] = useState(false);
+
+  const togglePin = async () => {
+    setPinLoading(true);
+    const supabase = createClient();
+    const { error } = await supabase
+      .from('threads')
+      .update({ pinned: !isPinned })
+      .eq('id', id);
+    if (!error) setIsPinned(!isPinned);
+    setPinLoading(false);
+  };
   const displayName = profiles?.display_name || 'Anonymous';
   const crossPostedForums = thread_forums
     .map((tf) => tf.forums)
@@ -50,7 +69,26 @@ export default function ThreadView({ thread }) {
 
             {/* Content */}
             <div className="min-w-0 flex-1">
-              <h1 className="text-2xl font-semibold text-foreground">{title}</h1>
+              <div className="flex items-start justify-between gap-3">
+                <h1 className="text-2xl font-semibold text-foreground">{title}</h1>
+                {isAdmin && (
+                  <button
+                    type="button"
+                    onClick={togglePin}
+                    disabled={pinLoading}
+                    className={`shrink-0 flex items-center gap-1 rounded-lg border px-2.5 py-1.5 text-xs font-medium transition ${
+                      isPinned
+                        ? 'border-purple bg-purple/10 text-purple'
+                        : 'border-border-subtle text-text-subtle hover:border-purple-pale hover:text-purple'
+                    }`}
+                  >
+                    <svg className="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M9.828 3.414a2 2 0 012.828 0l1.93 1.93a2 2 0 010 2.828l-5.464 5.464a1 1 0 01-.414.257l-3.5 1a1 1 0 01-1.236-1.236l1-3.5a1 1 0 01.257-.414l5.464-5.464z" />
+                    </svg>
+                    {pinLoading ? '...' : isPinned ? 'Unpin' : 'Pin'}
+                  </button>
+                )}
+              </div>
 
               <div className="mt-1 flex items-center gap-3 text-xs text-text-subtle">
                 <span>{new Date(created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
