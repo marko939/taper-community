@@ -80,39 +80,49 @@ export default function QuickPost({ user, profile }) {
     setLoading(true);
     setError('');
     try {
-      const { data: thread, error: insertError } = await supabase
-        .from('threads')
-        .insert({
-          forum_id: selectedForums[0],
-          user_id: user.id,
-          title: title.trim(),
-          body: body.trim(),
-          tags: selectedTags,
-        })
-        .select('id')
-        .maybeSingle();
+      const createThread = async () => {
+        const result = await supabase
+          .from('threads')
+          .insert({
+            forum_id: selectedForums[0],
+            user_id: user.id,
+            title: title.trim(),
+            body: body.trim(),
+            tags: selectedTags,
+          })
+          .select('id')
+          .maybeSingle();
 
-      if (insertError || !thread) {
-        console.error('[QuickPost] thread insert error:', insertError);
-        setError(insertError?.message || 'Failed to create post. Please try again.');
-        return;
-      }
+        if (!result || result.error || !result.data) {
+          throw new Error(result?.error?.message || 'Failed to create post. Please try again.');
+        }
 
-      // Link thread to all selected forums
-      const forumLinks = selectedForums.map((forumId) => ({
-        thread_id: thread.id,
-        forum_id: forumId,
-      }));
-      const { error: linkError } = await supabase.from('thread_forums').insert(forumLinks);
-      if (linkError) console.error('[QuickPost] thread_forums insert error:', linkError);
+        // Link thread to all selected forums (best-effort)
+        const forumLinks = selectedForums.map((forumId) => ({
+          thread_id: result.data.id,
+          forum_id: forumId,
+        }));
+        await supabase.from('thread_forums').insert(forumLinks).catch(() => {});
+
+        return result.data;
+      };
+
+      const thread = await Promise.race([
+        createThread(),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 10000)),
+      ]);
 
       // Reset form and show success
       setTitle('');
       setBody('');
       setSelectedTags([]);
       setSuccess({ id: thread.id });
-    } catch {
-      setError('Something went wrong. Please try again.');
+    } catch (err) {
+      if (err?.message === 'timeout') {
+        setError('Posting is taking too long. Please check your connection and try again.');
+      } else {
+        setError(err?.message || 'Something went wrong. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
