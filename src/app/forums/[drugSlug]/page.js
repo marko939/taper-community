@@ -30,14 +30,14 @@ export default function ForumPage() {
         .from('forums')
         .select('*')
         .eq('drug_slug', drugSlug)
-        .single();
+        .maybeSingle();
 
       if (!data) {
         const result = await supabase
           .from('forums')
           .select('*')
           .eq('slug', drugSlug)
-          .single();
+          .maybeSingle();
         data = result.data;
       }
 
