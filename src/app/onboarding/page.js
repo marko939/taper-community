@@ -83,34 +83,53 @@ export default function OnboardingPage() {
     }
   };
 
+  const [error, setError] = useState('');
+
   const handleComplete = async () => {
     setLoading(true);
-    const primaryDrug = notOnMeds ? null : medications[0]?.drug || null;
-    const primaryStage = notOnMeds ? 'supporting' : medications[0]?.stage || null;
-    const profileData = {
-      drug: primaryDrug,
-      taper_stage: primaryStage,
-      has_clinician: hasClinician,
-      drug_signature: drugSignature || null,
-    };
-    if (usernameInput && usernameInput.length >= 3) {
-      profileData.username = usernameInput;
-    }
-    await updateProfile(profileData);
+    setError('');
 
-    // Record referral if present
     try {
-      const ref = localStorage.getItem('taper_ref');
-      if (ref) {
-        const userId = useAuthStore.getState().user?.id;
-        if (userId) {
-          await recordReferral(ref, userId);
-        }
-        localStorage.removeItem('taper_ref');
+      const primaryDrug = notOnMeds ? null : medications[0]?.drug || null;
+      const primaryStage = notOnMeds ? 'supporting' : medications[0]?.stage || null;
+      const profileData = {
+        drug: primaryDrug,
+        taper_stage: primaryStage,
+        has_clinician: hasClinician,
+        drug_signature: drugSignature || null,
+      };
+      if (usernameInput && usernameInput.length >= 3) {
+        profileData.username = usernameInput;
       }
-    } catch { /* ignore */ }
 
-    router.push('/forums');
+      // Timeout so onboarding never hangs forever
+      await Promise.race([
+        updateProfile(profileData),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 10000)),
+      ]);
+
+      // Record referral if present (best-effort)
+      try {
+        const ref = localStorage.getItem('taper_ref');
+        if (ref) {
+          const userId = useAuthStore.getState().user?.id;
+          if (userId) {
+            await recordReferral(ref, userId);
+          }
+          localStorage.removeItem('taper_ref');
+        }
+      } catch { /* ignore */ }
+
+      router.push('/forums');
+    } catch (err) {
+      console.error('[onboarding] save error:', err);
+      if (err?.message === 'timeout') {
+        setError('Saving is taking too long. Please try again.');
+      } else {
+        setError('Could not save your profile. Please try again.');
+      }
+      setLoading(false);
+    }
   };
 
   const handleSkip = () => router.push('/forums');
@@ -413,6 +432,12 @@ export default function OnboardingPage() {
                 This creates a public journey page others can follow.
               </p>
             </div>
+          </div>
+        )}
+
+        {error && (
+          <div className="mt-4 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-600">
+            {error}
           </div>
         )}
 

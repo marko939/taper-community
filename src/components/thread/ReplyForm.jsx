@@ -8,6 +8,7 @@ import { useThreadStore } from '@/stores/threadStore';
 export default function ReplyForm({ threadId }) {
   const [body, setBody] = useState('');
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
   const user = useAuthStore((s) => s.user);
   const authLoading = useAuthStore((s) => s.loading);
   const addReply = useThreadStore((s) => s.addReply);
@@ -27,8 +28,26 @@ export default function ReplyForm({ threadId }) {
     if (!body.trim() || loading) return;
 
     setLoading(true);
-    await addReply(threadId, body);
-    setBody('');
+    setError('');
+
+    try {
+      const result = await Promise.race([
+        addReply(threadId, body),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 10000)),
+      ]);
+
+      if (result) {
+        setBody('');
+      } else {
+        setError('Reply could not be posted. Please try again.');
+      }
+    } catch (err) {
+      if (err?.message === 'timeout') {
+        setError('Posting is taking too long. Please check your connection and try again.');
+      } else {
+        setError('Something went wrong. Please try again.');
+      }
+    }
     setLoading(false);
   };
 
@@ -43,6 +62,9 @@ export default function ReplyForm({ threadId }) {
         className="textarea"
         required
       />
+      {error && (
+        <p className="mt-2 rounded-lg bg-red-50 px-4 py-2 text-sm text-red-600">{error}</p>
+      )}
       <div className="mt-3 flex justify-end">
         <button
           type="submit"

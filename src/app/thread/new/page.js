@@ -70,34 +70,50 @@ function NewThreadContent() {
   const handleSubmit = async ({ title, body, tags }) => {
     if (selectedForums.length === 0) throw new Error('Please select at least one community.');
 
-    // Create ONE thread (primary forum = first selected)
-    const { data: thread, error } = await supabase
-      .from('threads')
-      .insert({
-        forum_id: selectedForums[0],
-        user_id: user.id,
-        title,
-        body,
-        tags,
-      })
-      .select('id')
-      .maybeSingle();
+    // Wrap the entire creation in a timeout so it never hangs forever
+    const createThread = async () => {
+      const { data: thread, error } = await supabase
+        .from('threads')
+        .insert({
+          forum_id: selectedForums[0],
+          user_id: user.id,
+          title,
+          body,
+          tags,
+        })
+        .select('id')
+        .maybeSingle();
 
-    if (error) {
-      console.error('[NewThread] insert error:', error);
-      throw new Error(error.message || 'Failed to create thread.');
-    }
-    if (!thread) {
-      throw new Error('Thread was not created. Please try again.');
-    }
+      if (error) {
+        console.error('[NewThread] insert error:', error);
+        throw new Error(error.message || 'Failed to create thread.');
+      }
+      if (!thread) {
+        throw new Error('Thread was not created. Please try again.');
+      }
 
-    // Link thread to ALL selected forums via junction table
-    const forumLinks = selectedForums.map((forumId) => ({
-      thread_id: thread.id,
-      forum_id: forumId,
-    }));
-    const { error: linkError } = await supabase.from('thread_forums').insert(forumLinks);
-    if (linkError) console.error('[NewThread] thread_forums error:', linkError);
+      // Link thread to ALL selected forums via junction table (best-effort)
+      const forumLinks = selectedForums.map((forumId) => ({
+        thread_id: thread.id,
+        forum_id: forumId,
+      }));
+      await supabase.from('thread_forums').insert(forumLinks).catch(() => {});
+
+      return thread;
+    };
+
+    let thread;
+    try {
+      thread = await Promise.race([
+        createThread(),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 10000)),
+      ]);
+    } catch (err) {
+      if (err?.message === 'timeout') {
+        throw new Error('Posting is taking too long. Please check your connection and try again.');
+      }
+      throw err;
+    }
 
     router.push(`/thread/${thread.id}`);
   };
