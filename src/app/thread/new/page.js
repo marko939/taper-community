@@ -81,16 +81,20 @@ function NewThreadContent() {
         tags,
       })
       .select('id')
-      .single();
+      .maybeSingle();
 
-    if (error || !thread) return;
+    if (error || !thread) {
+      console.error('[NewThread] insert error:', error);
+      return;
+    }
 
     // Link thread to ALL selected forums via junction table
     const forumLinks = selectedForums.map((forumId) => ({
       thread_id: thread.id,
       forum_id: forumId,
     }));
-    await supabase.from('thread_forums').insert(forumLinks);
+    const { error: linkError } = await supabase.from('thread_forums').insert(forumLinks);
+    if (linkError) console.error('[NewThread] thread_forums error:', linkError);
 
     router.push(`/thread/${thread.id}`);
   };

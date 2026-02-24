@@ -90,7 +90,7 @@ export default function QuickPost({ user, profile }) {
           tags: selectedTags,
         })
         .select('id')
-        .single();
+        .maybeSingle();
 
       if (insertError || !thread) {
         console.error('[QuickPost] thread insert error:', insertError);
