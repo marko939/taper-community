@@ -59,25 +59,29 @@ function SignUpForm() {
         return;
       }
 
-      console.log('[signup] Account created');
+      console.log('[signup] Account created, tokens:', !!result.access_token);
 
-      // Set the session in the browser client so cookies are written
-      // and the middleware/sidebar pick up the logged-in state.
-      if (result.access_token && result.refresh_token) {
-        const supabase = createClient();
-        const { error: sessionError } = await supabase.auth.setSession({
-          access_token: result.access_token,
-          refresh_token: result.refresh_token,
-        });
-        if (sessionError) {
-          console.error('[signup] setSession failed:', sessionError.message);
-        } else {
-          console.log('[signup] Session set in browser client');
-        }
+      if (!result.access_token || !result.refresh_token) {
+        setError('Account created but no session returned. Please sign in.');
+        setLoading(false);
+        return;
       }
 
-      // Redirect to onboarding
-      console.log('[signup] Redirecting to /onboarding');
+      // Set the session in the browser client so cookies are written
+      const supabase = createClient();
+      const { error: sessionError } = await supabase.auth.setSession({
+        access_token: result.access_token,
+        refresh_token: result.refresh_token,
+      });
+
+      if (sessionError) {
+        console.error('[signup] setSession failed:', sessionError.message);
+        setError('Account created but session failed. Please sign in.');
+        setLoading(false);
+        return;
+      }
+
+      console.log('[signup] Session set, redirecting to /onboarding');
       router.refresh();
       router.push('/onboarding');
 

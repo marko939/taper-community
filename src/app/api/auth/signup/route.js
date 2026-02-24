@@ -48,7 +48,15 @@ export async function POST(request) {
       return NextResponse.json({ error: msg }, { status: res.status });
     }
 
-    console.log('[api/auth/signup] Success, user:', data.user?.id || data.id);
+    console.log('[api/auth/signup] Success, user:', data.user?.id || data.id, 'has_token:', !!data.access_token);
+
+    // Supabase returns 200 but no session if user already exists (soft-deleted or unconfirmed)
+    if (!data.access_token) {
+      return NextResponse.json(
+        { error: 'An account with this email already exists. Please sign in instead.' },
+        { status: 409 }
+      );
+    }
 
     return NextResponse.json({
       user: data.user || data,
