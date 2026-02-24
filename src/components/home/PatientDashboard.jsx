@@ -257,51 +257,49 @@ export default function PatientDashboard({ user, profile }) {
                     ? 'You checked in today'
                     : `Your last check-in was ${daysAgo} day${daysAgo !== 1 ? 's' : ''} ago`}
                 </p>
-                <div className="flex gap-2">
-                  {!profile?.post_count && (
-                    <button
-                      type="button"
-                      onClick={() => document.getElementById('quick-post')?.scrollIntoView({ behavior: 'smooth' })}
-                      className="rounded-lg px-4 py-2 text-xs font-bold no-underline transition hover:opacity-90"
-                      style={{ background: 'var(--teal)', color: 'white' }}
-                    >
-                      Introduce yourself
-                    </button>
-                  )}
-                  {daysAgo > 0 && (
-                    <Link
-                      href="/journal"
-                      className="rounded-lg px-4 py-2 text-xs font-bold text-purple no-underline transition hover:opacity-90"
-                      style={{ background: 'white' }}
-                    >
-                      Check in now
-                    </Link>
-                  )}
-                </div>
+                {daysAgo > 0 && (
+                  <Link
+                    href="/journal"
+                    className="rounded-lg px-4 py-2 text-xs font-bold text-purple no-underline transition hover:opacity-90"
+                    style={{ background: 'white' }}
+                  >
+                    Check in now
+                  </Link>
+                )}
               </div>
             </>
           ) : (
             <div className="mt-6 rounded-xl px-5 py-6 text-center" style={{ background: 'rgba(255,255,255,0.1)' }}>
-              <p className="text-sm text-white/80">Start tracking your taper journey</p>
-              <div className="mt-3 flex justify-center gap-2">
-                <Link
-                  href="/journal"
-                  className="inline-block rounded-lg px-6 py-2.5 text-sm font-bold text-purple no-underline transition hover:opacity-90"
-                  style={{ background: 'white' }}
-                >
-                  Log your first entry
-                </Link>
-                {!profile?.post_count && (
+              {!profile?.post_count ? (
+                <>
+                  <p className="text-sm text-white/80">Welcome! Introduce yourself to the community</p>
                   <button
                     type="button"
                     onClick={() => document.getElementById('quick-post')?.scrollIntoView({ behavior: 'smooth' })}
-                    className="rounded-lg px-6 py-2.5 text-sm font-bold no-underline transition hover:opacity-90"
+                    className="mt-3 rounded-lg px-6 py-2.5 text-sm font-bold no-underline transition hover:opacity-90"
                     style={{ background: 'var(--teal)', color: 'white' }}
                   >
                     Introduce yourself
                   </button>
-                )}
-              </div>
+                  <Link
+                    href="/journal"
+                    className="mt-2 block text-xs font-medium text-white/50 no-underline transition hover:text-white/80"
+                  >
+                    or log your first journal entry
+                  </Link>
+                </>
+              ) : (
+                <>
+                  <p className="text-sm text-white/80">Start tracking your taper journey</p>
+                  <Link
+                    href="/journal"
+                    className="mt-3 inline-block rounded-lg px-6 py-2.5 text-sm font-bold text-purple no-underline transition hover:opacity-90"
+                    style={{ background: 'white' }}
+                  >
+                    Log your first entry
+                  </Link>
+                </>
+              )}
             </div>
           )}
         </div>
