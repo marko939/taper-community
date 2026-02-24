@@ -12,6 +12,7 @@ export const useForumStore = create((set, get) => ({
   threadPages: {},     // keyed by forumId: { items, hasMore, totalCount, page, loading }
   searchState: {},     // keyed by forumId|'global': { results, loading, query }
   recentThreads: { items: [], loading: true },
+  hotThreadsLoaded: false,
 
   fetchForums: async () => {
     if (get().forumsLoaded) return get().forums;
@@ -109,6 +110,7 @@ export const useForumStore = create((set, get) => ({
   },
 
   fetchHotThreads: async (limit = 15) => {
+    if (get().hotThreadsLoaded) return;
     try {
       const supabase = createClient();
       const sevenDaysAgo = new Date(Date.now() - 7 * 86400000).toISOString();
@@ -151,10 +153,10 @@ export const useForumStore = create((set, get) => ({
       threads.sort((a, b) => b._hotScore - a._hotScore);
       threads = threads.slice(0, limit);
 
-      set({ recentThreads: { items: threads, loading: false } });
+      set({ recentThreads: { items: threads, loading: false }, hotThreadsLoaded: true });
     } catch (err) {
       console.error('[forumStore] fetchHotThreads error:', err);
-      set({ recentThreads: { items: [], loading: false } });
+      set({ recentThreads: { items: [], loading: false }, hotThreadsLoaded: true });
     }
   },
 

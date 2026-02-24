@@ -24,7 +24,10 @@ export const useAuthStore = create((set, get) => ({
 
     const init = async () => {
       try {
-        const { data: { user } } = await supabase.auth.getUser();
+        // Use getSession() (reads local cookie, near-instant) instead of getUser() (network roundtrip)
+        // onAuthStateChange listener below handles stale session correction
+        const { data: { session } } = await supabase.auth.getSession();
+        const user = session?.user ?? null;
         if (user) {
           const { data } = await supabase
             .from('profiles')

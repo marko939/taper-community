@@ -6,12 +6,14 @@ import { useAuthStore } from './authStore';
 
 export const useJournalStore = create((set, get) => ({
   entries: [],
+  entriesLoaded: false,
   loading: true,
   shareToken: null,
   sharedEntries: {},   // keyed by shareToken: { entries, loading }
   publicEntries: {},   // keyed by userId: { entries, loading }
 
   fetchEntries: async () => {
+    if (get().entriesLoaded) return;
     const supabase = createClient();
     const userId = useAuthStore.getState().user?.id;
     if (!userId) return;
@@ -22,7 +24,7 @@ export const useJournalStore = create((set, get) => ({
       .eq('user_id', userId)
       .order('date', { ascending: false });
 
-    set({ entries: data || [], loading: false });
+    set({ entries: data || [], entriesLoaded: true, loading: false });
   },
 
   addEntry: async (entry) => {

@@ -3,11 +3,15 @@
 import { useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 
+// Module-level cache so stats survive re-mounts during navigation
+let cachedStats = null;
+
 export default function CommunityPulse({ large }) {
-  const [stats, setStats] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState(cachedStats);
+  const [loading, setLoading] = useState(!cachedStats);
 
   useEffect(() => {
+    if (cachedStats) return;
     const fetchStats = async () => {
       try {
         const supabase = createClient();
@@ -26,7 +30,7 @@ export default function CommunityPulse({ large }) {
           supabase.from('replies').select('id', { count: 'exact', head: true }),
           supabase.from('journal_entries').select('id', { count: 'exact', head: true }).gte('created_at', sevenDaysAgo),
           supabase.from('journal_entries').select('id', { count: 'exact', head: true }),
-          supabase.from('journal_entries').select('user_id, drug, dose_numeric, date').not('dose_numeric', 'is', null).order('date', { ascending: true }),
+          supabase.from('journal_entries').select('user_id, drug, dose_numeric, date').not('dose_numeric', 'is', null).order('date', { ascending: true }).limit(5000),
         ]);
 
         // Calculate total mg reduced across all users/drugs
@@ -48,13 +52,15 @@ export default function CommunityPulse({ large }) {
         const weekCheckIns = journalWeekRes.count || 0;
         const hasWeekActivity = weekThreads + weekReplies + weekCheckIns > 0;
 
-        setStats({
+        const result = {
           threads: hasWeekActivity ? weekThreads : (threadsAllRes.count || 0),
           replies: hasWeekActivity ? weekReplies : (repliesAllRes.count || 0),
           checkIns: hasWeekActivity ? weekCheckIns : (journalAllRes.count || 0),
           totalReduced: Math.round(totalReduced * 10) / 10,
           isAllTime: !hasWeekActivity,
-        });
+        };
+        cachedStats = result;
+        setStats(result);
       } catch (err) {
         console.error('[CommunityPulse] fetch error:', err);
       }

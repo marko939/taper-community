@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { useJournalStore } from '@/stores/journalStore';
 import { useForumStore } from '@/stores/forumStore';
@@ -206,7 +207,7 @@ export default function PatientDashboard({ user, profile }) {
         }}
       >
         <div className="absolute inset-0">
-          <img src="/hero-bg.jpg" alt="" className="h-full w-full object-cover" />
+          <Image src="/hero-bg.jpg" alt="" fill className="object-cover" priority />
         </div>
         <div className="pointer-events-none absolute inset-0" style={{ background: 'rgba(42,18,80,0.35)' }} />
         <div className="relative z-10">

@@ -1,4 +1,4 @@
-import { DM_Sans } from 'next/font/google';
+import { DM_Sans, Fraunces } from 'next/font/google';
 import Sidebar from '@/components/layout/Sidebar';
 import Footer from '@/components/layout/Footer';
 import StoreInitializer from '@/components/layout/StoreInitializer';
@@ -12,6 +12,13 @@ const dmSans = DM_Sans({
   weight: ['300', '400', '500', '600', '700'],
 });
 
+const fraunces = Fraunces({
+  subsets: ['latin'],
+  variable: '--font-fraunces',
+  display: 'swap',
+  weight: ['300', '400', '600', '700'],
+});
+
 export const metadata = {
   title: 'TaperCommunity — Peer Support for Medication Tapering',
   description:
@@ -20,13 +27,7 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en" className={dmSans.variable}>
-      <head>
-        <link
-          href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,600;9..144,700&display=swap"
-          rel="stylesheet"
-        />
-      </head>
+    <html lang="en" className={`${dmSans.variable} ${fraunces.variable}`}>
       <body className="min-h-screen antialiased">
         <StoreInitializer />
         <div className="lg:flex">
