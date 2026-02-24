@@ -41,7 +41,8 @@ export default function JournalEntryForm({ onSubmit, entryCount = 0 }) {
       setForums(forumData || []);
 
       // Auto-fill drug/dose from most recent entry
-      const { data: { user } } = await supabase.auth.getUser();
+      const userResult = await supabase.auth.getUser();
+      const user = userResult?.data?.user;
       if (user) {
         const { data: recent } = await supabase
           .from('journal_entries')
@@ -73,7 +74,8 @@ export default function JournalEntryForm({ onSubmit, entryCount = 0 }) {
     if (!drug) { setDrugEntryCount(0); return; }
     let cancelled = false;
     (async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+      const userResult2 = await supabase.auth.getUser();
+      const user = userResult2?.data?.user;
       if (!user || cancelled) return;
       const { count } = await supabase
         .from('journal_entries')

@@ -69,13 +69,13 @@ function SignUpForm() {
 
       // Set the session in the browser client so cookies are written
       const supabase = createClient();
-      const { error: sessionError } = await supabase.auth.setSession({
+      const sessionResult = await supabase.auth.setSession({
         access_token: result.access_token,
         refresh_token: result.refresh_token,
       });
 
-      if (sessionError) {
-        console.error('[signup] setSession failed:', sessionError.message);
+      if (!sessionResult || sessionResult.error) {
+        console.error('[signup] setSession failed:', sessionResult?.error?.message || 'null response');
         setError('Account created but session failed. Please sign in.');
         setLoading(false);
         return;

@@ -29,16 +29,17 @@ function SignInForm() {
 
     console.log('[signin] Attempting sign in for:', email);
 
-    const { data, error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+    const result = await supabase.auth.signInWithPassword({ email, password });
 
-    if (signInError) {
-      console.error('[signin] signInWithPassword failed:', signInError.message);
-      setError(signInError.message);
+    if (!result || result.error) {
+      const msg = result?.error?.message || 'Sign in failed. Please try again.';
+      console.error('[signin] signInWithPassword failed:', msg);
+      setError(msg);
       setLoading(false);
       return;
     }
 
-    console.log('[signin] Signed in, user:', data.user?.id);
+    console.log('[signin] Signed in, user:', result.data?.user?.id);
     router.refresh();
     router.push('/');
   };

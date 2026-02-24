@@ -26,8 +26,8 @@ export const useAuthStore = create((set, get) => ({
       try {
         // Use getSession() (reads local cookie, near-instant) instead of getUser() (network roundtrip)
         // onAuthStateChange listener below handles stale session correction
-        const { data: { session } } = await supabase.auth.getSession();
-        const user = session?.user ?? null;
+        const sessionResult = await supabase.auth.getSession();
+        const user = sessionResult?.data?.session?.user ?? null;
         if (user) {
           const { data } = await supabase
             .from('profiles')
@@ -47,7 +47,7 @@ export const useAuthStore = create((set, get) => ({
     init();
 
     try {
-      const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      const authChangeResult = supabase.auth.onAuthStateChange(
         async (event, session) => {
           // Only refetch profile on actual sign-in/sign-out, not token refreshes
           // Token refreshes can race with in-flight API calls and block them
@@ -66,9 +66,10 @@ export const useAuthStore = create((set, get) => ({
           }
         }
       );
+      const subscription = authChangeResult?.data?.subscription;
 
       // Store cleanup function (rarely needed for app-lifetime store)
-      return () => subscription.unsubscribe();
+      return () => subscription?.unsubscribe();
     } catch (err) {
       console.error('[authStore] onAuthStateChange error:', err);
     }
