@@ -7,7 +7,7 @@ import { DRUGS } from '@/lib/drugs';
 // ── Section order ──────────────────────────────────────────────
 export const FORUM_CATEGORY_ORDER = [
   { key: 'community', label: 'Community' },
-  { key: 'tapering', label: 'Tapering & Symptoms' },
+  { key: 'tapering', label: 'Hyperbolic Tapering: How To, Tips & Tricks' },
   { key: 'research', label: 'Research & News' },
   { key: 'lifestyle', label: 'Relationships & Lifestyle' },
   { key: 'drug', label: 'Drug-Specific Forums' },
