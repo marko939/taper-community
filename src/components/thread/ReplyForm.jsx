@@ -31,24 +31,17 @@ export default function ReplyForm({ threadId }) {
     setError('');
 
     try {
-      const result = await Promise.race([
-        addReply(threadId, body),
-        new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 10000)),
-      ]);
-
+      const result = await addReply(threadId, body);
       if (result) {
         setBody('');
       } else {
         setError('Reply could not be posted. Please try again.');
       }
     } catch (err) {
-      if (err?.message === 'timeout') {
-        setError('Posting timed out. Please try again.');
-      } else {
-        setError(err?.message || 'Failed to post reply. Please try again.');
-      }
+      setError(err?.message || 'Failed to post reply. Please try again.');
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   return (

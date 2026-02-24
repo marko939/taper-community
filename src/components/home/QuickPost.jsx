@@ -80,37 +80,33 @@ export default function QuickPost({ user, profile }) {
     setLoading(true);
     setError('');
     try {
-      const createThread = async () => {
-        const result = await supabase
-          .from('threads')
-          .insert({
-            forum_id: selectedForums[0],
-            user_id: user.id,
-            title: title.trim(),
-            body: body.trim(),
-            tags: selectedTags,
-          })
-          .select('id')
-          .maybeSingle();
+      const { data: thread, error: insertError } = await supabase
+        .from('threads')
+        .insert({
+          forum_id: selectedForums[0],
+          user_id: user.id,
+          title: title.trim(),
+          body: body.trim(),
+          tags: selectedTags,
+        })
+        .select('id')
+        .maybeSingle();
 
-        if (!result || result.error || !result.data) {
-          throw new Error(result?.error?.message || 'Failed to create post. Please try again.');
-        }
+      if (insertError) {
+        throw new Error(insertError.message || 'Failed to create post. Please try again.');
+      }
+      if (!thread) {
+        throw new Error('Post was not created. Please try again.');
+      }
 
-        // Link thread to all selected forums (best-effort)
+      // Link thread to all selected forums (fire-and-forget, don't block success)
+      if (selectedForums.length > 0) {
         const forumLinks = selectedForums.map((forumId) => ({
-          thread_id: result.data.id,
+          thread_id: thread.id,
           forum_id: forumId,
         }));
-        try { await supabase.from('thread_forums').insert(forumLinks); } catch {}
-
-        return result.data;
-      };
-
-      const thread = await Promise.race([
-        createThread(),
-        new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 10000)),
-      ]);
+        supabase.from('thread_forums').insert(forumLinks).then(() => {});
+      }
 
       // Reset form and show success
       setTitle('');
@@ -118,11 +114,7 @@ export default function QuickPost({ user, profile }) {
       setSelectedTags([]);
       setSuccess({ id: thread.id });
     } catch (err) {
-      if (err?.message === 'timeout') {
-        setError('Posting timed out. Please try again.');
-      } else {
-        setError(err?.message || 'Failed to create post. Please try again.');
-      }
+      setError(err?.message || 'Failed to create post. Please try again.');
     } finally {
       setLoading(false);
     }

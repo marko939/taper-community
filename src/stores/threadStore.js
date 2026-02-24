@@ -126,7 +126,8 @@ export const useThreadStore = create((set, get) => ({
   addReply: async (threadId, body) => {
     const supabase = createClient();
     const userId = useAuthStore.getState().user?.id;
-    if (!userId || !body.trim()) return null;
+    if (!userId) throw new Error('Please sign in to reply.');
+    if (!body.trim()) throw new Error('Reply cannot be empty.');
 
     const { data, error } = await supabase
       .from('replies')
@@ -134,7 +135,12 @@ export const useThreadStore = create((set, get) => ({
       .select('*, profiles:user_id(display_name, is_peer_advisor, drug, taper_stage, post_count, drug_signature, avatar_url, is_founding_member)')
       .single();
 
-    if (!error && data) {
+    if (error) {
+      console.error('[threadStore] addReply error:', error);
+      throw new Error(error.message || 'Failed to post reply.');
+    }
+
+    if (data) {
       set((state) => {
         const current = state.replies[threadId] || { items: [], hasMore: false, totalCount: 0, page: 0 };
         return {

@@ -27,6 +27,7 @@ export default function NewThreadForm({ forumId, onSubmit, disabled = false }) {
     } catch (err) {
       console.error('[NewThreadForm] submit error:', err);
       setError(err.message || 'Failed to create thread. Please try again.');
+    } finally {
       setLoading(false);
     }
   };
