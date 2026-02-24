@@ -8,6 +8,7 @@ import { MOOD_LABELS } from '@/lib/constants';
 import { detectMilestones } from '@/lib/milestones';
 import CommunityPulse from './CommunityPulse';
 import QuickPost from './QuickPost';
+import { GENERAL_FORUMS } from '@/lib/forumCategories';
 
 // SVG icon components for badges
 const BadgeIcon = ({ id, achieved }) => {
@@ -392,7 +393,7 @@ export default function PatientDashboard({ user, profile }) {
                           className="rounded-full px-2 py-0.5 text-[10px] font-semibold"
                           style={{ background: 'var(--purple-pale)', color: 'var(--purple)' }}
                         >
-                          {thread.forums.name}
+                          {GENERAL_FORUMS.find((gf) => gf.slug === thread.forums.slug)?.name || thread.forums.name}
                         </span>
                       )}
                       <span>{thread.profiles?.display_name}</span>

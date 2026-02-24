@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useForumStore } from '@/stores/forumStore';
 import { PageLoading } from '@/components/shared/LoadingSpinner';
-import { getGeneralSections, getDrugClassGroups, CATEGORY_ICONS, DRUG_CLASS_ICONS } from '@/lib/forumCategories';
+import { getGeneralSections, getDrugClassGroups, CATEGORY_ICONS, DRUG_CLASS_ICONS, GENERAL_FORUMS } from '@/lib/forumCategories';
 import SearchBar from '@/components/shared/SearchBar';
 import ThreadCard from '@/components/forums/ThreadCard';
 
@@ -141,7 +141,7 @@ export default function ForumsPage() {
                                 className="rounded-full px-2 py-0.5 text-[11px] font-semibold"
                                 style={{ background: 'var(--purple-ghost)', color: 'var(--purple)' }}
                               >
-                                {f.name}
+                                {GENERAL_FORUMS.find((gf) => gf.slug === f.slug)?.name || f.name}
                               </span>
                             ))}
                           </>
