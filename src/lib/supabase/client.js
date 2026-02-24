@@ -4,15 +4,23 @@ import { createBrowserClient } from '@supabase/ssr';
 
 let _client = null;
 
-// In-memory mutex to replace Navigator LockManager
-// Serializes auth operations (token refresh, getSession) to prevent race conditions
+// In-memory lock to replace Navigator LockManager.
+// Serializes auth operations but with a timeout so a slow/hung token refresh
+// doesn't permanently block all subsequent requests.
 let _lockChain = Promise.resolve();
-async function inMemoryLock(_name, _acquireTimeout, fn) {
+async function inMemoryLock(_name, acquireTimeout, fn) {
   const previous = _lockChain;
   let releaseLock;
   _lockChain = new Promise((resolve) => { releaseLock = resolve; });
+
+  // Wait for previous operation, but give up after timeout to prevent deadlock
+  const timeout = acquireTimeout > 0 ? acquireTimeout : 5000;
+  await Promise.race([
+    previous,
+    new Promise((resolve) => setTimeout(resolve, timeout)),
+  ]);
+
   try {
-    await previous;
     return await fn();
   } finally {
     releaseLock();
