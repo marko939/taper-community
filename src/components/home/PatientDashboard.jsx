@@ -270,36 +270,21 @@ export default function PatientDashboard({ user, profile }) {
             </>
           ) : (
             <div className="mt-6 rounded-xl px-5 py-6 text-center" style={{ background: 'rgba(255,255,255,0.1)' }}>
-              {!profile?.post_count ? (
-                <>
-                  <p className="text-sm text-white/80">Welcome! Introduce yourself to the community</p>
-                  <button
-                    type="button"
-                    onClick={() => document.getElementById('quick-post')?.scrollIntoView({ behavior: 'smooth' })}
-                    className="mt-3 rounded-lg px-6 py-2.5 text-sm font-bold no-underline transition hover:opacity-90"
-                    style={{ background: 'var(--teal)', color: 'white' }}
-                  >
-                    Introduce yourself
-                  </button>
-                  <Link
-                    href="/journal"
-                    className="mt-2 block text-xs font-medium text-white/50 no-underline transition hover:text-white/80"
-                  >
-                    or log your first journal entry
-                  </Link>
-                </>
-              ) : (
-                <>
-                  <p className="text-sm text-white/80">Start tracking your taper journey</p>
-                  <Link
-                    href="/journal"
-                    className="mt-3 inline-block rounded-lg px-6 py-2.5 text-sm font-bold text-purple no-underline transition hover:opacity-90"
-                    style={{ background: 'white' }}
-                  >
-                    Log your first entry
-                  </Link>
-                </>
-              )}
+              <p className="text-sm text-white/80">Welcome! Introduce yourself to the community</p>
+              <button
+                type="button"
+                onClick={() => document.getElementById('quick-post')?.scrollIntoView({ behavior: 'smooth' })}
+                className="mt-3 rounded-lg px-6 py-2.5 text-sm font-bold no-underline transition hover:opacity-90"
+                style={{ background: 'var(--teal)', color: 'white' }}
+              >
+                Introduce yourself
+              </button>
+              <Link
+                href="/journal"
+                className="mt-2 block text-xs font-medium text-white/50 no-underline transition hover:text-white/80"
+              >
+                or log your first journal entry
+              </Link>
             </div>
           )}
         </div>
