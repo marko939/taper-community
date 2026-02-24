@@ -8,6 +8,7 @@ import { useForumStore } from '@/stores/forumStore';
 import { MOOD_LABELS } from '@/lib/constants';
 import { detectMilestones } from '@/lib/milestones';
 import CommunityPulse from './CommunityPulse';
+import FollowedThreads from './FollowedThreads';
 import QuickPost from './QuickPost';
 import { GENERAL_FORUMS } from '@/lib/forumCategories';
 
@@ -366,6 +367,9 @@ export default function PatientDashboard({ user, profile }) {
 
       {/* Community Pulse */}
       <CommunityPulse />
+
+      {/* From People You Follow */}
+      <FollowedThreads />
 
       {/* Top Posts — most upvoted */}
       <section>

@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useAuthStore } from '@/stores/authStore';
 import { useProfileStore } from '@/stores/profileStore';
 import { useJournalStore } from '@/stores/journalStore';
+import { useFollowStore } from '@/stores/followStore';
 import Avatar from '@/components/shared/Avatar';
 import { PeerAdvisorBadge } from '@/components/shared/Badge';
 import DrugSignature from '@/components/shared/DrugSignature';
@@ -35,13 +36,24 @@ export default function ProfilePage() {
   const [tab, setTab] = useState('posts');
 
   const isOwnProfile = currentUser?.id === userId;
+  const following = useFollowStore((s) => s.following);
+  const followingLoaded = useFollowStore((s) => s.followingLoaded);
+  const fetchFollowing = useFollowStore((s) => s.fetchFollowing);
+  const fetchFollowCounts = useFollowStore((s) => s.fetchFollowCounts);
+  const followCounts = useFollowStore((s) => s.followCounts[userId]);
+  const toggleFollow = useFollowStore((s) => s.toggleFollow);
+  const isFollowing = following.has(userId);
 
   useEffect(() => {
     fetchProfile(userId);
+    fetchFollowCounts(userId);
     if (!isOwnProfile) {
       fetchPublicEntries(userId);
     }
-  }, [userId, isOwnProfile, fetchProfile, fetchPublicEntries]);
+    if (currentUser?.id) {
+      fetchFollowing(currentUser.id);
+    }
+  }, [userId, isOwnProfile, fetchProfile, fetchPublicEntries, fetchFollowCounts, fetchFollowing, currentUser?.id]);
 
   const loading = profileData?.loading ?? true;
 
@@ -112,6 +124,7 @@ export default function ProfilePage() {
             <div className="mt-2 flex flex-wrap gap-4 text-sm text-text-muted">
               <span>{profile.post_count} posts</span>
               <span>{karma} karma</span>
+              {followCounts && <span>{followCounts.followers} follower{followCounts.followers !== 1 ? 's' : ''}</span>}
               <span>Joined {new Date(profile.joined_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short' })}</span>
             </div>
             {profile.drug && (
@@ -125,6 +138,18 @@ export default function ProfilePage() {
               <p className="mt-3 text-sm text-text-muted">{profile.bio}</p>
             )}
             <DrugSignature signature={profile.drug_signature} />
+            {!isOwnProfile && currentUser && followingLoaded && (
+              <button
+                onClick={() => toggleFollow(currentUser.id, userId)}
+                className={`mt-3 rounded-full px-4 py-1.5 text-sm font-semibold transition ${
+                  isFollowing
+                    ? 'border border-border-subtle bg-surface-glass text-text-muted hover:border-red-400 hover:text-red-500'
+                    : 'bg-accent-blue text-white hover:opacity-90'
+                }`}
+              >
+                {isFollowing ? 'Following' : 'Follow'}
+              </button>
+            )}
           </div>
         </div>
       </div>

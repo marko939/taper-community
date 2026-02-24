@@ -3,10 +3,12 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useForumStore } from '@/stores/forumStore';
+import { useAuthStore } from '@/stores/authStore';
 import { PageLoading } from '@/components/shared/LoadingSpinner';
 import { getGeneralSections, getDrugClassGroups, CATEGORY_ICONS, DRUG_CLASS_ICONS, GENERAL_FORUMS } from '@/lib/forumCategories';
 import SearchBar from '@/components/shared/SearchBar';
 import ThreadCard from '@/components/forums/ThreadCard';
+import FollowedThreads from '@/components/home/FollowedThreads';
 
 function timeAgo(dateStr) {
   const seconds = Math.floor((new Date() - new Date(dateStr)) / 1000);
@@ -21,6 +23,7 @@ function timeAgo(dateStr) {
 }
 
 export default function ForumsPage() {
+  const user = useAuthStore((s) => s.user);
   const forums = useForumStore((s) => s.forums);
   const forumsLoading = useForumStore((s) => s.forumsLoading);
   const fetchForums = useForumStore((s) => s.fetchForums);
@@ -176,6 +179,9 @@ export default function ForumsPage() {
           </section>
         );
       })()}
+
+      {/* From People You Follow */}
+      {!isSearching && user && <FollowedThreads />}
 
       {!isSearching && <div className="space-y-6">
         {/* General forum sections */}

@@ -5,24 +5,39 @@ import { createBrowserClient } from '@supabase/ssr';
 let _client = null;
 
 // In-memory lock to replace Navigator LockManager.
-// Serializes auth operations but with a timeout so a slow/hung token refresh
-// doesn't permanently block all subsequent requests.
+// Serializes auth operations with timeouts on both acquiring the lock
+// AND executing the operation, so nothing can permanently block requests.
 let _lockChain = Promise.resolve();
 async function inMemoryLock(_name, acquireTimeout, fn) {
   const previous = _lockChain;
   let releaseLock;
   _lockChain = new Promise((resolve) => { releaseLock = resolve; });
 
-  // Wait for previous operation, but give up after timeout to prevent deadlock
   const timeout = acquireTimeout > 0 ? acquireTimeout : 5000;
+
+  // Wait for previous operation, give up after timeout
   await Promise.race([
     previous,
     new Promise((resolve) => setTimeout(resolve, timeout)),
   ]);
 
+  let timer;
   try {
-    return await fn();
+    // Run auth operation with timeout — if token refresh hangs, give up
+    // rather than blocking all subsequent requests forever
+    return await Promise.race([
+      fn(),
+      new Promise((_, reject) => {
+        timer = setTimeout(() => reject(new Error('lock_timeout')), timeout);
+      }),
+    ]);
+  } catch (err) {
+    // Swallow lock timeout so supabase-js doesn't crash — the next
+    // request will retry with whatever token is currently stored
+    if (err?.message === 'lock_timeout') return null;
+    throw err;
   } finally {
+    clearTimeout(timer);
     releaseLock();
   }
 }
