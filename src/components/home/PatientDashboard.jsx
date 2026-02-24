@@ -311,6 +311,8 @@ export default function PatientDashboard({ user, profile }) {
         const achievedMilestones = milestones.filter((m) => m.achieved).slice(0, 3);
         const hasMilestones = achievedMilestones.length > 0;
 
+        if (achievedCount === 0 && !hasMilestones) return null;
+
         return (
           <div className={`grid gap-4 ${hasMilestones ? 'grid-cols-2' : 'grid-cols-1'}`}>
             {/* Achievements */}
