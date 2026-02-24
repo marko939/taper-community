@@ -4,6 +4,21 @@ import { createBrowserClient } from '@supabase/ssr';
 
 let _client = null;
 
+// In-memory mutex to replace Navigator LockManager
+// Serializes auth operations (token refresh, getSession) to prevent race conditions
+let _lockChain = Promise.resolve();
+async function inMemoryLock(_name, _acquireTimeout, fn) {
+  const previous = _lockChain;
+  let releaseLock;
+  _lockChain = new Promise((resolve) => { releaseLock = resolve; });
+  try {
+    await previous;
+    return await fn();
+  } finally {
+    releaseLock();
+  }
+}
+
 export function createClient() {
   if (!_client) {
     const url = (process.env.NEXT_PUBLIC_SUPABASE_URL || '').trim();
@@ -26,8 +41,9 @@ export function createClient() {
         flowType: 'pkce',
         detectSessionInUrl: true,
         persistSession: true,
-        // Bypass Navigator LockManager to prevent stale lock timeouts
-        lock: async (_name, _acquireTimeout, fn) => await fn(),
+        // In-memory mutex replaces Navigator LockManager to prevent both
+        // stale lock timeouts AND concurrent token refresh race conditions
+        lock: inMemoryLock,
       },
     });
   }
