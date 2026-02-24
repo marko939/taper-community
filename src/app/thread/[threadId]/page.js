@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { useThreadStore } from '@/stores/threadStore';
+import { GENERAL_FORUMS } from '@/lib/forumCategories';
 import ThreadView from '@/components/thread/ThreadView';
 import ReplyList from '@/components/thread/ReplyList';
 import ReplyForm from '@/components/thread/ReplyForm';
@@ -41,11 +42,23 @@ export default function ThreadPage() {
     );
   }
 
+  const primaryForum = thread.thread_forums?.[0]?.forums || thread.forums;
+  const forumSlug = primaryForum?.drug_slug || primaryForum?.slug;
+  const forumDisplayName = primaryForum
+    ? (GENERAL_FORUMS.find((gf) => gf.slug === primaryForum.slug)?.name || primaryForum.name)
+    : null;
+
   return (
     <div className="space-y-6">
-      <Link href="/forums" className="text-sm text-text-subtle hover:text-foreground">
-        &larr; Back to Forums
-      </Link>
+      <div className="flex items-center gap-1.5 text-sm text-text-subtle">
+        <Link href="/forums" className="hover:text-foreground">Forums</Link>
+        {forumSlug && forumDisplayName && (
+          <>
+            <span>/</span>
+            <Link href={`/forums/${forumSlug}`} className="hover:text-foreground">{forumDisplayName}</Link>
+          </>
+        )}
+      </div>
 
       <ThreadView thread={thread} />
 
@@ -55,6 +68,7 @@ export default function ThreadPage() {
         </h2>
         <ReplyList
           replies={replies}
+          threadId={threadId}
           hasMore={hasMoreReplies}
           totalCount={totalReplies}
           onLoadMore={() => loadMoreReplies(threadId)}

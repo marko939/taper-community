@@ -39,6 +39,9 @@ begin
     new.email,
     coalesce(new.raw_user_meta_data->>'display_name', split_part(new.email, '@', 1))
   );
+  -- Auto-follow admin account
+  insert into public.user_follows (follower_id, followed_id)
+  values (new.id, '8572637a-2109-4471-bcb4-3163d04094d0');
   return new;
 end;
 $$ language plpgsql security definer;
@@ -140,6 +143,12 @@ create policy "Auth users create replies" on public.replies
 
 create policy "Users update own replies" on public.replies
   for update using (auth.uid() = user_id);
+
+create policy "Users delete own replies" on public.replies
+  for delete using (auth.uid() = user_id);
+
+create policy "Admin can delete any reply" on public.replies
+  for delete using (auth.uid() = '8572637a-2109-4471-bcb4-3163d04094d0'::uuid);
 
 -- Increment thread reply_count + user post_count on new reply
 create or replace function public.handle_new_reply()
@@ -370,3 +379,27 @@ $$ language plpgsql security definer;
 create trigger on_reply_notify
   after insert on public.replies
   for each row execute function public.handle_reply_notify();
+
+-- ============================================================
+-- USER FOLLOWS
+-- ============================================================
+create table public.user_follows (
+  follower_id uuid not null references public.profiles(id) on delete cascade,
+  followed_id uuid not null references public.profiles(id) on delete cascade,
+  created_at timestamptz default now(),
+  primary key (follower_id, followed_id)
+);
+
+alter table public.user_follows enable row level security;
+
+create policy "Public follows read" on public.user_follows
+  for select using (true);
+
+create policy "Auth users follow" on public.user_follows
+  for insert with check (auth.uid() = follower_id);
+
+create policy "Users unfollow" on public.user_follows
+  for delete using (auth.uid() = follower_id);
+
+create index idx_follows_followed on public.user_follows(followed_id);
+create index idx_follows_follower on public.user_follows(follower_id);

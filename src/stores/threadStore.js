@@ -161,6 +161,67 @@ export const useThreadStore = create((set, get) => ({
     return data;
   },
 
+  editReply: async (threadId, replyId, newBody) => {
+    const supabase = createClient();
+    try {
+      const { error } = await supabase
+        .from('replies')
+        .update({ body: newBody.trim() })
+        .eq('id', replyId);
+      if (error) throw error;
+
+      set((state) => {
+        const current = state.replies[threadId];
+        if (!current) return state;
+        return {
+          replies: {
+            ...state.replies,
+            [threadId]: {
+              ...current,
+              items: current.items.map((r) =>
+                r.id === replyId ? { ...r, body: newBody.trim() } : r
+              ),
+            },
+          },
+        };
+      });
+      return true;
+    } catch (err) {
+      console.error('[threadStore] editReply error:', err);
+      return false;
+    }
+  },
+
+  deleteReply: async (threadId, replyId) => {
+    const supabase = createClient();
+    try {
+      const { error } = await supabase
+        .from('replies')
+        .delete()
+        .eq('id', replyId);
+      if (error) throw error;
+
+      set((state) => {
+        const current = state.replies[threadId];
+        if (!current) return state;
+        return {
+          replies: {
+            ...state.replies,
+            [threadId]: {
+              ...current,
+              items: current.items.filter((r) => r.id !== replyId),
+              totalCount: current.totalCount - 1,
+            },
+          },
+        };
+      });
+      return true;
+    } catch (err) {
+      console.error('[threadStore] deleteReply error:', err);
+      return false;
+    }
+  },
+
   // Vote on thread or reply
   vote: async (type, targetId, voteType) => {
     const userId = useAuthStore.getState().user?.id;
