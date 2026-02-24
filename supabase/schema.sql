@@ -97,6 +97,12 @@ create policy "Users update own threads" on public.threads
 create policy "Admin can update any thread" on public.threads
   for update using (auth.uid() = '8572637a-2109-4471-bcb4-3163d04094d0'::uuid);
 
+create policy "Users delete own threads" on public.threads
+  for delete using (auth.uid() = user_id);
+
+create policy "Admin can delete any thread" on public.threads
+  for delete using (auth.uid() = '8572637a-2109-4471-bcb4-3163d04094d0'::uuid);
+
 -- Increment forum post_count + user post_count on new thread
 create or replace function public.handle_new_thread()
 returns trigger as $$

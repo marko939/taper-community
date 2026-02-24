@@ -93,7 +93,8 @@ export default function QuickPost({ user, profile }) {
         .single();
 
       if (insertError || !thread) {
-        setError('Failed to create post. Please try again.');
+        console.error('[QuickPost] thread insert error:', insertError);
+        setError(insertError?.message || 'Failed to create post. Please try again.');
         return;
       }
 
@@ -102,7 +103,8 @@ export default function QuickPost({ user, profile }) {
         thread_id: thread.id,
         forum_id: forumId,
       }));
-      await supabase.from('thread_forums').insert(forumLinks);
+      const { error: linkError } = await supabase.from('thread_forums').insert(forumLinks);
+      if (linkError) console.error('[QuickPost] thread_forums insert error:', linkError);
 
       // Reset form and show success
       setTitle('');
