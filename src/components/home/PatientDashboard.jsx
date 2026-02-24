@@ -258,7 +258,7 @@ export default function PatientDashboard({ user, profile }) {
                     : `Your last check-in was ${daysAgo} day${daysAgo !== 1 ? 's' : ''} ago`}
                 </p>
                 <div className="flex gap-2">
-                  {profile?.post_count === 0 && (
+                  {!profile?.post_count && (
                     <button
                       type="button"
                       onClick={() => document.getElementById('quick-post')?.scrollIntoView({ behavior: 'smooth' })}
@@ -291,7 +291,7 @@ export default function PatientDashboard({ user, profile }) {
                 >
                   Log your first entry
                 </Link>
-                {profile?.post_count === 0 && (
+                {!profile?.post_count && (
                   <button
                     type="button"
                     onClick={() => document.getElementById('quick-post')?.scrollIntoView({ behavior: 'smooth' })}
@@ -440,7 +440,7 @@ export default function PatientDashboard({ user, profile }) {
       {/* Quick Post */}
       <section id="quick-post">
         <h2 className="mb-3 text-sm font-semibold text-foreground">
-          {profile?.post_count === 0 ? 'Introduce Yourself' : 'Start a Discussion'}
+          {!profile?.post_count ? 'Introduce Yourself' : 'Start a Discussion'}
         </h2>
         <div
           className="rounded-xl border p-4"

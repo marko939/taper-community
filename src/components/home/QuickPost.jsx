@@ -19,7 +19,7 @@ export default function QuickPost({ user, profile }) {
   const [drugDropdownOpen, setDrugDropdownOpen] = useState(false);
 
   const supabase = createClient();
-  const isFirstPost = profile?.post_count === 0;
+  const isFirstPost = !profile?.post_count;
 
   useEffect(() => {
     const fetchForums = async () => {
