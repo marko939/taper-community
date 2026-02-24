@@ -113,20 +113,32 @@ export const useNotificationStore = create((set, get) => ({
     const userId = useAuthStore.getState().user?.id;
     if (!userId) return;
 
-    const supabase = createClient();
-    const title = `${milestone.emoji} Badge earned: ${milestone.label}`;
+    try {
+      const supabase = createClient();
+      const title = `${milestone.emoji} Badge earned: ${milestone.label}`;
 
-    const { data } = await supabase
-      .from('notifications')
-      .insert({ user_id: userId, type: 'badge', title })
-      .select()
-      .single();
+      const { data } = await supabase
+        .from('notifications')
+        .insert({
+          user_id: userId,
+          type: 'badge',
+          title,
+          actor_id: userId,
+          thread_id: null,
+          reply_id: null,
+        })
+        .select()
+        .single();
 
-    if (data) {
-      set((state) => ({
-        notifications: [data, ...state.notifications],
-        unreadCount: state.unreadCount + 1,
-      }));
+      if (data) {
+        set((state) => ({
+          notifications: [data, ...state.notifications],
+          unreadCount: state.unreadCount + 1,
+        }));
+      }
+    } catch (err) {
+      // Badge notifications are non-critical — don't crash the app
+      console.error('[notificationStore] createBadgeNotification error:', err);
     }
   },
 

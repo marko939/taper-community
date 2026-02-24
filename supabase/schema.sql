@@ -311,9 +311,9 @@ alter table public.profiles add column if not exists email_notifications boolean
 create table public.notifications (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references public.profiles(id) on delete cascade,
-  type text not null check (type in ('thread_reply', 'reply_mention')),
-  thread_id uuid not null references public.threads(id) on delete cascade,
-  reply_id uuid not null references public.replies(id) on delete cascade,
+  type text not null check (type in ('thread_reply', 'reply_mention', 'badge')),
+  thread_id uuid references public.threads(id) on delete cascade,
+  reply_id uuid references public.replies(id) on delete cascade,
   actor_id uuid not null references public.profiles(id) on delete cascade,
   title text not null,
   body text,
