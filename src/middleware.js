@@ -25,8 +25,15 @@ export async function middleware(request) {
     }
   );
 
-  // Refresh the auth token
-  await supabase.auth.getUser();
+  // Refresh the auth token (with timeout to prevent navigation hangs)
+  try {
+    await Promise.race([
+      supabase.auth.getUser(),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 5000)),
+    ]);
+  } catch {
+    // Auth check timed out or failed — continue without blocking navigation
+  }
 
   return supabaseResponse;
 }

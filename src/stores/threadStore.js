@@ -12,58 +12,84 @@ export const useThreadStore = create((set, get) => ({
   voteState: {},     // keyed by `${type}_${targetId}`: { userVote, score }
   helpfulState: {},  // keyed by replyId: { hasVoted, count }
 
+  updateThread: (threadId, partial) => {
+    set((state) => ({
+      threads: {
+        ...state.threads,
+        [threadId]: state.threads[threadId]
+          ? { ...state.threads[threadId], ...partial }
+          : null,
+      },
+    }));
+  },
+
   fetchThread: async (threadId) => {
-    const supabase = createClient();
+    try {
+      const supabase = createClient();
 
-    const { data: threadData } = await supabase
-      .from('threads')
-      .select('*, profiles:user_id(display_name, is_peer_advisor, drug, taper_stage, post_count, drug_signature, location, avatar_url, is_founding_member), thread_forums(forum_id, forums:forum_id(name, slug, drug_slug))')
-      .eq('id', threadId)
-      .single();
-
-    if (threadData) {
-      set((state) => ({
-        threads: { ...state.threads, [threadId]: threadData },
-      }));
-
-      // Increment view count (best-effort)
-      supabase
+      const { data: threadData } = await supabase
         .from('threads')
-        .update({ view_count: (threadData.view_count || 0) + 1 })
+        .select('*, profiles:user_id(display_name, is_peer_advisor, drug, taper_stage, post_count, drug_signature, location, avatar_url, is_founding_member), thread_forums(forum_id, forums:forum_id(name, slug, drug_slug))')
         .eq('id', threadId)
-        .then(() => {})
-        .catch(() => {});
-    }
+        .single();
 
-    return threadData;
+      if (threadData) {
+        set((state) => ({
+          threads: { ...state.threads, [threadId]: threadData },
+        }));
+
+        // Increment view count (best-effort)
+        supabase
+          .from('threads')
+          .update({ view_count: (threadData.view_count || 0) + 1 })
+          .eq('id', threadId)
+          .then(() => {})
+          .catch(() => {});
+      }
+
+      return threadData;
+    } catch (err) {
+      console.error('[threadStore] fetchThread error:', err);
+      return null;
+    }
   },
 
   fetchReplies: async (threadId) => {
-    const supabase = createClient();
-    const from = 0;
-    const to = REPLIES_PER_PAGE - 1;
+    try {
+      const supabase = createClient();
+      const from = 0;
+      const to = REPLIES_PER_PAGE - 1;
 
-    const { data, count } = await supabase
-      .from('replies')
-      .select('*, profiles:user_id(display_name, is_peer_advisor, drug, taper_stage, post_count, drug_signature, location, avatar_url, is_founding_member)', { count: 'exact' })
-      .eq('thread_id', threadId)
-      .order('created_at')
-      .range(from, to);
+      const { data, count } = await supabase
+        .from('replies')
+        .select('*, profiles:user_id(display_name, is_peer_advisor, drug, taper_stage, post_count, drug_signature, location, avatar_url, is_founding_member)', { count: 'exact' })
+        .eq('thread_id', threadId)
+        .order('created_at')
+        .range(from, to);
 
-    const rows = data || [];
-    const total = count ?? rows.length;
+      const rows = data || [];
+      const total = count ?? rows.length;
 
-    set((state) => ({
-      replies: {
-        ...state.replies,
-        [threadId]: {
-          items: rows,
-          hasMore: rows.length < total,
-          totalCount: total,
-          page: 0,
+      set((state) => ({
+        replies: {
+          ...state.replies,
+          [threadId]: {
+            items: rows,
+            hasMore: rows.length < total,
+            totalCount: total,
+            page: 0,
+          },
         },
-      },
-    }));
+      }));
+    } catch (err) {
+      console.error('[threadStore] fetchReplies error:', err);
+      set((state) => ({
+        replies: {
+          ...state.replies,
+          [threadId]: { items: [], hasMore: false, totalCount: 0, page: 0 },
+        },
+      }));
+    }
   },
 
   loadMoreReplies: async (threadId) => {
@@ -147,32 +173,40 @@ export const useThreadStore = create((set, get) => ({
     const key = `${type}_${targetId}`;
     const current = get().voteState[key] || { userVote: null, score: 0 };
 
-    if (current.userVote === voteType) {
-      // Remove vote
-      const newScore = current.score + (voteType === 'up' ? -1 : 1);
+    try {
+      if (current.userVote === voteType) {
+        // Remove vote
+        const newScore = current.score + (voteType === 'up' ? -1 : 1);
+        set((state) => ({
+          voteState: { ...state.voteState, [key]: { userVote: null, score: newScore } },
+        }));
+        await supabase.from(table).delete().eq('user_id', userId).eq(idColumn, targetId);
+        await supabase.from(scoreTable).update({ vote_score: newScore }).eq('id', targetId);
+      } else if (current.userVote) {
+        // Change vote direction
+        const delta = voteType === 'up' ? 2 : -2;
+        const newScore = current.score + delta;
+        set((state) => ({
+          voteState: { ...state.voteState, [key]: { userVote: voteType, score: newScore } },
+        }));
+        await supabase.from(table).update({ vote_type: voteType }).eq('user_id', userId).eq(idColumn, targetId);
+        await supabase.from(scoreTable).update({ vote_score: newScore }).eq('id', targetId);
+      } else {
+        // New vote
+        const delta = voteType === 'up' ? 1 : -1;
+        const newScore = current.score + delta;
+        set((state) => ({
+          voteState: { ...state.voteState, [key]: { userVote: voteType, score: newScore } },
+        }));
+        await supabase.from(table).insert({ user_id: userId, [idColumn]: targetId, vote_type: voteType });
+        await supabase.from(scoreTable).update({ vote_score: newScore }).eq('id', targetId);
+      }
+    } catch (err) {
+      console.error('[threadStore] vote error:', err);
+      // Rollback to previous state
       set((state) => ({
-        voteState: { ...state.voteState, [key]: { userVote: null, score: newScore } },
+        voteState: { ...state.voteState, [key]: current },
       }));
-      await supabase.from(table).delete().eq('user_id', userId).eq(idColumn, targetId);
-      await supabase.from(scoreTable).update({ vote_score: newScore }).eq('id', targetId);
-    } else if (current.userVote) {
-      // Change vote direction
-      const delta = voteType === 'up' ? 2 : -2;
-      const newScore = current.score + delta;
-      set((state) => ({
-        voteState: { ...state.voteState, [key]: { userVote: voteType, score: newScore } },
-      }));
-      await supabase.from(table).update({ vote_type: voteType }).eq('user_id', userId).eq(idColumn, targetId);
-      await supabase.from(scoreTable).update({ vote_score: newScore }).eq('id', targetId);
-    } else {
-      // New vote
-      const delta = voteType === 'up' ? 1 : -1;
-      const newScore = current.score + delta;
-      set((state) => ({
-        voteState: { ...state.voteState, [key]: { userVote: voteType, score: newScore } },
-      }));
-      await supabase.from(table).insert({ user_id: userId, [idColumn]: targetId, vote_type: voteType });
-      await supabase.from(scoreTable).update({ vote_score: newScore }).eq('id', targetId);
     }
   },
 

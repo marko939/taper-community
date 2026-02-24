@@ -47,30 +47,40 @@ export const useForumStore = create((set, get) => ({
       },
     }));
 
-    // Query threads through junction table (one thread, many forums)
-    const { data, count } = await supabase
-      .from('threads')
-      .select('*, profiles:user_id(display_name, is_peer_advisor, drug, taper_stage, drug_signature, avatar_url, is_founding_member), thread_forums!inner(forum_id)', { count: 'exact' })
-      .eq('thread_forums.forum_id', forumId)
-      .order('pinned', { ascending: false })
-      .order('created_at', { ascending: false })
-      .range(0, THREADS_PER_PAGE - 1);
+    try {
+      // Query threads through junction table (one thread, many forums)
+      const { data, count } = await supabase
+        .from('threads')
+        .select('*, profiles:user_id(display_name, is_peer_advisor, drug, taper_stage, drug_signature, avatar_url, is_founding_member), thread_forums!inner(forum_id)', { count: 'exact' })
+        .eq('thread_forums.forum_id', forumId)
+        .order('pinned', { ascending: false })
+        .order('created_at', { ascending: false })
+        .range(0, THREADS_PER_PAGE - 1);
 
-    const rows = data || [];
-    const total = count ?? rows.length;
+      const rows = data || [];
+      const total = count ?? rows.length;
 
-    set((state) => ({
-      threadPages: {
-        ...state.threadPages,
-        [forumId]: {
-          items: rows,
-          hasMore: rows.length < total,
-          totalCount: total,
-          page: 0,
-          loading: false,
+      set((state) => ({
+        threadPages: {
+          ...state.threadPages,
+          [forumId]: {
+            items: rows,
+            hasMore: rows.length < total,
+            totalCount: total,
+            page: 0,
+            loading: false,
+          },
         },
-      },
-    }));
+      }));
+    } catch (err) {
+      console.error('[forumStore] fetchThreads error:', err);
+      set((state) => ({
+        threadPages: {
+          ...state.threadPages,
+          [forumId]: { ...(state.threadPages[forumId] || {}), loading: false },
+        },
+      }));
+    }
   },
 
   loadMoreThreads: async (forumId) => {

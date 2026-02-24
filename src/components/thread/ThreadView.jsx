@@ -8,6 +8,7 @@ import Badge, { PeerAdvisorBadge } from '@/components/shared/Badge';
 import DrugSignature from '@/components/shared/DrugSignature';
 import VoteButton from '@/components/shared/VoteButton';
 import { useAuthStore } from '@/stores/authStore';
+import { useThreadStore } from '@/stores/threadStore';
 import { createClient } from '@/lib/supabase/client';
 import { ADMIN_USER_ID } from '@/lib/blog';
 
@@ -45,18 +46,25 @@ export default function ThreadView({ thread }) {
   const handleEdit = async () => {
     if (!editTitle.trim() || !editBody.trim()) return;
     setEditLoading(true);
-    const { error } = await supabase
-      .from('threads')
-      .update({ title: editTitle.trim(), body: editBody.trim() })
-      .eq('id', id)
-      .select()
-      .maybeSingle();
-    if (!error) {
-      thread.title = editTitle.trim();
-      thread.body = editBody.trim();
-      setEditing(false);
-    } else {
-      console.error('[ThreadView] edit error:', error);
+    try {
+      const { error } = await supabase
+        .from('threads')
+        .update({ title: editTitle.trim(), body: editBody.trim() })
+        .eq('id', id)
+        .select()
+        .maybeSingle();
+      if (!error) {
+        // Update store instead of mutating prop
+        useThreadStore.getState().updateThread(id, {
+          title: editTitle.trim(),
+          body: editBody.trim(),
+        });
+        setEditing(false);
+      } else {
+        console.error('[ThreadView] edit error:', error);
+      }
+    } catch (err) {
+      console.error('[ThreadView] edit error:', err);
     }
     setEditLoading(false);
   };
