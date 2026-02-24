@@ -7,6 +7,7 @@ import { useForumStore } from '@/stores/forumStore';
 import { MOOD_LABELS } from '@/lib/constants';
 import { detectMilestones } from '@/lib/milestones';
 import CommunityPulse from './CommunityPulse';
+import QuickPost from './QuickPost';
 
 // SVG icon components for badges
 const BadgeIcon = ({ id, achieved }) => {
@@ -256,27 +257,51 @@ export default function PatientDashboard({ user, profile }) {
                     ? 'You checked in today'
                     : `Your last check-in was ${daysAgo} day${daysAgo !== 1 ? 's' : ''} ago`}
                 </p>
-                {daysAgo > 0 && (
-                  <Link
-                    href="/journal"
-                    className="rounded-lg px-4 py-2 text-xs font-bold text-purple no-underline transition hover:opacity-90"
-                    style={{ background: 'white' }}
-                  >
-                    Check in now
-                  </Link>
-                )}
+                <div className="flex gap-2">
+                  {profile?.post_count === 0 && (
+                    <button
+                      type="button"
+                      onClick={() => document.getElementById('quick-post')?.scrollIntoView({ behavior: 'smooth' })}
+                      className="rounded-lg px-4 py-2 text-xs font-bold no-underline transition hover:opacity-90"
+                      style={{ background: 'var(--teal)', color: 'white' }}
+                    >
+                      Introduce yourself
+                    </button>
+                  )}
+                  {daysAgo > 0 && (
+                    <Link
+                      href="/journal"
+                      className="rounded-lg px-4 py-2 text-xs font-bold text-purple no-underline transition hover:opacity-90"
+                      style={{ background: 'white' }}
+                    >
+                      Check in now
+                    </Link>
+                  )}
+                </div>
               </div>
             </>
           ) : (
             <div className="mt-6 rounded-xl px-5 py-6 text-center" style={{ background: 'rgba(255,255,255,0.1)' }}>
               <p className="text-sm text-white/80">Start tracking your taper journey</p>
-              <Link
-                href="/journal"
-                className="mt-3 inline-block rounded-lg px-6 py-2.5 text-sm font-bold text-purple no-underline transition hover:opacity-90"
-                style={{ background: 'white' }}
-              >
-                Log your first entry
-              </Link>
+              <div className="mt-3 flex justify-center gap-2">
+                <Link
+                  href="/journal"
+                  className="inline-block rounded-lg px-6 py-2.5 text-sm font-bold text-purple no-underline transition hover:opacity-90"
+                  style={{ background: 'white' }}
+                >
+                  Log your first entry
+                </Link>
+                {profile?.post_count === 0 && (
+                  <button
+                    type="button"
+                    onClick={() => document.getElementById('quick-post')?.scrollIntoView({ behavior: 'smooth' })}
+                    className="rounded-lg px-6 py-2.5 text-sm font-bold no-underline transition hover:opacity-90"
+                    style={{ background: 'var(--teal)', color: 'white' }}
+                  >
+                    Introduce yourself
+                  </button>
+                )}
+              </div>
             </div>
           )}
         </div>
@@ -410,6 +435,19 @@ export default function PatientDashboard({ user, profile }) {
             ))}
           </div>
         )}
+      </section>
+
+      {/* Quick Post */}
+      <section id="quick-post">
+        <h2 className="mb-3 text-sm font-semibold text-foreground">
+          {profile?.post_count === 0 ? 'Introduce Yourself' : 'Start a Discussion'}
+        </h2>
+        <div
+          className="rounded-xl border p-4"
+          style={{ borderColor: 'var(--border-subtle)', background: 'var(--surface-strong)' }}
+        >
+          <QuickPost user={user} profile={profile} />
+        </div>
       </section>
     </div>
   );
