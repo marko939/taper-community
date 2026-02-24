@@ -26,7 +26,7 @@ export default function ThreadView({ thread }) {
             {/* Author sidebar */}
             <div className="shrink-0 lg:w-44">
               <div className="flex items-center gap-3 lg:flex-col lg:items-start">
-                <Avatar name={displayName} size="lg" />
+                <Avatar name={displayName} avatarUrl={profiles?.avatar_url} size="lg" foundingMember={profiles?.is_founding_member} />
                 <div>
                   <div className="flex items-center gap-2">
                     <Link href={`/profile/${user_id}`} className="font-semibold text-foreground no-underline hover:text-accent-blue">

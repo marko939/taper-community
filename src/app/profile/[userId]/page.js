@@ -100,7 +100,7 @@ export default function ProfilePage() {
       {/* Profile header */}
       <div className="card">
         <div className="flex items-start gap-4">
-          <Avatar name={profile.display_name} avatarUrl={profile.avatar_url} size="lg" />
+          <Avatar name={profile.display_name} avatarUrl={profile.avatar_url} size="lg" foundingMember={profile.is_founding_member} />
           <div className="flex-1">
             <div className="flex items-center gap-2">
               <h1 className="text-2xl font-semibold text-foreground">{profile.display_name}</h1>

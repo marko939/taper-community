@@ -49,7 +49,7 @@ export const useForumStore = create((set, get) => ({
     // Query threads through junction table (one thread, many forums)
     const { data, count } = await supabase
       .from('threads')
-      .select('*, profiles:user_id(display_name, is_peer_advisor, drug, taper_stage, drug_signature, avatar_url), thread_forums!inner(forum_id)', { count: 'exact' })
+      .select('*, profiles:user_id(display_name, is_peer_advisor, drug, taper_stage, drug_signature, avatar_url, is_founding_member), thread_forums!inner(forum_id)', { count: 'exact' })
       .eq('thread_forums.forum_id', forumId)
       .order('pinned', { ascending: false })
       .order('created_at', { ascending: false })
@@ -85,7 +85,7 @@ export const useForumStore = create((set, get) => ({
 
     const { data, count } = await supabase
       .from('threads')
-      .select('*, profiles:user_id(display_name, is_peer_advisor, drug, taper_stage, drug_signature, avatar_url), thread_forums!inner(forum_id)', { count: 'exact' })
+      .select('*, profiles:user_id(display_name, is_peer_advisor, drug, taper_stage, drug_signature, avatar_url, is_founding_member), thread_forums!inner(forum_id)', { count: 'exact' })
       .eq('thread_forums.forum_id', forumId)
       .order('pinned', { ascending: false })
       .order('created_at', { ascending: false })
@@ -116,7 +116,7 @@ export const useForumStore = create((set, get) => ({
       // Fetch recent threads with engagement data
       let { data } = await supabase
         .from('threads')
-        .select('*, profiles:user_id(display_name, is_peer_advisor, avatar_url), forums:forum_id(name, drug_slug, slug), thread_forums(forum_id, forums:forum_id(name, slug, drug_slug))')
+        .select('*, profiles:user_id(display_name, is_peer_advisor, avatar_url, is_founding_member), forums:forum_id(name, drug_slug, slug), thread_forums(forum_id, forums:forum_id(name, slug, drug_slug))')
         .gte('created_at', sevenDaysAgo)
         .order('created_at', { ascending: false })
         .limit(50);
@@ -128,7 +128,7 @@ export const useForumStore = create((set, get) => ({
         const existingIds = new Set(threads.map((t) => t.id));
         const { data: topData } = await supabase
           .from('threads')
-          .select('*, profiles:user_id(display_name, is_peer_advisor, avatar_url), forums:forum_id(name, drug_slug, slug), thread_forums(forum_id, forums:forum_id(name, slug, drug_slug))')
+          .select('*, profiles:user_id(display_name, is_peer_advisor, avatar_url, is_founding_member), forums:forum_id(name, drug_slug, slug), thread_forums(forum_id, forums:forum_id(name, slug, drug_slug))')
           .order('vote_score', { ascending: false })
           .limit(limit);
         (topData || []).forEach((t) => {
@@ -174,8 +174,8 @@ export const useForumStore = create((set, get) => ({
 
     const supabase = createClient();
     const selectFields = forumId
-      ? '*, profiles:user_id(display_name, is_peer_advisor, avatar_url), forums:forum_id(name, slug, drug_slug), thread_forums!inner(forum_id)'
-      : '*, profiles:user_id(display_name, is_peer_advisor, avatar_url), forums:forum_id(name, slug, drug_slug)';
+      ? '*, profiles:user_id(display_name, is_peer_advisor, avatar_url, is_founding_member), forums:forum_id(name, slug, drug_slug), thread_forums!inner(forum_id)'
+      : '*, profiles:user_id(display_name, is_peer_advisor, avatar_url, is_founding_member), forums:forum_id(name, slug, drug_slug)';
 
     let qb = supabase
       .from('threads')

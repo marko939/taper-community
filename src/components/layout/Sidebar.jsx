@@ -145,7 +145,7 @@ export default function Sidebar() {
                       onClick={() => setMobileOpen(false)}
                       className="flex items-center gap-3 rounded-xl px-3 py-2 no-underline transition hover:bg-purple-ghost"
                     >
-                      <Avatar name={profile?.display_name || 'U'} avatarUrl={profile?.avatar_url} size="sm" />
+                      <Avatar name={profile?.display_name || 'U'} avatarUrl={profile?.avatar_url} size="sm" foundingMember={profile?.is_founding_member} />
                       <span className="text-sm font-medium text-foreground">{profile?.display_name || 'User'}</span>
                     </Link>
                     <Link
@@ -258,7 +258,7 @@ export default function Sidebar() {
                 href={`/profile/${user.id}`}
                 className="flex items-center gap-3 rounded-xl px-3 py-2 no-underline transition hover:bg-purple-ghost"
               >
-                <Avatar name={profile?.display_name || 'U'} avatarUrl={profile?.avatar_url} size="sm" />
+                <Avatar name={profile?.display_name || 'U'} avatarUrl={profile?.avatar_url} size="sm" foundingMember={profile?.is_founding_member} />
                 {!collapsed && (
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-medium text-foreground">{profile?.display_name || 'User'}</p>
