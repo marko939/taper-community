@@ -46,8 +46,8 @@ export const CATEGORY_ICONS = {
 // These define what forums show up and with what names.
 // Slugs must match the DB forum slugs for routing/post_count.
 export const GENERAL_FORUMS = [
-  { category: 'community', slug: 'finding-meaning', name: 'Philosophy', description: 'Life philosophy, identity, and purpose during and after withdrawal.' },
   { category: 'community', slug: 'introductions', name: 'Introductions', description: 'Welcome! Tell us about yourself and your tapering journey.' },
+  { category: 'community', slug: 'finding-meaning', name: 'Philosophy', description: 'Life philosophy, identity, and purpose during and after withdrawal.' },
   { category: 'community', slug: 'success-stories', name: "I'm Crushing It", description: 'Recovery wins, taper milestones, and positive updates.' },
   { category: 'community', slug: 'support', name: 'I Need Support', description: 'Emotional support for tough moments during tapering and withdrawal.' },
   { category: 'tapering', slug: 'tapering', name: 'Tapering & Symptoms', description: 'Dose reduction strategies, withdrawal symptoms, supplements, and self-care.' },
