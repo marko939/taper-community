@@ -102,7 +102,7 @@ export default function QuickPost({ user, profile }) {
           thread_id: result.data.id,
           forum_id: forumId,
         }));
-        await supabase.from('thread_forums').insert(forumLinks).catch(() => {});
+        try { await supabase.from('thread_forums').insert(forumLinks); } catch {}
 
         return result.data;
       };

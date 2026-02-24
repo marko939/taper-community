@@ -97,7 +97,7 @@ function NewThreadContent() {
         thread_id: thread.id,
         forum_id: forumId,
       }));
-      await supabase.from('thread_forums').insert(forumLinks).catch(() => {});
+      try { await supabase.from('thread_forums').insert(forumLinks); } catch {}
 
       return thread;
     };

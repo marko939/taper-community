@@ -38,13 +38,12 @@ export const useThreadStore = create((set, get) => ({
           threads: { ...state.threads, [threadId]: threadData },
         }));
 
-        // Increment view count (best-effort)
+        // Increment view count (best-effort, fire-and-forget)
         supabase
           .from('threads')
           .update({ view_count: (threadData.view_count || 0) + 1 })
           .eq('id', threadId)
-          .then(() => {})
-          .catch(() => {});
+          .then(() => {});
       }
 
       return threadData;
