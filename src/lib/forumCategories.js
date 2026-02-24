@@ -11,6 +11,7 @@ export const FORUM_CATEGORY_ORDER = [
   { key: 'research', label: 'Research & News' },
   { key: 'lifestyle', label: 'Relationships & Lifestyle' },
   { key: 'drug', label: 'Drug-Specific Forums' },
+  { key: 'feedback', label: 'Feedback' },
 ];
 
 // ── Category header icons ──────────────────────────────────────
@@ -35,6 +36,11 @@ export const CATEGORY_ICONS = {
       <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" />
     </svg>
   ),
+  feedback: (
+    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M11.42 15.17l-5.645 3.182a.535.535 0 01-.779-.596l1.06-6.277L.856 6.447a.535.535 0 01.295-.917l6.263-.914L10.21.516a.536.536 0 01.962 0l2.796 5.1 6.263.914a.535.535 0 01.295.917l-5.2 5.032 1.06 6.277a.535.535 0 01-.779.596L11.42 15.17z" />
+    </svg>
+  ),
   drug: (
     <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
       <path strokeLinecap="round" strokeLinejoin="round" d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3M14.25 3.104c.251.023.501.05.75.082M19.8 15.3l-1.57.393A9.065 9.065 0 0112 15a9.065 9.065 0 00-6.23.693L5 14.5m14.8.8l1.402 1.402c1.232 1.232.65 3.318-1.067 3.611A48.309 48.309 0 0112 21c-2.773 0-5.491-.235-8.135-.687-1.718-.293-2.3-2.379-1.067-3.61L5 14.5" />
@@ -53,6 +59,7 @@ export const GENERAL_FORUMS = [
   { category: 'tapering', slug: 'tapering', name: 'Tapering & Symptoms', description: 'Dose reduction strategies, withdrawal symptoms, supplements, and self-care.' },
   { category: 'research', slug: 'research-and-news', name: 'Research & News', description: 'Scientific papers, news articles, advocacy, and media about psychiatric drug withdrawal.' },
   { category: 'lifestyle', slug: 'lifestyle', name: 'Relationships & Lifestyle', description: 'Diet, exercise, sleep, relationships, and lifestyle during tapering.' },
+  { category: 'feedback', slug: 'feature-requests-and-bugs', name: 'Feature Requests & Bug Fixes', description: 'Suggest new features, report bugs, and help us improve TaperMeds.' },
 ];
 
 // ── Drug class icons (for the 6-group grid) ────────────────────

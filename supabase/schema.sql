@@ -57,7 +57,7 @@ create table public.forums (
   id uuid primary key default gen_random_uuid(),
   name text not null,
   drug_slug text unique,
-  category text not null check (category in ('drug', 'general', 'resources', 'start', 'community', 'tapering', 'research', 'lifestyle')),
+  category text not null check (category in ('drug', 'general', 'resources', 'start', 'community', 'tapering', 'research', 'lifestyle', 'feedback')),
   slug text unique,
   description text,
   post_count integer default 0,
