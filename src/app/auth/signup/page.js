@@ -28,6 +28,22 @@ function SignUpForm() {
     e.preventDefault();
     setError('');
 
+    const trimmedEmail = email.trim().toLowerCase();
+    const trimmedName = displayName.trim();
+
+    // Client-side validation
+    if (!trimmedName) {
+      setError('Please enter a display name.');
+      return;
+    }
+    if (!trimmedEmail) {
+      setError('Please enter your email address.');
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
+      setError('Please enter a valid email address.');
+      return;
+    }
     if (password.length < 8) {
       setError('Password must be at least 8 characters.');
       return;
@@ -38,30 +54,30 @@ function SignUpForm() {
     }
 
     setLoading(true);
-    console.log('[signup] Creating account for:', email);
 
     try {
-      // Call our own API route — the server handles the Supabase call.
-      // This avoids ALL browser-side header/cookie corruption issues.
       const res = await fetch('/api/auth/signup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password, displayName }),
+        body: JSON.stringify({ email: trimmedEmail, password, displayName: trimmedName }),
       });
 
-      const result = await res.json();
-      console.log('[signup] Response status:', res.status);
-
-      if (!res.ok) {
-        console.error('[signup] Error:', result.error);
-        setError(result.error || 'Signup failed');
+      let result;
+      try {
+        result = await res.json();
+      } catch {
+        setError('Server returned an invalid response. Please try again.');
         setLoading(false);
         return;
       }
 
-      console.log('[signup] Account created, tokens:', !!result.access_token);
+      if (!res.ok) {
+        setError(result?.error || 'Signup failed. Please try again.');
+        setLoading(false);
+        return;
+      }
 
-      if (!result.access_token || !result.refresh_token) {
+      if (!result?.access_token || !result?.refresh_token) {
         setError('Account created but no session returned. Please sign in.');
         setLoading(false);
         return;
@@ -69,25 +85,32 @@ function SignUpForm() {
 
       // Set the session in the browser client so cookies are written
       const supabase = createClient();
-      const sessionResult = await supabase.auth.setSession({
-        access_token: result.access_token,
-        refresh_token: result.refresh_token,
-      });
+      let sessionResult;
+      try {
+        sessionResult = await supabase.auth.setSession({
+          access_token: result.access_token,
+          refresh_token: result.refresh_token,
+        });
+      } catch {
+        // setSession itself threw (e.g. lock timeout wrapped in error)
+        sessionResult = null;
+      }
 
       if (!sessionResult || sessionResult.error) {
-        console.error('[signup] setSession failed:', sessionResult?.error?.message || 'null response');
-        setError('Account created but session failed. Please sign in.');
-        setLoading(false);
+        // Account exists in DB but browser session failed — send to signin
+        router.push('/auth/signin?error=' + encodeURIComponent('Account created! Please sign in.'));
         return;
       }
 
-      console.log('[signup] Session set, redirecting to /onboarding');
       router.refresh();
       router.push('/onboarding');
 
     } catch (err) {
-      console.error('[signup] Fetch error:', err.message);
-      setError(`Connection error: ${err.message}`);
+      if (err?.name === 'AbortError' || err?.message?.includes('fetch')) {
+        setError('Network error. Please check your connection and try again.');
+      } else {
+        setError('Something went wrong. Please try again.');
+      }
       setLoading(false);
     }
   };
@@ -142,6 +165,7 @@ function SignUpForm() {
                 placeholder="Minimum 8 characters"
                 className="input"
                 required
+                minLength={8}
               />
             </div>
             <div>

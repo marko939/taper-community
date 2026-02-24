@@ -14,7 +14,7 @@ function SignInForm() {
   const searchParams = useSearchParams();
   const supabase = createClient();
 
-  // Show error from OAuth callback redirect
+  // Show error/success from callback or signup redirect
   useEffect(() => {
     const callbackError = searchParams.get('error');
     if (callbackError) {
@@ -25,23 +25,54 @@ function SignInForm() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
-    setLoading(true);
 
-    console.log('[signin] Attempting sign in for:', email);
+    const trimmedEmail = email.trim().toLowerCase();
 
-    const result = await supabase.auth.signInWithPassword({ email, password });
-
-    if (!result || result.error) {
-      const msg = result?.error?.message || 'Sign in failed. Please try again.';
-      console.error('[signin] signInWithPassword failed:', msg);
-      setError(msg);
-      setLoading(false);
+    if (!trimmedEmail) {
+      setError('Please enter your email address.');
+      return;
+    }
+    if (!password) {
+      setError('Please enter your password.');
       return;
     }
 
-    console.log('[signin] Signed in, user:', result.data?.user?.id);
-    router.refresh();
-    router.push('/');
+    setLoading(true);
+
+    try {
+      const result = await supabase.auth.signInWithPassword({
+        email: trimmedEmail,
+        password,
+      });
+
+      if (!result || result.error) {
+        const raw = result?.error?.message || '';
+        // Map Supabase error messages to user-friendly ones
+        let msg;
+        if (raw.includes('Invalid login credentials')) {
+          msg = 'Incorrect email or password.';
+        } else if (raw.includes('Email not confirmed')) {
+          msg = 'Please confirm your email before signing in. Check your inbox.';
+        } else if (raw.includes('rate') || raw.includes('too many')) {
+          msg = 'Too many attempts. Please wait a moment and try again.';
+        } else {
+          msg = raw || 'Sign in failed. Please try again.';
+        }
+        setError(msg);
+        setLoading(false);
+        return;
+      }
+
+      router.refresh();
+      router.push('/');
+    } catch (err) {
+      if (err?.name === 'AbortError' || err?.message?.includes('fetch')) {
+        setError('Network error. Please check your connection and try again.');
+      } else {
+        setError('Something went wrong. Please try again.');
+      }
+      setLoading(false);
+    }
   };
 
   return (
