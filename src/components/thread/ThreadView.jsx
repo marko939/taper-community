@@ -35,7 +35,9 @@ export default function ThreadView({ thread }) {
     const { error } = await supabase
       .from('threads')
       .update({ pinned: !isPinned })
-      .eq('id', id);
+      .eq('id', id)
+      .select()
+      .maybeSingle();
     if (!error) setIsPinned(!isPinned);
     setPinLoading(false);
   };
@@ -46,11 +48,15 @@ export default function ThreadView({ thread }) {
     const { error } = await supabase
       .from('threads')
       .update({ title: editTitle.trim(), body: editBody.trim() })
-      .eq('id', id);
+      .eq('id', id)
+      .select()
+      .maybeSingle();
     if (!error) {
       thread.title = editTitle.trim();
       thread.body = editBody.trim();
       setEditing(false);
+    } else {
+      console.error('[ThreadView] edit error:', error);
     }
     setEditLoading(false);
   };
