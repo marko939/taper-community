@@ -88,7 +88,7 @@ function SignUpForm() {
       // Email confirmation is OFF — session should exist immediately
       if (data?.session) {
         setLoading(false);
-        window.location.href = '/';
+        window.location.href = '/onboarding';
         return;
       }
 
