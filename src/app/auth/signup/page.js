@@ -16,6 +16,14 @@ function SignUpForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
+  // Redirect if already signed in
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.getUser().then(({ data }) => {
+      if (data?.user) router.replace('/');
+    });
+  }, []);
+
   // Persist referral code to localStorage
   useEffect(() => {
     const ref = searchParams.get('ref');

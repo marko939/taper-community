@@ -14,6 +14,13 @@ function SignInForm() {
   const searchParams = useSearchParams();
   const supabase = createClient();
 
+  // Redirect if already signed in
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      if (data?.user) router.replace('/');
+    });
+  }, []);
+
   // Show error/success from callback or signup redirect
   useEffect(() => {
     const callbackError = searchParams.get('error');
