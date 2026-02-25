@@ -95,23 +95,23 @@ function SignUpForm() {
 
       // Set the session in the browser client so cookies are written
       const supabase = createClient();
-      let sessionResult;
       try {
-        sessionResult = await supabase.auth.setSession({
+        const sessionPromise = supabase.auth.setSession({
           access_token: result.access_token,
           refresh_token: result.refresh_token,
         });
+        // 5s timeout — if setSession hangs, still redirect
+        await Promise.race([
+          sessionPromise,
+          new Promise((_, reject) => setTimeout(() => reject(new Error('session-timeout')), 5000)),
+        ]);
       } catch {
-        sessionResult = null;
+        // Session may or may not be set — redirect anyway
       }
 
-      if (!sessionResult || sessionResult.error) {
-        router.push('/auth/signin?error=' + encodeURIComponent('Account created! Please sign in.'));
-        return;
-      }
-
-      router.refresh();
-      router.push('/onboarding');
+      // Hard redirect to ensure fresh server-side cookie read
+      window.location.href = '/onboarding';
+      return;
 
     } catch (err) {
       if (err?.name === 'AbortError') {

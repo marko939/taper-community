@@ -68,8 +68,8 @@ function SignInForm() {
         return;
       }
 
-      router.refresh();
-      router.push('/');
+      // Hard redirect to ensure fresh server-side cookie read
+      window.location.href = '/';
     } catch (err) {
       console.error('[signin] error:', err?.message);
       setError(err?.message || 'Sign in failed. Please try again.');
