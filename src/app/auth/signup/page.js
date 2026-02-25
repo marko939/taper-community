@@ -85,15 +85,11 @@ function SignUpForm() {
         return;
       }
 
-      // Email confirmation is OFF — session should exist immediately
-      if (data?.session) {
-        setLoading(false);
-        window.location.href = '/onboarding';
-        return;
-      }
-
-      // Fallback: no session returned (shouldn't happen with autoconfirm)
-      setError('Account created! Please sign in.');
+      // Signup succeeded — redirect to onboarding
+      // Session should exist immediately since email confirmation is OFF
+      setLoading(false);
+      window.location.href = '/onboarding';
+      return;
     } catch (err) {
       console.error('[signup] error:', err?.message);
       setError(err?.message || 'Signup failed. Please try again.');
