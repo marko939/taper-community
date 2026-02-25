@@ -32,18 +32,27 @@ export async function POST(request) {
   try {
     const endpoint = `${SUPABASE_URL}/auth/v1/signup`;
 
-    const res = await fetch(endpoint, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'apikey': SUPABASE_KEY,
-      },
-      body: JSON.stringify({
-        email: email.trim().toLowerCase(),
-        password,
-        data: { display_name: displayName || '' },
-      }),
-    });
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 8000);
+
+    let res;
+    try {
+      res = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': SUPABASE_KEY,
+        },
+        body: JSON.stringify({
+          email: email.trim().toLowerCase(),
+          password,
+          data: { display_name: displayName || '' },
+        }),
+        signal: controller.signal,
+      });
+    } finally {
+      clearTimeout(timeoutId);
+    }
 
     let data;
     try {
@@ -88,6 +97,12 @@ export async function POST(request) {
     });
   } catch (err) {
     console.error('[api/auth/signup] Exception:', err.message);
+    if (err?.name === 'AbortError') {
+      return NextResponse.json(
+        { error: 'Signup timed out. Your account may have been created — try signing in.' },
+        { status: 504 }
+      );
+    }
     return NextResponse.json(
       { error: 'Could not connect to the signup service. Please try again.' },
       { status: 503 }

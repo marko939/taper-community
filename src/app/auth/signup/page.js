@@ -55,17 +55,16 @@ function SignUpForm() {
 
     setLoading(true);
 
-    // Hard timeout — user is never stuck longer than 15s
-    const timeoutId = setTimeout(() => {
-      setLoading(false);
-      setError('Signup is taking too long. Please try again.');
-    }, 15000);
+    // AbortController kills the fetch after 10s so the user is never stuck
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
 
     try {
       const res = await fetch('/api/auth/signup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: trimmedEmail, password, displayName: trimmedName }),
+        signal: controller.signal,
       });
 
       let result;
@@ -107,8 +106,12 @@ function SignUpForm() {
       router.push('/onboarding');
 
     } catch (err) {
-      console.error('[signup] error:', err?.message);
-      setError(err?.message || 'Signup failed. Please try again.');
+      if (err?.name === 'AbortError') {
+        setError('Signup timed out. Your account may have been created — try signing in. If not, please try again.');
+      } else {
+        console.error('[signup] error:', err?.message);
+        setError(err?.message || 'Signup failed. Please try again.');
+      }
     } finally {
       clearTimeout(timeoutId);
       setLoading(false);
