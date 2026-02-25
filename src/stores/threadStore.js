@@ -2,6 +2,7 @@
 
 import { create } from 'zustand';
 import { createClient } from '@/lib/supabase/client';
+import { fireAndForget } from '@/lib/fireAndForget';
 import { useAuthStore } from './authStore';
 
 const REPLIES_PER_PAGE = 25;
@@ -39,11 +40,12 @@ export const useThreadStore = create((set, get) => ({
         }));
 
         // Increment view count (best-effort, fire-and-forget)
-        supabase
-          .from('threads')
-          .update({ view_count: (threadData.view_count || 0) + 1 })
-          .eq('id', threadId)
-          .then(() => {});
+        fireAndForget('increment-view-count', () =>
+          supabase
+            .from('threads')
+            .update({ view_count: (threadData.view_count || 0) + 1 })
+            .eq('id', threadId)
+        );
       }
 
       return threadData;
@@ -156,11 +158,13 @@ export const useThreadStore = create((set, get) => ({
       });
 
       // Fire email notifications (best-effort)
-      fetch('/api/notify-email', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ reply_id: data.id, thread_id: threadId }),
-      }).catch(() => {});
+      fireAndForget('notify-email', () =>
+        fetch('/api/notify-email', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ reply_id: data.id, thread_id: threadId }),
+        })
+      );
     }
 
     return data;

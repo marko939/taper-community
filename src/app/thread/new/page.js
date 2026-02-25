@@ -4,6 +4,7 @@ import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
+import { fireAndForget } from '@/lib/fireAndForget';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
 import NewThreadForm from '@/components/forums/NewThreadForm';
 import { PageLoading } from '@/components/shared/LoadingSpinner';
@@ -96,7 +97,7 @@ function NewThreadContent() {
         thread_id: thread.id,
         forum_id: fid,
       }));
-      supabase.from('thread_forums').insert(forumLinks).then(() => {});
+      fireAndForget('link-thread-forums', () => supabase.from('thread_forums').insert(forumLinks));
     }
 
     router.push(`/thread/${thread.id}`);

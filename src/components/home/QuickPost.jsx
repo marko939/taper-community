@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
+import { fireAndForget } from '@/lib/fireAndForget';
 import { THREAD_TAGS } from '@/lib/constants';
 import { GENERAL_FORUMS, FORUM_CATEGORY_ORDER } from '@/lib/forumCategories';
 
@@ -99,13 +100,13 @@ export default function QuickPost({ user, profile }) {
         throw new Error('Post was not created. Please try again.');
       }
 
-      // Link thread to all selected forums (fire-and-forget, don't block success)
+      // Link thread to all selected forums (side effect — never blocks success)
       if (selectedForums.length > 0) {
         const forumLinks = selectedForums.map((forumId) => ({
           thread_id: thread.id,
           forum_id: forumId,
         }));
-        supabase.from('thread_forums').insert(forumLinks).then(() => {});
+        fireAndForget('link-thread-forums', () => supabase.from('thread_forums').insert(forumLinks));
       }
 
       // Reset form and show success

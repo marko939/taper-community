@@ -2,6 +2,7 @@
 
 import { create } from 'zustand';
 import { createClient } from '@/lib/supabase/client';
+import { fireAndForget } from '@/lib/fireAndForget';
 import { useAuthStore } from './authStore';
 
 export const useJournalStore = create((set, get) => ({
@@ -92,17 +93,22 @@ export const useJournalStore = create((set, get) => ({
         if (threadErr) console.warn('[journal] Thread creation failed:', threadErr.message);
 
         if (thread) {
-          // Link thread to ALL selected forums via junction table
+          // Link thread to ALL selected forums via junction table (fire-and-forget)
           const forumLinks = published_forums.map((forumId) => ({
             thread_id: thread.id,
             forum_id: forumId,
           }));
-          await supabase.from('thread_forums').insert(forumLinks);
+          fireAndForget('journal-link-thread-forums', () =>
+            supabase.from('thread_forums').insert(forumLinks)
+          );
 
-          await supabase
-            .from('journal_entries')
-            .update({ thread_ids: [thread.id] })
-            .eq('id', data.id);
+          // Update journal entry with thread ID (fire-and-forget)
+          fireAndForget('journal-update-thread-ids', () =>
+            supabase
+              .from('journal_entries')
+              .update({ thread_ids: [thread.id] })
+              .eq('id', data.id)
+          );
           data.thread_ids = [thread.id];
         }
       } catch (err) {
