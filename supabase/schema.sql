@@ -39,9 +39,13 @@ begin
     new.email,
     coalesce(new.raw_user_meta_data->>'display_name', split_part(new.email, '@', 1))
   );
-  -- Auto-follow admin account
-  insert into public.user_follows (follower_id, followed_id)
-  values (new.id, '8572637a-2109-4471-bcb4-3163d04094d0');
+  -- Auto-follow admin account (best-effort, never block signup)
+  begin
+    insert into public.user_follows (follower_id, followed_id)
+    values (new.id, '8572637a-2109-4471-bcb4-3163d04094d0');
+  exception when others then
+    raise warning 'Auto-follow admin failed: %', sqlerrm;
+  end;
   return new;
 end;
 $$ language plpgsql security definer;
@@ -110,8 +114,12 @@ create policy "Admin can delete any thread" on public.threads
 create or replace function public.handle_new_thread()
 returns trigger as $$
 begin
-  update public.forums set post_count = post_count + 1 where id = new.forum_id;
-  update public.profiles set post_count = post_count + 1 where id = new.user_id;
+  begin
+    update public.forums set post_count = post_count + 1 where id = new.forum_id;
+    update public.profiles set post_count = post_count + 1 where id = new.user_id;
+  exception when others then
+    raise warning 'handle_new_thread side effect failed: %', sqlerrm;
+  end;
   return new;
 end;
 $$ language plpgsql security definer;
@@ -154,8 +162,12 @@ create policy "Admin can delete any reply" on public.replies
 create or replace function public.handle_new_reply()
 returns trigger as $$
 begin
-  update public.threads set reply_count = reply_count + 1 where id = new.thread_id;
-  update public.profiles set post_count = post_count + 1 where id = new.user_id;
+  begin
+    update public.threads set reply_count = reply_count + 1 where id = new.thread_id;
+    update public.profiles set post_count = post_count + 1 where id = new.user_id;
+  exception when others then
+    raise warning 'handle_new_reply side effect failed: %', sqlerrm;
+  end;
   return new;
 end;
 $$ language plpgsql security definer;
@@ -311,7 +323,7 @@ alter table public.profiles add column if not exists email_notifications boolean
 create table public.notifications (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references public.profiles(id) on delete cascade,
-  type text not null check (type in ('thread_reply', 'reply_mention', 'badge')),
+  type text not null check (type in ('thread_reply', 'reply_mention', 'badge', 'achievement')),
   thread_id uuid references public.threads(id) on delete cascade,
   reply_id uuid references public.replies(id) on delete cascade,
   actor_id uuid not null references public.profiles(id) on delete cascade,
@@ -343,34 +355,33 @@ declare
   v_title text;
   v_body text;
 begin
-  -- Get thread info
-  select id, user_id, title into v_thread
-    from public.threads where id = new.thread_id;
+  begin
+    select id, user_id, title into v_thread
+      from public.threads where id = new.thread_id;
 
-  -- Get actor display name
-  select display_name into v_actor_name
-    from public.profiles where id = new.user_id;
+    select display_name into v_actor_name
+      from public.profiles where id = new.user_id;
 
-  -- Build notification text
-  v_title := v_actor_name || ' replied to "' || left(v_thread.title, 80) || '"';
-  v_body := left(new.body, 200);
+    v_title := v_actor_name || ' replied to "' || left(v_thread.title, 80) || '"';
+    v_body := left(new.body, 200);
 
-  -- Collect recipients: thread author + all previous repliers, excluding the reply author
-  select array_agg(distinct uid) into v_recipients
-  from (
-    select v_thread.user_id as uid
-    union
-    select r.user_id as uid from public.replies r where r.thread_id = new.thread_id
-  ) participants
-  where uid != new.user_id;
+    select array_agg(distinct uid) into v_recipients
+    from (
+      select v_thread.user_id as uid
+      union
+      select r.user_id as uid from public.replies r where r.thread_id = new.thread_id
+    ) participants
+    where uid != new.user_id;
 
-  -- Insert a notification for each recipient
-  if v_recipients is not null then
-    foreach v_recipient in array v_recipients loop
-      insert into public.notifications (user_id, type, thread_id, reply_id, actor_id, title, body)
-      values (v_recipient, 'thread_reply', new.thread_id, new.id, new.user_id, v_title, v_body);
-    end loop;
-  end if;
+    if v_recipients is not null then
+      foreach v_recipient in array v_recipients loop
+        insert into public.notifications (user_id, type, thread_id, reply_id, actor_id, title, body)
+        values (v_recipient, 'thread_reply', new.thread_id, new.id, new.user_id, v_title, v_body);
+      end loop;
+    end if;
+  exception when others then
+    raise warning 'handle_reply_notify failed: %', sqlerrm;
+  end;
 
   return new;
 end;
