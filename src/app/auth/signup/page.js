@@ -63,65 +63,41 @@ function SignUpForm() {
 
     setLoading(true);
 
-    // AbortController kills the fetch after 10s so the user is never stuck
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000);
-
     try {
-      const res = await fetch('/api/auth/signup', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: trimmedEmail, password, displayName: trimmedName }),
-        signal: controller.signal,
+      const supabase = createClient();
+      const { data, error: signUpError } = await supabase.auth.signUp({
+        email: trimmedEmail,
+        password,
+        options: { data: { display_name: trimmedName } },
       });
 
-      let result;
-      try {
-        result = await res.json();
-      } catch {
-        setError('Server returned an invalid response. Please try again.');
+      if (signUpError) {
+        const raw = signUpError.message || '';
+        if (raw.includes('already registered') || raw.includes('already been registered')) {
+          setError('An account with this email already exists. Please sign in instead.');
+        } else if (raw.includes('valid email')) {
+          setError('Please enter a valid email address.');
+        } else if (raw.includes('rate') || raw.includes('too many')) {
+          setError('Too many signup attempts. Please wait a moment and try again.');
+        } else {
+          setError(raw || 'Signup failed. Please try again.');
+        }
         return;
       }
 
-      if (!res.ok) {
-        setError(result?.error || 'Signup failed. Please try again.');
+      // Email confirmation is OFF — session should exist immediately
+      if (data?.session) {
+        setLoading(false);
+        window.location.href = '/onboarding';
         return;
       }
 
-      if (!result?.access_token || !result?.refresh_token) {
-        setError('Account created but no session returned. Please sign in.');
-        return;
-      }
-
-      // Set the session in the browser client so cookies are written
-      const supabase = createClient();
-      try {
-        const sessionPromise = supabase.auth.setSession({
-          access_token: result.access_token,
-          refresh_token: result.refresh_token,
-        });
-        // 5s timeout — if setSession hangs, still redirect
-        await Promise.race([
-          sessionPromise,
-          new Promise((_, reject) => setTimeout(() => reject(new Error('session-timeout')), 5000)),
-        ]);
-      } catch {
-        // Session may or may not be set — redirect anyway
-      }
-
-      // Hard redirect to ensure fresh server-side cookie read
-      window.location.href = '/onboarding';
-      return;
-
+      // Fallback: no session returned (shouldn't happen with autoconfirm)
+      setError('Account created! Please sign in.');
     } catch (err) {
-      if (err?.name === 'AbortError') {
-        setError('Signup timed out. Your account may have been created — try signing in. If not, please try again.');
-      } else {
-        console.error('[signup] error:', err?.message);
-        setError(err?.message || 'Signup failed. Please try again.');
-      }
+      console.error('[signup] error:', err?.message);
+      setError(err?.message || 'Signup failed. Please try again.');
     } finally {
-      clearTimeout(timeoutId);
       setLoading(false);
     }
   };
