@@ -47,7 +47,6 @@ function SignInForm() {
 
       if (!result || result.error) {
         const raw = result?.error?.message || '';
-        // Map Supabase error messages to user-friendly ones
         let msg;
         if (raw.includes('Invalid login credentials')) {
           msg = 'Incorrect email or password.';
@@ -59,7 +58,6 @@ function SignInForm() {
           msg = raw || 'Sign in failed. Please try again.';
         }
         setError(msg);
-        setLoading(false);
         return;
       }
 
@@ -68,6 +66,7 @@ function SignInForm() {
     } catch (err) {
       console.error('[signin] error:', err?.message);
       setError(err?.message || 'Sign in failed. Please try again.');
+    } finally {
       setLoading(false);
     }
   };

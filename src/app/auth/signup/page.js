@@ -55,6 +55,12 @@ function SignUpForm() {
 
     setLoading(true);
 
+    // Hard timeout — user is never stuck longer than 15s
+    const timeoutId = setTimeout(() => {
+      setLoading(false);
+      setError('Signup is taking too long. Please try again.');
+    }, 15000);
+
     try {
       const res = await fetch('/api/auth/signup', {
         method: 'POST',
@@ -67,19 +73,16 @@ function SignUpForm() {
         result = await res.json();
       } catch {
         setError('Server returned an invalid response. Please try again.');
-        setLoading(false);
         return;
       }
 
       if (!res.ok) {
         setError(result?.error || 'Signup failed. Please try again.');
-        setLoading(false);
         return;
       }
 
       if (!result?.access_token || !result?.refresh_token) {
         setError('Account created but no session returned. Please sign in.');
-        setLoading(false);
         return;
       }
 
@@ -92,12 +95,10 @@ function SignUpForm() {
           refresh_token: result.refresh_token,
         });
       } catch {
-        // setSession itself threw (e.g. lock timeout wrapped in error)
         sessionResult = null;
       }
 
       if (!sessionResult || sessionResult.error) {
-        // Account exists in DB but browser session failed — send to signin
         router.push('/auth/signin?error=' + encodeURIComponent('Account created! Please sign in.'));
         return;
       }
@@ -108,6 +109,8 @@ function SignUpForm() {
     } catch (err) {
       console.error('[signup] error:', err?.message);
       setError(err?.message || 'Signup failed. Please try again.');
+    } finally {
+      clearTimeout(timeoutId);
       setLoading(false);
     }
   };
