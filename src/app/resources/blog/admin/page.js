@@ -1,14 +1,28 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { useBlogStore } from '@/stores/blogStore';
 import { ADMIN_USER_ID, toSlug } from '@/lib/blog';
 
 export default function BlogAdminPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center py-24">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-purple border-t-transparent" />
+      </div>
+    }>
+      <BlogAdminContent />
+    </Suspense>
+  );
+}
+
+function BlogAdminContent() {
   const { user, loading: authLoading } = useAuth();
   const { posts, postsLoading, fetchPosts, createPost, updatePost, deletePost } = useBlogStore();
+  const searchParams = useSearchParams();
 
   const [editing, setEditing] = useState(null); // null = list view, 'new' or post id
   const [form, setForm] = useState({ title: '', excerpt: '', body: '', cover_image_url: '', tags: '', published: false });
@@ -19,6 +33,15 @@ export default function BlogAdminPage() {
       fetchPosts(true);
     }
   }, [user, fetchPosts]);
+
+  // Handle ?edit= query param — open editor for that post once posts are loaded
+  useEffect(() => {
+    const editId = searchParams.get('edit');
+    if (editId && posts.length > 0 && !editing) {
+      const post = posts.find((p) => p.id === editId);
+      if (post) startEdit(post);
+    }
+  }, [searchParams, posts]);
 
   if (authLoading) {
     return (

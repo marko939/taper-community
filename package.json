@@ -9,9 +9,11 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.78.0",
     "@react-pdf/renderer": "^4.3.2",
     "@supabase/ssr": "^0.6.1",
     "@supabase/supabase-js": "^2.49.1",
+    "exa-js": "^2.4.0",
     "html2canvas": "^1.4.1",
     "leaflet": "^1.9.4",
     "leaflet.markercluster": "^1.5.3",
@@ -19,7 +21,9 @@
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-leaflet": "^5.0.0",
+    "react-markdown": "^10.1.0",
     "recharts": "^2.15.0",
+    "remark-gfm": "^4.0.1",
     "resend": "^6.9.2",
     "zustand": "^5.0.11"
   },
@@ -29,6 +33,7 @@
     "eslint": "^9.17.0",
     "eslint-config-next": "^15.1.0",
     "postcss": "^8.4.49",
-    "tailwindcss": "^3.4.17"
+    "tailwindcss": "^3.4.17",
+    "vercel": "^50.23.2"
   }
 }

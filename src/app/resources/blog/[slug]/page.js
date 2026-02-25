@@ -1,17 +1,31 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { useBlogStore } from '@/stores/blogStore';
+import { useAuth } from '@/hooks/useAuth';
+import { ADMIN_USER_ID } from '@/lib/blog';
 
 export default function BlogPostPage() {
   const { slug } = useParams();
-  const { currentPost: post, currentPostLoading: loading, fetchPost } = useBlogStore();
+  const router = useRouter();
+  const { user, loading: authLoading } = useAuth();
+  const { currentPost: post, currentPostLoading: loading, fetchPost, deletePost } = useBlogStore();
+
+  const isAdmin = !authLoading && user?.id === ADMIN_USER_ID;
 
   useEffect(() => {
     if (slug) fetchPost(slug);
   }, [slug, fetchPost]);
+
+  const handleDelete = async () => {
+    if (!confirm('Delete this post? This cannot be undone.')) return;
+    await deletePost(post.id);
+    router.push('/resources');
+  };
 
   if (loading) {
     return (
@@ -34,15 +48,34 @@ export default function BlogPostPage() {
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
-      <Link
-        href="/resources"
-        className="inline-flex items-center gap-1.5 text-sm text-text-muted no-underline transition hover:text-purple"
-      >
-        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
-        </svg>
-        Back to Resources
-      </Link>
+      <div className="flex items-center justify-between">
+        <Link
+          href="/resources"
+          className="inline-flex items-center gap-1.5 text-sm text-text-muted no-underline transition hover:text-purple"
+        >
+          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+          </svg>
+          Back to Resources
+        </Link>
+
+        {isAdmin && (
+          <div className="flex items-center gap-2">
+            <Link
+              href={`/resources/blog/admin?edit=${post.id}`}
+              className="rounded-lg px-3 py-1.5 text-xs font-medium text-purple no-underline transition hover:bg-purple-ghost"
+            >
+              Edit
+            </Link>
+            <button
+              onClick={handleDelete}
+              className="rounded-lg px-3 py-1.5 text-xs font-medium text-rose-500 transition hover:bg-rose-50"
+            >
+              Delete
+            </button>
+          </div>
+        )}
+      </div>
 
       {post.cover_image_url && (
         <div className="overflow-hidden rounded-2xl">
@@ -74,20 +107,10 @@ export default function BlogPostPage() {
         </div>
       </div>
 
-      <div className="max-w-none space-y-4 text-sm leading-relaxed text-text-muted">
-        {post.body.split('\n\n').map((block, i) => {
-          const trimmed = block.trim();
-          if (!trimmed) return null;
-          const isHeading = trimmed.length < 80 && !trimmed.includes('. ') && /^[A-Z]/.test(trimmed);
-          if (isHeading) {
-            return (
-              <h2 key={i} className="mt-6 font-serif text-xl font-bold text-foreground">
-                {trimmed}
-              </h2>
-            );
-          }
-          return <p key={i}>{trimmed}</p>;
-        })}
+      <div className="prose prose-sm max-w-none text-text-muted prose-headings:font-serif prose-headings:text-foreground prose-a:text-purple prose-strong:text-foreground prose-img:rounded-xl">
+        <ReactMarkdown remarkPlugins={[remarkGfm]}>
+          {post.body}
+        </ReactMarkdown>
       </div>
     </div>
   );
