@@ -120,7 +120,7 @@ export default function OnboardingPage() {
         }
       } catch { /* ignore */ }
 
-      router.push('/forums');
+      router.push('/');
     } catch (err) {
       console.error('[onboarding] save error:', err);
       if (err?.message === 'timeout') {
@@ -132,7 +132,7 @@ export default function OnboardingPage() {
     }
   };
 
-  const handleSkip = () => router.push('/forums');
+  const handleSkip = () => router.push('/');
 
   return (
     <div className="mx-auto max-w-lg py-12">
