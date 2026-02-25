@@ -76,9 +76,14 @@ export const useAuthStore = create((set, get) => ({
   },
 
   signOut: async () => {
-    const supabase = createClient();
-    await supabase.auth.signOut();
     set({ user: null, profile: null });
+    try {
+      const supabase = createClient();
+      // Don't block on signOut — clear state and redirect immediately
+      supabase.auth.signOut().catch(() => {});
+    } catch {
+      // Ignore — state is already cleared
+    }
   },
 
   updateProfileCache: (partial) => {
