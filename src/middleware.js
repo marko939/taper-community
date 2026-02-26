@@ -4,9 +4,16 @@ import { createServerClient } from '@supabase/ssr';
 export async function middleware(request) {
   let supabaseResponse = NextResponse.next({ request });
 
+  const url = (process.env.NEXT_PUBLIC_SUPABASE_URL || '').trim();
+  const key = (process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '').replace(/\s+/g, '');
+
+  if (!url || !key) {
+    return supabaseResponse;
+  }
+
   const supabase = createServerClient(
-    (process.env.NEXT_PUBLIC_SUPABASE_URL || '').trim(),
-    (process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '').replace(/\s+/g, ''),
+    url,
+    key,
     {
       cookies: {
         getAll() {
