@@ -5,6 +5,10 @@ import { createClient } from '@/lib/supabase/client';
 
 const THREADS_PER_PAGE = 20;
 
+// Request ID counters — used to ignore stale responses from concurrent fetches
+let _hotRequestId = 0;
+let _newRequestId = 0;
+
 export const useForumStore = create((set, get) => ({
   forums: [],
   forumsLoaded: false,
@@ -132,8 +136,10 @@ export const useForumStore = create((set, get) => ({
     }));
   },
 
-  fetchHotThreads: async (limit = 10) => {
-    if (get().hotThreadsLoaded) return;
+  fetchHotThreads: async (limit = 10, { force = false } = {}) => {
+    if (!force && get().hotThreadsLoaded) return;
+    const requestId = ++_hotRequestId;
+    set({ recentThreads: { items: get().recentThreads.items, loading: true } });
     try {
       const supabase = createClient();
       const sevenDaysAgo = new Date(Date.now() - 7 * 86400000).toISOString();
@@ -146,6 +152,9 @@ export const useForumStore = create((set, get) => ({
         .order('created_at', { ascending: false })
         .limit(50);
 
+      // Stale response — a newer request was fired, ignore this one
+      if (requestId !== _hotRequestId) return;
+
       let threads = data || [];
 
       // If not enough recent threads, backfill with top all-time
@@ -156,6 +165,10 @@ export const useForumStore = create((set, get) => ({
           .select('*, profiles:user_id(display_name, is_peer_advisor, avatar_url, is_founding_member), forums:forum_id(name, drug_slug, slug), thread_forums(forum_id, forums:forum_id(name, slug, drug_slug))')
           .order('vote_score', { ascending: false })
           .limit(limit);
+
+        // Check staleness again after second await
+        if (requestId !== _hotRequestId) return;
+
         (topData || []).forEach((t) => {
           if (!existingIds.has(t.id)) threads.push(t);
         });
@@ -167,13 +180,16 @@ export const useForumStore = create((set, get) => ({
 
       set({ recentThreads: { items: threads, loading: false }, hotThreadsLoaded: true });
     } catch (err) {
+      if (requestId !== _hotRequestId) return;
       console.error('[forumStore] fetchHotThreads error:', err);
       set({ recentThreads: { items: [], loading: false }, hotThreadsLoaded: true });
     }
   },
 
-  fetchNewThreads: async (limit = 10) => {
-    if (get().newThreadsLoaded) return;
+  fetchNewThreads: async (limit = 10, { force = false } = {}) => {
+    if (!force && get().newThreadsLoaded) return;
+    const requestId = ++_newRequestId;
+    set({ newThreads: { items: get().newThreads.items, loading: true } });
     try {
       const supabase = createClient();
       const { data } = await supabase
@@ -182,8 +198,12 @@ export const useForumStore = create((set, get) => ({
         .order('created_at', { ascending: false })
         .limit(limit);
 
+      // Stale response — a newer request was fired, ignore this one
+      if (requestId !== _newRequestId) return;
+
       set({ newThreads: { items: data || [], loading: false }, newThreadsLoaded: true });
     } catch (err) {
+      if (requestId !== _newRequestId) return;
       console.error('[forumStore] fetchNewThreads error:', err);
       set({ newThreads: { items: [], loading: false }, newThreadsLoaded: true });
     }

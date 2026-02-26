@@ -49,8 +49,6 @@ export const useAuthStore = create((set, get) => ({
     try {
       const authChangeResult = supabase.auth.onAuthStateChange(
         async (event, session) => {
-          // Only refetch profile on actual sign-in/sign-out, not token refreshes
-          // Token refreshes can race with in-flight API calls and block them
           if (event === 'SIGNED_IN') {
             const newUser = session?.user ?? null;
             if (newUser) {
@@ -60,6 +58,13 @@ export const useAuthStore = create((set, get) => ({
                 .eq('id', newUser.id)
                 .single();
               set({ user: newUser, profile: data });
+            }
+          } else if (event === 'TOKEN_REFRESHED') {
+            // Keep user object in sync with refreshed token —
+            // prevents stale auth state after token rotation
+            const newUser = session?.user ?? null;
+            if (newUser) {
+              set({ user: newUser });
             }
           } else if (event === 'SIGNED_OUT') {
             set({ user: null, profile: null });

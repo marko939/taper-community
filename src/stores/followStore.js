@@ -5,6 +5,9 @@ import { createClient } from '@/lib/supabase/client';
 
 const ADMIN_ID = '8572637a-2109-4471-bcb4-3163d04094d0';
 
+// Request ID counter — used to ignore stale responses from concurrent fetches
+let _followedThreadsRequestId = 0;
+
 export const useFollowStore = create((set, get) => ({
   following: new Set(),
   followingLoaded: false,
@@ -53,13 +56,16 @@ export const useFollowStore = create((set, get) => ({
     }
   },
 
-  fetchFollowedThreads: async () => {
-    if (get().followedThreadsLoaded) return;
+  fetchFollowedThreads: async ({ force = false } = {}) => {
+    if (!force && get().followedThreadsLoaded) return;
+    const requestId = ++_followedThreadsRequestId;
     const { following } = get();
     if (following.size === 0) {
       set({ followedThreads: { items: [], loading: false }, followedThreadsLoaded: true });
       return;
     }
+
+    set({ followedThreads: { items: get().followedThreads.items, loading: true } });
 
     try {
       const supabase = createClient();
@@ -71,6 +77,9 @@ export const useFollowStore = create((set, get) => ({
         .in('user_id', followedIds)
         .order('created_at', { ascending: false })
         .limit(20);
+
+      // Stale response — a newer request was fired, ignore this one
+      if (requestId !== _followedThreadsRequestId) return;
 
       let threads = data || [];
 
@@ -90,6 +99,7 @@ export const useFollowStore = create((set, get) => ({
 
       set({ followedThreads: { items: threads, loading: false }, followedThreadsLoaded: true });
     } catch (err) {
+      if (requestId !== _followedThreadsRequestId) return;
       console.error('[followStore] fetchFollowedThreads error:', err);
       set({ followedThreads: { items: [], loading: false }, followedThreadsLoaded: true });
     }

@@ -2,6 +2,7 @@
 
 import { create } from 'zustand';
 import { createClient } from '@/lib/supabase/client';
+import { ensureSession } from '@/lib/ensureSession';
 import { fireAndForget } from '@/lib/fireAndForget';
 import { useAuthStore } from './authStore';
 import { useForumStore } from './forumStore';
@@ -134,6 +135,9 @@ export const useThreadStore = create((set, get) => ({
     const userId = useAuthStore.getState().user?.id;
     if (!userId) throw new Error('Please sign in to reply.');
     if (!body.trim()) throw new Error('Reply cannot be empty.');
+
+    // Ensure session is valid before inserting — prevents silent RLS failures
+    await ensureSession();
 
     const { data, error } = await supabase
       .from('replies')

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
+import { ensureSession } from '@/lib/ensureSession';
 import { fireAndForget } from '@/lib/fireAndForget';
 import { THREAD_TAGS } from '@/lib/constants';
 import { GENERAL_FORUMS, FORUM_CATEGORY_ORDER } from '@/lib/forumCategories';
@@ -82,6 +83,9 @@ export default function QuickPost({ user, profile }) {
     setLoading(true);
     setError('');
     try {
+      // Ensure session is valid before inserting — prevents silent RLS failures
+      await ensureSession();
+
       const { data: thread, error: insertError } = await supabase
         .from('threads')
         .insert({

@@ -4,6 +4,7 @@ import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
+import { ensureSession } from '@/lib/ensureSession';
 import { fireAndForget } from '@/lib/fireAndForget';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
 import NewThreadForm from '@/components/forums/NewThreadForm';
@@ -71,6 +72,9 @@ function NewThreadContent() {
 
   const handleSubmit = async ({ title, body, tags }) => {
     if (selectedForums.length === 0) throw new Error('Please select at least one community.');
+
+    // Ensure session is valid before inserting — prevents silent RLS failures
+    await ensureSession();
 
     const { data: thread, error } = await supabase
       .from('threads')

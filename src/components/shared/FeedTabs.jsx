@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { useForumStore } from '@/stores/forumStore';
 import { useAuthStore } from '@/stores/authStore';
@@ -100,7 +100,25 @@ export default function FeedTabs({ activeTab: controlledTab, onTabChange, useUrl
   const [localTab, setLocalTab] = useState('hot');
   const activeTab = controlledTab ?? localTab;
   const [expanded, setExpanded] = useState(false);
+  const [showingMore, setShowingMore] = useState(false);
 
+  // Refs for debounce and abort
+  const debounceRef = useRef(null);
+  const activeTabRef = useRef(activeTab);
+  activeTabRef.current = activeTab;
+
+  // Fetch the active tab's data — called on mount and debounced on tab switch
+  const fetchForTab = useCallback((tab) => {
+    if (tab === 'hot') {
+      fetchHotThreads(10);
+    } else if (tab === 'new') {
+      fetchNewThreads(10);
+    } else if (tab === 'following' && followingLoaded) {
+      fetchFollowedThreads();
+    }
+  }, [fetchHotThreads, fetchNewThreads, fetchFollowedThreads, followingLoaded]);
+
+  // Initial fetch for active tab on mount
   useEffect(() => {
     fetchHotThreads(10);
     fetchNewThreads(10);
@@ -116,15 +134,28 @@ export default function FeedTabs({ activeTab: controlledTab, onTabChange, useUrl
     }
   }, [followingLoaded, fetchFollowedThreads]);
 
-  const switchTab = (tab) => {
+  // Debounced tab switch — UI updates immediately, fetch fires after 150ms settle
+  const switchTab = useCallback((tab) => {
     setExpanded(false);
+    setShowingMore(false);
+
+    // Update tab UI immediately (feels snappy)
     if (onTabChange) {
       onTabChange(tab);
     } else {
       setLocalTab(tab);
     }
-  };
 
+    // Cancel any pending debounced fetch
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+
+    // Debounce the fetch — if another click comes within 150ms, this gets cancelled
+    debounceRef.current = setTimeout(() => {
+      fetchForTab(tab);
+    }, 150);
+  }, [onTabChange, fetchForTab]);
+
+  // Safety timeout — if loading is stuck for 10 seconds, force reset
   let currentThreads, currentLoading;
   if (activeTab === 'hot') {
     currentThreads = recentThreads.items || [];
@@ -136,6 +167,39 @@ export default function FeedTabs({ activeTab: controlledTab, onTabChange, useUrl
     currentThreads = followedThreads.items || [];
     currentLoading = followedThreads.loading;
   }
+
+  useEffect(() => {
+    if (!currentLoading) return;
+    const safety = setTimeout(() => {
+      // Force-reset loading state for the stuck tab
+      const tab = activeTabRef.current;
+      if (tab === 'hot') {
+        useForumStore.setState({ recentThreads: { items: useForumStore.getState().recentThreads.items || [], loading: false }, hotThreadsLoaded: true });
+      } else if (tab === 'new') {
+        useForumStore.setState({ newThreads: { items: useForumStore.getState().newThreads.items || [], loading: false }, newThreadsLoaded: true });
+      } else {
+        useFollowStore.setState({ followedThreads: { items: useFollowStore.getState().followedThreads.items || [], loading: false }, followedThreadsLoaded: true });
+      }
+      console.warn('[tab-switcher] safety timeout triggered — force reset loading for tab:', tab);
+    }, 10000);
+    return () => clearTimeout(safety);
+  }, [currentLoading]);
+
+  // Cleanup debounce on unmount
+  useEffect(() => {
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, []);
+
+  // Show more — protected from double-clicks
+  const handleShowMore = useCallback(() => {
+    if (showingMore) return;
+    setShowingMore(true);
+    setExpanded(true);
+    // Reset after a brief moment so it can be used again if needed
+    setTimeout(() => setShowingMore(false), 300);
+  }, [showingMore]);
 
   const visibleItems = expanded ? currentThreads.slice(0, 10) : currentThreads.slice(0, 5);
   const canExpand = currentThreads.length > 5 && !expanded;
@@ -196,7 +260,8 @@ export default function FeedTabs({ activeTab: controlledTab, onTabChange, useUrl
           </div>
           {canExpand && (
             <button
-              onClick={() => setExpanded(true)}
+              onClick={handleShowMore}
+              disabled={showingMore}
               className="flex w-full items-center justify-center gap-2 border-t px-6 py-3 text-sm font-semibold transition hover:bg-purple-ghost/50"
               style={{ borderColor: 'var(--border-subtle)', color: 'var(--purple)' }}
             >

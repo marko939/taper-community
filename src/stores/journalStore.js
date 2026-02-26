@@ -2,6 +2,7 @@
 
 import { create } from 'zustand';
 import { createClient } from '@/lib/supabase/client';
+import { ensureSession } from '@/lib/ensureSession';
 import { fireAndForget } from '@/lib/fireAndForget';
 import { useAuthStore } from './authStore';
 
@@ -37,6 +38,9 @@ export const useJournalStore = create((set, get) => ({
     const supabase = createClient();
     const userId = useAuthStore.getState().user?.id;
     if (!userId) return { data: null, error: { message: 'Not authenticated' } };
+
+    // Ensure session is valid before inserting
+    await ensureSession();
 
     // Auto-generate title if not provided
     if (!entry.title) {
