@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/client';
 import { fireAndForget } from '@/lib/fireAndForget';
 import { THREAD_TAGS } from '@/lib/constants';
 import { GENERAL_FORUMS, FORUM_CATEGORY_ORDER } from '@/lib/forumCategories';
+import { useForumStore } from '@/stores/forumStore';
 
 export default function QuickPost({ user, profile }) {
   const [forums, setForums] = useState([]);
@@ -108,6 +109,9 @@ export default function QuickPost({ user, profile }) {
         }));
         fireAndForget('link-thread-forums', () => supabase.from('thread_forums').insert(forumLinks));
       }
+
+      // Bust forum cache so forums page shows the new thread
+      useForumStore.getState().invalidate();
 
       // Reset form and show success
       setTitle('');

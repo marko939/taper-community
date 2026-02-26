@@ -29,12 +29,17 @@ export default function InvitePrompt({ trigger, userId }) {
 
   const handleInvite = async () => {
     setLoading(true);
-    const code = await createInviteLink(userId);
-    if (code) {
-      const url = `${window.location.origin}/join?ref=${code}`;
-      setInviteUrl(url);
+    try {
+      const code = await createInviteLink(userId);
+      if (code) {
+        const url = `${window.location.origin}/join?ref=${code}`;
+        setInviteUrl(url);
+      }
+    } catch (err) {
+      console.error('[InvitePrompt] invite error:', err);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const handleCopy = () => {

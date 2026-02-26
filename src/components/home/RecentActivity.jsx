@@ -35,7 +35,7 @@ export default function RecentActivity() {
   return (
     <section>
       <h2 className="mb-1 font-serif text-2xl font-semibold" style={{ color: 'var(--foreground)' }}>Top Discussions</h2>
-      <p className="mb-6 text-sm" style={{ color: 'var(--text-muted)' }}>The most upvoted posts from the community.</p>
+      <p className="mb-6 text-sm" style={{ color: 'var(--text-muted)' }}>The most liked posts from the community.</p>
 
       {loading ? (
         <LoadingSpinner className="py-8" />

@@ -13,6 +13,19 @@ export const useForumStore = create((set, get) => ({
   searchState: {},     // keyed by forumId|'global': { results, loading, query }
   recentThreads: { items: [], loading: true },
   hotThreadsLoaded: false,
+  newThreads: { items: [], loading: true },
+  newThreadsLoaded: false,
+
+  // Reset cached flags so next fetch actually hits the DB
+  invalidate: () => {
+    set({
+      hotThreadsLoaded: false,
+      newThreadsLoaded: false,
+      recentThreads: { items: [], loading: true },
+      newThreads: { items: [], loading: true },
+      threadPages: {},
+    });
+  },
 
   fetchForums: async () => {
     if (get().forumsLoaded) return get().forums;
@@ -119,13 +132,13 @@ export const useForumStore = create((set, get) => ({
     }));
   },
 
-  fetchHotThreads: async (limit = 15) => {
+  fetchHotThreads: async (limit = 10) => {
     if (get().hotThreadsLoaded) return;
     try {
       const supabase = createClient();
       const sevenDaysAgo = new Date(Date.now() - 7 * 86400000).toISOString();
 
-      // Fetch recent threads with engagement data
+      // Fetch recent threads from last 7 days
       let { data } = await supabase
         .from('threads')
         .select('*, profiles:user_id(display_name, is_peer_advisor, avatar_url, is_founding_member), forums:forum_id(name, drug_slug, slug), thread_forums(forum_id, forums:forum_id(name, slug, drug_slug))')
@@ -148,25 +161,31 @@ export const useForumStore = create((set, get) => ({
         });
       }
 
-      // Reddit-style hot score: combines votes, replies, and recency
-      const now = Date.now();
-      threads = threads.map((t) => {
-        const ageHours = Math.max((now - new Date(t.created_at).getTime()) / 3600000, 0.1);
-        const votes = Math.max(t.vote_score || 0, 0);
-        const replies = t.reply_count || 0;
-        const engagement = votes + replies * 0.5;
-        // Log of engagement boosted, divided by age decay (gravity)
-        const hotScore = (Math.log10(Math.max(engagement, 1)) + 1) / Math.pow(ageHours / 6 + 1, 0.5);
-        return { ...t, _hotScore: hotScore };
-      });
-
-      threads.sort((a, b) => b._hotScore - a._hotScore);
+      // Simple ranking: vote_score + reply_count
+      threads.sort((a, b) => ((b.vote_score || 0) + (b.reply_count || 0)) - ((a.vote_score || 0) + (a.reply_count || 0)));
       threads = threads.slice(0, limit);
 
       set({ recentThreads: { items: threads, loading: false }, hotThreadsLoaded: true });
     } catch (err) {
       console.error('[forumStore] fetchHotThreads error:', err);
       set({ recentThreads: { items: [], loading: false }, hotThreadsLoaded: true });
+    }
+  },
+
+  fetchNewThreads: async (limit = 10) => {
+    if (get().newThreadsLoaded) return;
+    try {
+      const supabase = createClient();
+      const { data } = await supabase
+        .from('threads')
+        .select('*, profiles:user_id(display_name, is_peer_advisor, avatar_url, is_founding_member), forums:forum_id(name, drug_slug, slug), thread_forums(forum_id, forums:forum_id(name, slug, drug_slug))')
+        .order('created_at', { ascending: false })
+        .limit(limit);
+
+      set({ newThreads: { items: data || [], loading: false }, newThreadsLoaded: true });
+    } catch (err) {
+      console.error('[forumStore] fetchNewThreads error:', err);
+      set({ newThreads: { items: [], loading: false }, newThreadsLoaded: true });
     }
   },
 
@@ -184,26 +203,33 @@ export const useForumStore = create((set, get) => ({
       searchState: { ...state.searchState, [key]: { results: [], loading: true, query } },
     }));
 
-    const supabase = createClient();
-    const selectFields = forumId
-      ? '*, profiles:user_id(display_name, is_peer_advisor, avatar_url, is_founding_member), forums:forum_id(name, slug, drug_slug), thread_forums!inner(forum_id)'
-      : '*, profiles:user_id(display_name, is_peer_advisor, avatar_url, is_founding_member), forums:forum_id(name, slug, drug_slug)';
+    try {
+      const supabase = createClient();
+      const selectFields = forumId
+        ? '*, profiles:user_id(display_name, is_peer_advisor, avatar_url, is_founding_member), forums:forum_id(name, slug, drug_slug), thread_forums!inner(forum_id)'
+        : '*, profiles:user_id(display_name, is_peer_advisor, avatar_url, is_founding_member), forums:forum_id(name, slug, drug_slug)';
 
-    let qb = supabase
-      .from('threads')
-      .select(selectFields)
-      .textSearch('title', query)
-      .order('created_at', { ascending: false })
-      .limit(20);
+      let qb = supabase
+        .from('threads')
+        .select(selectFields)
+        .textSearch('title', query)
+        .order('created_at', { ascending: false })
+        .limit(20);
 
-    if (forumId) {
-      qb = qb.eq('thread_forums.forum_id', forumId);
+      if (forumId) {
+        qb = qb.eq('thread_forums.forum_id', forumId);
+      }
+
+      const { data } = await qb;
+
+      set((state) => ({
+        searchState: { ...state.searchState, [key]: { results: data || [], loading: false, query } },
+      }));
+    } catch (err) {
+      console.error('[forumStore] search error:', err);
+      set((state) => ({
+        searchState: { ...state.searchState, [key]: { results: [], loading: false, query } },
+      }));
     }
-
-    const { data } = await qb;
-
-    set((state) => ({
-      searchState: { ...state.searchState, [key]: { results: data || [], loading: false, query } },
-    }));
   },
 }));

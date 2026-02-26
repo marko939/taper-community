@@ -10,6 +10,7 @@ export const useFollowStore = create((set, get) => ({
   followingLoaded: false,
   followCounts: {},
   followedThreads: { items: [], loading: true },
+  followedThreadsLoaded: false,
 
   fetchFollowing: async (userId) => {
     if (!userId || get().followingLoaded) return;
@@ -53,9 +54,10 @@ export const useFollowStore = create((set, get) => ({
   },
 
   fetchFollowedThreads: async () => {
+    if (get().followedThreadsLoaded) return;
     const { following } = get();
     if (following.size === 0) {
-      set({ followedThreads: { items: [], loading: false } });
+      set({ followedThreads: { items: [], loading: false }, followedThreadsLoaded: true });
       return;
     }
 
@@ -86,10 +88,10 @@ export const useFollowStore = create((set, get) => ({
       threads.sort((a, b) => b._hotScore - a._hotScore);
       threads = threads.slice(0, 4);
 
-      set({ followedThreads: { items: threads, loading: false } });
+      set({ followedThreads: { items: threads, loading: false }, followedThreadsLoaded: true });
     } catch (err) {
       console.error('[followStore] fetchFollowedThreads error:', err);
-      set({ followedThreads: { items: [], loading: false } });
+      set({ followedThreads: { items: [], loading: false }, followedThreadsLoaded: true });
     }
   },
 

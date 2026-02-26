@@ -1,7 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { THREAD_TAGS } from '@/lib/constants';
+import EmojiPickerButton from '@/components/shared/EmojiPickerButton';
 
 export default function NewThreadForm({ forumId, onSubmit, disabled = false }) {
   const [title, setTitle] = useState('');
@@ -9,6 +10,7 @@ export default function NewThreadForm({ forumId, onSubmit, disabled = false }) {
   const [selectedTags, setSelectedTags] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const bodyRef = useRef(null);
 
   const toggleTag = (tag) => {
     setSelectedTags((prev) =>
@@ -55,6 +57,7 @@ export default function NewThreadForm({ forumId, onSubmit, disabled = false }) {
         </label>
         <textarea
           id="body"
+          ref={bodyRef}
           value={body}
           onChange={(e) => setBody(e.target.value)}
           placeholder="Share your experience, question, or thoughts..."
@@ -62,6 +65,9 @@ export default function NewThreadForm({ forumId, onSubmit, disabled = false }) {
           className="textarea"
           required
         />
+        <div className="mt-1 flex justify-end">
+          <EmojiPickerButton textareaRef={bodyRef} value={body} onChange={setBody} />
+        </div>
       </div>
 
       <div>

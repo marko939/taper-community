@@ -11,6 +11,8 @@ import { useAuthStore } from '@/stores/authStore';
 import { useThreadStore } from '@/stores/threadStore';
 import { createClient } from '@/lib/supabase/client';
 import { ADMIN_USER_ID } from '@/lib/blog';
+import { renderBodyWithQuotes } from '@/lib/renderQuotes';
+import FollowButton from '@/components/shared/FollowButton';
 
 export default function ThreadView({ thread }) {
   const { id, title, body, tags = [], view_count, vote_score, created_at, user_id, profiles, thread_forums = [], pinned } = thread;
@@ -33,14 +35,19 @@ export default function ThreadView({ thread }) {
 
   const togglePin = async () => {
     setPinLoading(true);
-    const { error } = await supabase
-      .from('threads')
-      .update({ pinned: !isPinned })
-      .eq('id', id)
-      .select()
-      .maybeSingle();
-    if (!error) setIsPinned(!isPinned);
-    setPinLoading(false);
+    try {
+      const { error } = await supabase
+        .from('threads')
+        .update({ pinned: !isPinned })
+        .eq('id', id)
+        .select()
+        .maybeSingle();
+      if (!error) setIsPinned(!isPinned);
+    } catch (err) {
+      console.error('[ThreadView] togglePin error:', err);
+    } finally {
+      setPinLoading(false);
+    }
   };
 
   const handleEdit = async () => {
@@ -71,16 +78,22 @@ export default function ThreadView({ thread }) {
 
   const handleDelete = async () => {
     setDeleteLoading(true);
-    const { error } = await supabase
-      .from('threads')
-      .delete()
-      .eq('id', id);
-    if (!error) {
-      router.push('/forums');
-    } else {
-      console.error('[ThreadView] delete error:', error);
-      setDeleteLoading(false);
+    try {
+      const { error } = await supabase
+        .from('threads')
+        .delete()
+        .eq('id', id);
+      if (!error) {
+        router.push('/forums');
+      } else {
+        console.error('[ThreadView] delete error:', error);
+        setShowDeleteConfirm(false);
+      }
+    } catch (err) {
+      console.error('[ThreadView] delete error:', err);
       setShowDeleteConfirm(false);
+    } finally {
+      setDeleteLoading(false);
     }
   };
 
@@ -92,11 +105,6 @@ export default function ThreadView({ thread }) {
   return (
     <div className="card">
       <div className="flex gap-4">
-        {/* Vote arrows */}
-        <div className="shrink-0 pt-1">
-          <VoteButton type="thread" targetId={id} initialScore={vote_score || 0} />
-        </div>
-
         <div className="min-w-0 flex-1">
           <div className="flex flex-col gap-6 lg:flex-row">
             {/* Author sidebar */}
@@ -109,6 +117,7 @@ export default function ThreadView({ thread }) {
                       {displayName}
                     </Link>
                     {profiles?.is_peer_advisor && <PeerAdvisorBadge />}
+                    <FollowButton targetUserId={user_id} />
                   </div>
                   {profiles?.drug && (
                     <p className="text-xs text-text-subtle">Tapering: {profiles.drug}</p>
@@ -236,6 +245,8 @@ export default function ThreadView({ thread }) {
                     <span>{new Date(created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
                     <span>&middot;</span>
                     <span>{view_count} views</span>
+                    <span>&middot;</span>
+                    <VoteButton type="thread" targetId={id} initialScore={vote_score || 0} />
                   </div>
 
                   {crossPostedForums.length > 1 && (
@@ -262,8 +273,8 @@ export default function ThreadView({ thread }) {
                     </div>
                   )}
 
-                  <div className="mt-6 max-w-none whitespace-pre-wrap text-sm leading-relaxed text-text-muted">
-                    {editBody}
+                  <div className="mt-6 max-w-none whitespace-pre-wrap text-sm leading-relaxed text-text-muted" data-quotable data-author={displayName}>
+                    {renderBodyWithQuotes(editBody)}
                   </div>
 
                   <DrugSignature signature={profiles?.drug_signature} />

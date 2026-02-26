@@ -184,30 +184,35 @@ export default function JournalEntryForm({ onSubmit, entryCount = 0 }) {
     if (loading) return;
     setLoading(true);
 
-    // Only post to forums that have a real DB row (skip slug-only fallbacks)
-    const allForumIds = allPostingForums.filter((f) => f._hasDb !== false).map((f) => f.id);
+    try {
+      // Only post to forums that have a real DB row (skip slug-only fallbacks)
+      const allForumIds = allPostingForums.filter((f) => f._hasDb !== false).map((f) => f.id);
 
-    await onSubmit({
-      title,
-      date,
-      drug: drug || null,
-      current_dose: currentDose ? `${currentDose}${doseUnit}` : null,
-      dose_numeric: currentDose ? parseFloat(currentDose) || null : null,
-      symptoms,
-      mood_score: moodScore,
-      notes,
-      is_public: isPublic || allForumIds.length > 0,
-      published_forums: allForumIds,
-    });
+      await onSubmit({
+        title,
+        date,
+        drug: drug || null,
+        current_dose: currentDose ? `${currentDose}${doseUnit}` : null,
+        dose_numeric: currentDose ? parseFloat(currentDose) || null : null,
+        symptoms,
+        mood_score: moodScore,
+        notes,
+        is_public: isPublic || allForumIds.length > 0,
+        published_forums: allForumIds,
+      });
 
-    setCurrentDose('');
-    setSymptoms([]);
-    setMoodScore(5);
-    setIsPublic(true);
-    setCrossPostForums([]);
-    setTitleEdited(false);
-    setNotesEdited(false);
-    setLoading(false);
+      setCurrentDose('');
+      setSymptoms([]);
+      setMoodScore(5);
+      setIsPublic(true);
+      setCrossPostForums([]);
+      setTitleEdited(false);
+      setNotesEdited(false);
+    } catch (err) {
+      console.error('[JournalEntryForm] submit error:', err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (

@@ -45,20 +45,30 @@ export const useProfileStore = create((set, get) => ({
       );
     }
 
-    const results = await Promise.all(promises);
+    try {
+      const results = await Promise.all(promises);
 
-    set((state) => ({
-      profiles: {
-        ...state.profiles,
-        [userId]: {
-          data: results[0].data,
-          threads: results[1].data || [],
-          replies: results[2].data || [],
-          journal: isOwn && results[3] ? results[3].data || [] : [],
-          loading: false,
+      set((state) => ({
+        profiles: {
+          ...state.profiles,
+          [userId]: {
+            data: results[0].data,
+            threads: results[1].data || [],
+            replies: results[2].data || [],
+            journal: isOwn && results[3] ? results[3].data || [] : [],
+            loading: false,
+          },
         },
-      },
-    }));
+      }));
+    } catch (err) {
+      console.error('[profileStore] fetchProfile error:', err);
+      set((state) => ({
+        profiles: {
+          ...state.profiles,
+          [userId]: { data: null, threads: [], replies: [], journal: [], loading: false },
+        },
+      }));
+    }
   },
 
   updateProfile: async (partial) => {

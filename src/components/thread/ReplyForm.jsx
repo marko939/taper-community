@@ -1,17 +1,34 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { useAuthStore } from '@/stores/authStore';
 import { useThreadStore } from '@/stores/threadStore';
+import EmojiPickerButton from '@/components/shared/EmojiPickerButton';
 
 export default function ReplyForm({ threadId }) {
   const [body, setBody] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const textareaRef = useRef(null);
   const user = useAuthStore((s) => s.user);
   const authLoading = useAuthStore((s) => s.loading);
   const addReply = useThreadStore((s) => s.addReply);
+  const pendingQuote = useThreadStore((s) => s.pendingQuote);
+  const clearQuote = useThreadStore((s) => s.clearQuote);
+
+  // Handle incoming quotes
+  useEffect(() => {
+    if (pendingQuote) {
+      setBody((prev) => pendingQuote + (prev ? '\n' + prev : ''));
+      clearQuote();
+      // Scroll form into view and focus
+      requestAnimationFrame(() => {
+        textareaRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        textareaRef.current?.focus();
+      });
+    }
+  }, [pendingQuote, clearQuote]);
 
   if (!authLoading && !user) {
     return (
@@ -48,6 +65,7 @@ export default function ReplyForm({ threadId }) {
     <form onSubmit={handleSubmit} className="card">
       <h3 className="mb-3 text-sm font-semibold text-foreground">Write a Reply</h3>
       <textarea
+        ref={textareaRef}
         value={body}
         onChange={(e) => setBody(e.target.value)}
         placeholder="Share your thoughts or experience..."
@@ -58,7 +76,8 @@ export default function ReplyForm({ threadId }) {
       {error && (
         <p className="mt-2 rounded-lg bg-red-50 px-4 py-2 text-sm text-red-600">{error}</p>
       )}
-      <div className="mt-3 flex justify-end">
+      <div className="mt-3 flex items-center justify-end gap-2">
+        <EmojiPickerButton textareaRef={textareaRef} value={body} onChange={setBody} />
         <button
           type="submit"
           disabled={loading || !body.trim()}

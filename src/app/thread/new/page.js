@@ -8,6 +8,7 @@ import { fireAndForget } from '@/lib/fireAndForget';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
 import NewThreadForm from '@/components/forums/NewThreadForm';
 import { PageLoading } from '@/components/shared/LoadingSpinner';
+import { useForumStore } from '@/stores/forumStore';
 import { GENERAL_FORUMS, FORUM_CATEGORY_ORDER } from '@/lib/forumCategories';
 
 function NewThreadContent() {
@@ -100,6 +101,8 @@ function NewThreadContent() {
       fireAndForget('link-thread-forums', () => supabase.from('thread_forums').insert(forumLinks));
     }
 
+    // Bust forum cache so forums page shows the new thread
+    useForumStore.getState().invalidate();
     router.push(`/thread/${thread.id}`);
   };
 

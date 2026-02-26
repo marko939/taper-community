@@ -15,17 +15,22 @@ export const useNotificationStore = create((set, get) => ({
     if (!userId) return;
 
     set({ loading: true });
-    const supabase = createClient();
+    try {
+      const supabase = createClient();
 
-    const { data } = await supabase
-      .from('notifications')
-      .select('*, actor:actor_id(display_name, avatar_url), thread:thread_id(title)')
-      .eq('user_id', userId)
-      .in('type', ['thread_reply', 'reply_mention', 'badge'])
-      .order('created_at', { ascending: false })
-      .limit(50);
+      const { data } = await supabase
+        .from('notifications')
+        .select('*, actor:actor_id(display_name, avatar_url), thread:thread_id(title)')
+        .eq('user_id', userId)
+        .in('type', ['thread_reply', 'reply_mention', 'badge'])
+        .order('created_at', { ascending: false })
+        .limit(50);
 
-    set({ notifications: data || [], loading: false });
+      set({ notifications: data || [], loading: false });
+    } catch (err) {
+      console.error('[notificationStore] fetchNotifications error:', err);
+      set({ loading: false });
+    }
   },
 
   fetchUnreadCount: async () => {

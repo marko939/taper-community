@@ -15,17 +15,22 @@ export const useJournalStore = create((set, get) => ({
 
   fetchEntries: async () => {
     if (get().entriesLoaded) return;
-    const supabase = createClient();
     const userId = useAuthStore.getState().user?.id;
-    if (!userId) return;
+    if (!userId) { set({ loading: false }); return; }
 
-    const { data } = await supabase
-      .from('journal_entries')
-      .select('*')
-      .eq('user_id', userId)
-      .order('date', { ascending: false });
+    try {
+      const supabase = createClient();
+      const { data } = await supabase
+        .from('journal_entries')
+        .select('*')
+        .eq('user_id', userId)
+        .order('date', { ascending: false });
 
-    set({ entries: data || [], entriesLoaded: true, loading: false });
+      set({ entries: data || [], entriesLoaded: true, loading: false });
+    } catch (err) {
+      console.error('[journalStore] fetchEntries error:', err);
+      set({ loading: false });
+    }
   },
 
   addEntry: async (entry) => {
@@ -159,30 +164,37 @@ export const useJournalStore = create((set, get) => ({
       sharedEntries: { ...state.sharedEntries, [shareToken]: { entries: [], loading: true } },
     }));
 
-    const supabase = createClient();
+    try {
+      const supabase = createClient();
 
-    const { data: share } = await supabase
-      .from('journal_shares')
-      .select('user_id')
-      .eq('share_token', shareToken)
-      .single();
+      const { data: share } = await supabase
+        .from('journal_shares')
+        .select('user_id')
+        .eq('share_token', shareToken)
+        .single();
 
-    if (!share) {
+      if (!share) {
+        set((state) => ({
+          sharedEntries: { ...state.sharedEntries, [shareToken]: { entries: [], loading: false } },
+        }));
+        return;
+      }
+
+      const { data } = await supabase
+        .from('journal_entries')
+        .select('*')
+        .eq('user_id', share.user_id)
+        .order('date', { ascending: true });
+
+      set((state) => ({
+        sharedEntries: { ...state.sharedEntries, [shareToken]: { entries: data || [], loading: false } },
+      }));
+    } catch (err) {
+      console.error('[journalStore] fetchSharedEntries error:', err);
       set((state) => ({
         sharedEntries: { ...state.sharedEntries, [shareToken]: { entries: [], loading: false } },
       }));
-      return;
     }
-
-    const { data } = await supabase
-      .from('journal_entries')
-      .select('*')
-      .eq('user_id', share.user_id)
-      .order('date', { ascending: true });
-
-    set((state) => ({
-      sharedEntries: { ...state.sharedEntries, [shareToken]: { entries: data || [], loading: false } },
-    }));
   },
 
   fetchPublicEntries: async (userId) => {
@@ -193,16 +205,23 @@ export const useJournalStore = create((set, get) => ({
       publicEntries: { ...state.publicEntries, [userId]: { entries: [], loading: true } },
     }));
 
-    const supabase = createClient();
-    const { data } = await supabase
-      .from('journal_entries')
-      .select('*')
-      .eq('user_id', userId)
-      .eq('is_public', true)
-      .order('date', { ascending: false });
+    try {
+      const supabase = createClient();
+      const { data } = await supabase
+        .from('journal_entries')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('is_public', true)
+        .order('date', { ascending: false });
 
-    set((state) => ({
-      publicEntries: { ...state.publicEntries, [userId]: { entries: data || [], loading: false } },
-    }));
+      set((state) => ({
+        publicEntries: { ...state.publicEntries, [userId]: { entries: data || [], loading: false } },
+      }));
+    } catch (err) {
+      console.error('[journalStore] fetchPublicEntries error:', err);
+      set((state) => ({
+        publicEntries: { ...state.publicEntries, [userId]: { entries: [], loading: false } },
+      }));
+    }
   },
 }));

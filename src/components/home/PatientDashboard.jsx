@@ -4,13 +4,11 @@ import { useEffect, useMemo } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useJournalStore } from '@/stores/journalStore';
-import { useForumStore } from '@/stores/forumStore';
 import { MOOD_LABELS } from '@/lib/constants';
 import { detectMilestones } from '@/lib/milestones';
 import CommunityPulse from './CommunityPulse';
-import FollowedThreads from './FollowedThreads';
 import QuickPost from './QuickPost';
-import { GENERAL_FORUMS } from '@/lib/forumCategories';
+import FeedTabs from '../shared/FeedTabs';
 
 // SVG icon components for badges
 const BadgeIcon = ({ id, achieved }) => {
@@ -149,21 +147,6 @@ function pickDisplayBadges(badges) {
   return picked.slice(0, 3);
 }
 
-function timeAgo(dateStr) {
-  const now = new Date();
-  const date = new Date(dateStr);
-  const seconds = Math.floor((now - date) / 1000);
-  if (seconds < 60) return 'just now';
-  const minutes = Math.floor(seconds / 60);
-  if (minutes < 60) return `${minutes}m ago`;
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours}h ago`;
-  const days = Math.floor(hours / 24);
-  if (days === 1) return '1 day ago';
-  if (days < 30) return `${days} days ago`;
-  return `${Math.floor(days / 30)}mo ago`;
-}
-
 function daysSince(dateStr) {
   const now = new Date();
   const date = new Date(dateStr);
@@ -174,17 +157,12 @@ export default function PatientDashboard({ user, profile }) {
   const entries = useJournalStore((s) => s.entries);
   const journalLoading = useJournalStore((s) => s.loading);
   const fetchEntries = useJournalStore((s) => s.fetchEntries);
-  const recentThreads = useForumStore((s) => s.recentThreads);
-  const fetchHotThreads = useForumStore((s) => s.fetchHotThreads);
 
   useEffect(() => {
     fetchEntries();
-    fetchHotThreads(5);
-  }, [fetchEntries, fetchHotThreads]);
+  }, [fetchEntries]);
 
   const loading = journalLoading;
-  const threads = recentThreads.items;
-  const threadsLoading = recentThreads.loading;
 
   const lastEntry = entries[0] || null;
   const daysAgo = lastEntry ? daysSince(lastEntry.date) : null;
@@ -368,59 +346,8 @@ export default function PatientDashboard({ user, profile }) {
       {/* Community Pulse */}
       <CommunityPulse />
 
-      {/* From People You Follow */}
-      <FollowedThreads />
-
-      {/* Top Posts — most upvoted */}
-      <section>
-        <h2 className="mb-3 text-sm font-semibold text-foreground">Top Posts</h2>
-        {threadsLoading ? (
-          <div className="h-16 animate-pulse rounded-xl" style={{ background: 'var(--surface-glass)' }} />
-        ) : threads.length === 0 ? (
-          <p className="text-sm text-text-muted">No posts yet. Be the first to start a discussion!</p>
-        ) : (
-          <div className="space-y-2">
-            {threads.slice(0, 3).map((thread) => (
-              <Link
-                key={thread.id}
-                href={`/thread/${thread.id}`}
-                className="group block rounded-xl border p-3.5 no-underline transition hover:border-purple hover:shadow-elevated"
-                style={{ borderColor: 'var(--border-subtle)', background: 'var(--surface-strong)' }}
-              >
-                <div className="flex items-start justify-between gap-4">
-                  <div className="min-w-0">
-                    <h3 className="text-sm font-semibold text-foreground transition group-hover:text-purple">
-                      {thread.title}
-                    </h3>
-                    <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-text-subtle">
-                      {thread.forums?.name && (
-                        <span
-                          className="rounded-full px-2 py-0.5 text-[10px] font-semibold"
-                          style={{ background: 'var(--purple-pale)', color: 'var(--purple)' }}
-                        >
-                          {GENERAL_FORUMS.find((gf) => gf.slug === thread.forums.slug)?.name || thread.forums.name}
-                        </span>
-                      )}
-                      <span>{thread.profiles?.display_name}</span>
-                      <span>&middot;</span>
-                      <span>{timeAgo(thread.created_at)}</span>
-                    </div>
-                  </div>
-                  <div className="shrink-0 text-right text-[11px] text-text-subtle">
-                    <div className="flex items-center justify-end gap-1">
-                      <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 15.75l7.5-7.5 7.5 7.5" />
-                      </svg>
-                      {thread.vote_score || 0}
-                    </div>
-                    <div>{thread.reply_count ?? 0} replies</div>
-                  </div>
-                </div>
-              </Link>
-            ))}
-          </div>
-        )}
-      </section>
+      {/* 3-Tab Feed Switcher: Hot | New | Following */}
+      <FeedTabs />
 
       {/* Quick Post */}
       <section id="quick-post">

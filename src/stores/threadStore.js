@@ -4,6 +4,7 @@ import { create } from 'zustand';
 import { createClient } from '@/lib/supabase/client';
 import { fireAndForget } from '@/lib/fireAndForget';
 import { useAuthStore } from './authStore';
+import { useForumStore } from './forumStore';
 
 const REPLIES_PER_PAGE = 25;
 
@@ -12,6 +13,9 @@ export const useThreadStore = create((set, get) => ({
   replies: {},       // keyed by threadId: { items, hasMore, totalCount, page }
   voteState: {},     // keyed by `${type}_${targetId}`: { userVote, score }
   helpfulState: {},  // keyed by replyId: { hasVoted, count }
+  pendingQuote: null,
+  setQuote: (quote) => set({ pendingQuote: quote }),
+  clearQuote: () => set({ pendingQuote: null }),
 
   updateThread: (threadId, partial) => {
     set((state) => ({
@@ -157,6 +161,9 @@ export const useThreadStore = create((set, get) => ({
         };
       });
 
+      // Bust forum cache (reply count changed)
+      useForumStore.getState().invalidate();
+
       // Fire email notifications (best-effort)
       fireAndForget('notify-email', () =>
         fetch('/api/notify-email', {
@@ -224,6 +231,7 @@ export const useThreadStore = create((set, get) => ({
           },
         };
       });
+      useForumStore.getState().invalidate();
       return true;
     } catch (err) {
       console.error('[threadStore] deleteReply error:', err);
@@ -245,26 +253,16 @@ export const useThreadStore = create((set, get) => ({
 
     try {
       if (current.userVote === voteType) {
-        // Remove vote
-        const newScore = current.score + (voteType === 'up' ? -1 : 1);
+        // Remove vote (unlike)
+        const newScore = current.score - 1;
         set((state) => ({
           voteState: { ...state.voteState, [key]: { userVote: null, score: newScore } },
         }));
         await supabase.from(table).delete().eq('user_id', userId).eq(idColumn, targetId);
         await supabase.from(scoreTable).update({ vote_score: newScore }).eq('id', targetId);
-      } else if (current.userVote) {
-        // Change vote direction
-        const delta = voteType === 'up' ? 2 : -2;
-        const newScore = current.score + delta;
-        set((state) => ({
-          voteState: { ...state.voteState, [key]: { userVote: voteType, score: newScore } },
-        }));
-        await supabase.from(table).update({ vote_type: voteType }).eq('user_id', userId).eq(idColumn, targetId);
-        await supabase.from(scoreTable).update({ vote_score: newScore }).eq('id', targetId);
       } else {
-        // New vote
-        const delta = voteType === 'up' ? 1 : -1;
-        const newScore = current.score + delta;
+        // New vote (like)
+        const newScore = current.score + 1;
         set((state) => ({
           voteState: { ...state.voteState, [key]: { userVote: voteType, score: newScore } },
         }));

@@ -26,12 +26,17 @@ export default function AssessmentForm({ type, onComplete, onCancel }) {
   const handleSubmit = async () => {
     if (!allAnswered) return;
     setSubmitting(true);
-    const score = responses.reduce((a, b) => a + b, 0);
-    const data = await submitAssessment({ type, score, responses, date });
-    if (data) {
-      setResult({ score, severity: labelFn(score) });
+    try {
+      const score = responses.reduce((a, b) => a + b, 0);
+      const data = await submitAssessment({ type, score, responses, date });
+      if (data) {
+        setResult({ score, severity: labelFn(score) });
+      }
+    } catch (err) {
+      console.error('[AssessmentForm] submit error:', err);
+    } finally {
+      setSubmitting(false);
     }
-    setSubmitting(false);
   };
 
   if (result) {

@@ -9,17 +9,22 @@ export const useAssessmentStore = create((set, get) => ({
   loading: true,
 
   fetchAssessments: async () => {
-    const supabase = createClient();
     const userId = useAuthStore.getState().user?.id;
-    if (!userId) return;
+    if (!userId) { set({ loading: false }); return; }
 
-    const { data } = await supabase
-      .from('assessments')
-      .select('*')
-      .eq('user_id', userId)
-      .order('date', { ascending: false });
+    try {
+      const supabase = createClient();
+      const { data } = await supabase
+        .from('assessments')
+        .select('*')
+        .eq('user_id', userId)
+        .order('date', { ascending: false });
 
-    set({ assessments: data || [], loading: false });
+      set({ assessments: data || [], loading: false });
+    } catch (err) {
+      console.error('[assessmentStore] fetchAssessments error:', err);
+      set({ loading: false });
+    }
   },
 
   submitAssessment: async ({ type, score, responses, date }) => {

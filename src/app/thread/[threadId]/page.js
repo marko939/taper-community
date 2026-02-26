@@ -9,6 +9,7 @@ import ThreadView from '@/components/thread/ThreadView';
 import ReplyList from '@/components/thread/ReplyList';
 import ReplyForm from '@/components/thread/ReplyForm';
 import DeprescriberCTA from '@/components/layout/DeprescriberCTA';
+import QuoteToolbar from '@/components/thread/QuoteToolbar';
 import { PageLoading } from '@/components/shared/LoadingSpinner';
 
 export default function ThreadPage() {
@@ -76,6 +77,7 @@ export default function ThreadPage() {
         <ReplyForm threadId={threadId} />
       </div>
 
+      <QuoteToolbar />
       <DeprescriberCTA className="mt-8" />
     </div>
   );
