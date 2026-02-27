@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/hooks/useAuth';
-import { ADMIN_USER_ID } from '@/lib/blog';
+import { isAdmin } from '@/lib/blog';
 import Link from 'next/link';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid,
@@ -34,12 +34,12 @@ export default function AnalyticsDashboard() {
   }, []);
 
   useEffect(() => {
-    if (user?.id === ADMIN_USER_ID) fetchData();
+    if (isAdmin(user?.id)) fetchData();
   }, [user, fetchData]);
 
   if (authLoading) return <LoadingSkeleton />;
 
-  if (!user || user.id !== ADMIN_USER_ID) {
+  if (!user || !isAdmin(user.id)) {
     return (
       <div className="py-24 text-center">
         <p className="text-lg font-semibold text-foreground">Not authorized</p>

@@ -1,8 +1,7 @@
 import { createClient as createAuthClient } from '@/lib/supabase/server';
 import { createClient } from '@supabase/supabase-js';
 import { NextResponse } from 'next/server';
-
-const ADMIN_USER_ID = '8572637a-2109-4471-bcb4-3163d04094d0';
+import { isAdmin } from '@/lib/blog';
 
 export const dynamic = 'force-dynamic';
 
@@ -19,7 +18,7 @@ export async function GET() {
   // Auth check using cookie-based client
   const authClient = await createAuthClient();
   const { data: { user } } = await authClient.auth.getUser();
-  if (!user || user.id !== ADMIN_USER_ID) {
+  if (!user || !isAdmin(user.id)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 

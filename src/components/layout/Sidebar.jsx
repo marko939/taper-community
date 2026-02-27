@@ -6,7 +6,7 @@ import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import Avatar from '@/components/shared/Avatar';
-import { ADMIN_USER_ID } from '@/lib/blog';
+import { isAdmin } from '@/lib/blog';
 
 const NAV_ITEMS = [
   {
@@ -136,7 +136,7 @@ export default function Sidebar() {
                   <span className="text-sm font-medium">{item.label}</span>
                 </Link>
               ))}
-              {user?.id === ADMIN_USER_ID && (
+              {isAdmin(user?.id) && (
                 <Link
                   href="/admin/analytics"
                   onClick={() => setMobileOpen(false)}
@@ -254,7 +254,7 @@ export default function Sidebar() {
                 </Tag>
               );
             })}
-            {user?.id === ADMIN_USER_ID && (
+            {isAdmin(user?.id) && (
               <Link
                 href="/admin/analytics"
                 className="flex items-center gap-3 rounded-xl px-3 py-2.5 no-underline transition hover:bg-purple-ghost"
