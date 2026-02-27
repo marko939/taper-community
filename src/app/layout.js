@@ -1,8 +1,10 @@
 import { DM_Sans, Fraunces } from 'next/font/google';
+import { Analytics } from '@vercel/analytics/react';
 import Sidebar from '@/components/layout/Sidebar';
 import Footer from '@/components/layout/Footer';
 import StoreInitializer from '@/components/layout/StoreInitializer';
 import NotificationFab from '@/components/layout/NotificationFab';
+import PageViewTracker from '@/components/layout/PageViewTracker';
 import './globals.css';
 
 const dmSans = DM_Sans({
@@ -40,6 +42,8 @@ export default function RootLayout({ children }) {
           </div>
         </div>
         <NotificationFab />
+        <PageViewTracker />
+        <Analytics />
       </body>
     </html>
   );
