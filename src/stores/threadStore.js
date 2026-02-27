@@ -243,36 +243,43 @@ export const useThreadStore = create((set, get) => ({
     }
   },
 
-  // Vote on thread or reply
+  // Vote on thread or reply — uses server API to bypass RLS
   vote: async (type, targetId, voteType) => {
     const userId = useAuthStore.getState().user?.id;
     if (!userId || !targetId) return;
 
-    const supabase = createClient();
-    const table = type === 'thread' ? 'thread_votes' : 'reply_votes';
-    const idColumn = type === 'thread' ? 'thread_id' : 'reply_id';
-    const scoreTable = type === 'thread' ? 'threads' : 'replies';
     const key = `${type}_${targetId}`;
     const current = get().voteState[key] || { userVote: null, score: 0 };
+    const isToggleOff = current.userVote === voteType;
+
+    // Optimistic UI update
+    const optimisticScore = isToggleOff ? current.score - 1 : current.score + 1;
+    const optimisticVote = isToggleOff ? null : voteType;
+    set((state) => ({
+      voteState: { ...state.voteState, [key]: { userVote: optimisticVote, score: optimisticScore } },
+    }));
 
     try {
-      if (current.userVote === voteType) {
-        // Remove vote (unlike)
-        const newScore = current.score - 1;
-        set((state) => ({
-          voteState: { ...state.voteState, [key]: { userVote: null, score: newScore } },
-        }));
-        await supabase.from(table).delete().eq('user_id', userId).eq(idColumn, targetId);
-        await supabase.from(scoreTable).update({ vote_score: newScore }).eq('id', targetId);
-      } else {
-        // New vote (like)
-        const newScore = current.score + 1;
-        set((state) => ({
-          voteState: { ...state.voteState, [key]: { userVote: voteType, score: newScore } },
-        }));
-        await supabase.from(table).insert({ user_id: userId, [idColumn]: targetId, vote_type: voteType });
-        await supabase.from(scoreTable).update({ vote_score: newScore }).eq('id', targetId);
-      }
+      const res = await fetch('/api/vote', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type, targetId, voteType, userId }),
+      });
+
+      const result = await res.json();
+
+      if (!res.ok) throw new Error(result.error || 'Vote failed');
+
+      // Use the real score from server (always accurate)
+      set((state) => ({
+        voteState: {
+          ...state.voteState,
+          [key]: {
+            userVote: result.action === 'removed' ? null : voteType,
+            score: result.score,
+          },
+        },
+      }));
     } catch (err) {
       console.error('[threadStore] vote error:', err);
       // Rollback to previous state
@@ -321,28 +328,44 @@ export const useThreadStore = create((set, get) => ({
     }
   },
 
-  // Toggle helpful on a reply
+  // Toggle helpful on a reply — uses server API to bypass RLS
   toggleHelpful: async (replyId, initialCount) => {
     const userId = useAuthStore.getState().user?.id;
     if (!userId) return;
 
-    const supabase = createClient();
     const current = get().helpfulState[replyId] || { hasVoted: false, count: initialCount ?? 0 };
+    const isToggleOff = current.hasVoted;
 
-    if (current.hasVoted) {
-      // Optimistic: remove vote
+    // Optimistic UI update
+    set((state) => ({
+      helpfulState: {
+        ...state.helpfulState,
+        [replyId]: { hasVoted: !isToggleOff, count: current.count + (isToggleOff ? -1 : 1) },
+      },
+    }));
+
+    try {
+      const res = await fetch('/api/vote', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'helpful', targetId: replyId, voteType: 'helpful', userId }),
+      });
+
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.error || 'Vote failed');
+
       set((state) => ({
-        helpfulState: { ...state.helpfulState, [replyId]: { hasVoted: false, count: current.count - 1 } },
+        helpfulState: {
+          ...state.helpfulState,
+          [replyId]: { hasVoted: result.action === 'added', count: result.score },
+        },
       }));
-      await supabase.from('helpful_votes').delete().eq('user_id', userId).eq('reply_id', replyId);
-      await supabase.from('replies').update({ helpful_count: current.count - 1 }).eq('id', replyId);
-    } else {
-      // Optimistic: add vote
+    } catch (err) {
+      console.error('[threadStore] toggleHelpful error:', err);
+      // Rollback
       set((state) => ({
-        helpfulState: { ...state.helpfulState, [replyId]: { hasVoted: true, count: current.count + 1 } },
+        helpfulState: { ...state.helpfulState, [replyId]: current },
       }));
-      await supabase.from('helpful_votes').insert({ user_id: userId, reply_id: replyId });
-      await supabase.from('replies').update({ helpful_count: current.count + 1 }).eq('id', replyId);
     }
   },
 
