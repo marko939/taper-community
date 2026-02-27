@@ -301,25 +301,60 @@ function DailyActivityChart({ activity }) {
 function RetentionCards({ retention }) {
   if (!retention) return <SectionUnavailable label="Retention" />;
 
+  const [retentionView, setRetentionView] = useState('current');
+
+  // Support both old (flat) and new (nested) data shapes
+  const currentData = retention.current || retention;
+  const alltimeData = retention.alltime || retention;
+  const activeData = retentionView === 'current' ? currentData : alltimeData;
+
   const metrics = [
-    { label: 'D1 Retention', value: retention.d1_pct, cohort: retention.d1_cohort, returned: retention.d1_returned, benchGood: 40, benchGreat: 60 },
-    { label: 'D7 Retention', value: retention.d7_pct, cohort: retention.d7_cohort, returned: retention.d7_returned, benchGood: 20, benchGreat: 40 },
-    { label: 'D30 Retention', value: retention.d30_pct, cohort: retention.d30_cohort, returned: retention.d30_returned, benchGood: 10, benchGreat: 25 },
+    { label: 'D1 Retention', value: activeData.d1_pct, cohort: activeData.d1_cohort, returned: activeData.d1_returned, benchGood: 40, benchGreat: 60 },
+    { label: 'D7 Retention', value: activeData.d7_pct, cohort: activeData.d7_cohort, returned: activeData.d7_returned, benchGood: 20, benchGreat: 40 },
+    { label: 'D30 Retention', value: activeData.d30_pct, cohort: activeData.d30_cohort, returned: activeData.d30_returned, benchGood: 10, benchGreat: 25 },
+  ];
+
+  const tabs = [
+    { key: 'current', label: 'Current Cohort', desc: 'Recent signups in each window' },
+    { key: 'alltime', label: 'All-Time', desc: 'Every user who ever signed up' },
   ];
 
   return (
-    <div className="grid gap-4 sm:grid-cols-3">
-      {metrics.map(m => {
-        const color = m.value >= m.benchGreat ? '#10B981' : m.value >= m.benchGood ? '#F59E0B' : '#EF4444';
-        return (
-          <Card key={m.label}>
-            <p className="text-xs font-medium text-text-muted">{m.label}</p>
-            <p className="mt-1 text-3xl font-bold" style={{ color }}>{m.value}%</p>
-            <p className="mt-1 text-[11px] text-text-subtle">{m.returned} of {m.cohort} users returned</p>
-            <p className="mt-2 text-[10px] text-text-subtle">Good: &gt;{m.benchGood}% &middot; Great: &gt;{m.benchGreat}%</p>
-          </Card>
-        );
-      })}
+    <div className="space-y-3">
+      <div className="flex items-center gap-3">
+        <h2 className="text-sm font-semibold text-foreground">Retention</h2>
+        <div className="flex gap-1 rounded-lg p-0.5" style={{ background: 'var(--surface-strong)' }}>
+          {tabs.map(tab => (
+            <button
+              key={tab.key}
+              onClick={() => setRetentionView(tab.key)}
+              className="rounded-md px-3 py-1.5 text-[11px] font-medium transition"
+              style={{
+                background: retentionView === tab.key ? 'var(--purple)' : 'transparent',
+                color: retentionView === tab.key ? '#fff' : 'var(--text-muted)',
+              }}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+        <span className="text-[10px] text-text-subtle">
+          {tabs.find(t => t.key === retentionView)?.desc}
+        </span>
+      </div>
+      <div className="grid gap-4 sm:grid-cols-3">
+        {metrics.map(m => {
+          const color = m.value >= m.benchGreat ? '#10B981' : m.value >= m.benchGood ? '#F59E0B' : '#EF4444';
+          return (
+            <Card key={m.label}>
+              <p className="text-xs font-medium text-text-muted">{m.label}</p>
+              <p className="mt-1 text-3xl font-bold" style={{ color }}>{m.value}%</p>
+              <p className="mt-1 text-[11px] text-text-subtle">{m.returned ?? 0} of {m.cohort ?? 0} users returned</p>
+              <p className="mt-2 text-[10px] text-text-subtle">Good: &gt;{m.benchGood}% &middot; Great: &gt;{m.benchGreat}%</p>
+            </Card>
+          );
+        })}
+      </div>
     </div>
   );
 }

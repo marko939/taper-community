@@ -263,7 +263,13 @@ async function fetchDailyActivity(supabase) {
 // ── Section 5: Retention ──
 async function fetchRetention(supabase) {
   const { data } = await supabase.rpc('analytics_retention');
-  return data || { d1_pct: 0, d7_pct: 0, d30_pct: 0, d1_cohort: 0, d7_cohort: 0, d30_cohort: 0 };
+  if (!data) {
+    const empty = { d1_pct: 0, d7_pct: 0, d30_pct: 0, d1_cohort: 0, d7_cohort: 0, d30_cohort: 0, d1_returned: 0, d7_returned: 0, d30_returned: 0 };
+    return { current: empty, alltime: empty };
+  }
+  // Handle both old (flat) and new (nested) response shapes
+  if (data.current) return data;
+  return { current: data, alltime: data };
 }
 
 // ── Section 6: Engagement ──
