@@ -29,10 +29,9 @@ function ForumsContent() {
 
   const searchParams = useSearchParams();
   const router = useRouter();
-  const activeTab = searchParams.get('tab') || 'hot';
+  const activeTab = searchParams.get('tab') || 'new';
 
   useEffect(() => {
-    useForumStore.getState().invalidate();
     fetchForums();
   }, [fetchForums]);
 

@@ -26,6 +26,7 @@ export default function HowOthersFelt({ entries }) {
 
   useEffect(() => {
     if (!currentDrug || taperPct === null) return;
+    let cancelled = false;
 
     const fetchCommunity = async () => {
       setLoading(true);
@@ -40,6 +41,8 @@ export default function HowOthersFelt({ entries }) {
           .not('dose_numeric', 'is', null)
           .eq('is_public', true)
           .order('date', { ascending: true });
+
+        if (cancelled) return;
 
         if (data && data.length > 0) {
           // Group by user, compute their taper % at each entry
@@ -78,20 +81,23 @@ export default function HowOthersFelt({ entries }) {
               .slice(0, 5)
               .map(([name, count]) => ({ name, pct: Math.round((count / matchingEntries.length) * 100) }));
 
-            setCommunityData({
-              count: matchingEntries.length,
-              avgMood,
-              topSymptoms,
-            });
+            if (!cancelled) {
+              setCommunityData({
+                count: matchingEntries.length,
+                avgMood,
+                topSymptoms,
+              });
+            }
           }
         }
       } catch (err) {
-        console.error('[HowOthersFelt] fetch error:', err);
+        if (!cancelled) console.error('[HowOthersFelt] fetch error:', err);
       }
-      setLoading(false);
+      if (!cancelled) setLoading(false);
     };
 
     fetchCommunity();
+    return () => { cancelled = true; };
   }, [currentDrug, taperPct]);
 
   if (!currentDrug || taperPct === null) return null;

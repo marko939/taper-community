@@ -60,7 +60,8 @@ export async function POST(request) {
       }
 
       const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://taper-community.vercel.app';
-      const threadUrl = `${siteUrl}/thread/${notification.thread_id}`;
+      const replyHash = reply_id ? `#reply-${reply_id}` : '';
+      const threadUrl = `${siteUrl}/thread/${notification.thread_id}${replyHash}`;
 
       try {
         await resend.emails.send({

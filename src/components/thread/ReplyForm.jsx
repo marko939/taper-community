@@ -5,27 +5,37 @@ import Link from 'next/link';
 import { useAuthStore } from '@/stores/authStore';
 import { useThreadStore } from '@/stores/threadStore';
 import EmojiPickerButton from '@/components/shared/EmojiPickerButton';
+import FormattingToolbar, { makeBulletKeyHandler } from '@/components/shared/FormattingToolbar';
 
 export default function ReplyForm({ threadId }) {
   const [body, setBody] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const textareaRef = useRef(null);
+  const bulletKeyHandler = makeBulletKeyHandler(textareaRef, setBody);
   const user = useAuthStore((s) => s.user);
   const authLoading = useAuthStore((s) => s.loading);
   const addReply = useThreadStore((s) => s.addReply);
   const pendingQuote = useThreadStore((s) => s.pendingQuote);
   const clearQuote = useThreadStore((s) => s.clearQuote);
 
-  // Handle incoming quotes
+  // Handle incoming quotes — always append to the end
   useEffect(() => {
     if (pendingQuote) {
-      setBody((prev) => pendingQuote + (prev ? '\n' + prev : ''));
+      setBody((prev) => {
+        const trimmed = prev.trimEnd();
+        const separator = trimmed.length > 0 ? '\n\n' : '';
+        return trimmed + separator + pendingQuote;
+      });
       clearQuote();
-      // Scroll form into view and focus
+      // Scroll form into view, focus, and move cursor to end
       requestAnimationFrame(() => {
         textareaRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        textareaRef.current?.focus();
+        if (textareaRef.current) {
+          textareaRef.current.selectionStart = textareaRef.current.value.length;
+          textareaRef.current.selectionEnd = textareaRef.current.value.length;
+          textareaRef.current.focus();
+        }
       });
     }
   }, [pendingQuote, clearQuote]);
@@ -64,13 +74,19 @@ export default function ReplyForm({ threadId }) {
   return (
     <form onSubmit={handleSubmit} className="card">
       <h3 className="mb-3 text-sm font-semibold text-foreground">Write a Reply</h3>
+      <FormattingToolbar
+        textareaRef={textareaRef}
+        value={body}
+        onChange={setBody}
+      />
       <textarea
         ref={textareaRef}
         value={body}
         onChange={(e) => setBody(e.target.value)}
+        onKeyDown={bulletKeyHandler}
         placeholder="Share your thoughts or experience..."
         rows={4}
-        className="textarea"
+        className="textarea rounded-t-none"
         required
       />
       {error && (

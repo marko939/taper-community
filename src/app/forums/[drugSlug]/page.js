@@ -25,6 +25,7 @@ export default function ForumPage() {
   const searchFn = useForumStore((s) => s.search);
 
   useEffect(() => {
+    let cancelled = false;
     const fetchForum = async () => {
       let { data } = await supabase
         .from('forums')
@@ -41,10 +42,13 @@ export default function ForumPage() {
         data = result.data;
       }
 
-      setForum(data);
-      setForumLoading(false);
+      if (!cancelled) {
+        setForum(data);
+        setForumLoading(false);
+      }
     };
     fetchForum();
+    return () => { cancelled = true; };
   }, [drugSlug]);
 
   useEffect(() => {

@@ -371,3 +371,12 @@ label {
     text-decoration: underline;
   }
 }
+
+/* Notification scroll highlight */
+.highlight-flash {
+  animation: flash 2s ease-out;
+}
+@keyframes flash {
+  0% { background-color: rgba(107, 70, 193, 0.2); }
+  100% { background-color: transparent; }
+}

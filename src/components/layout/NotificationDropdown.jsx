@@ -46,7 +46,8 @@ export default function NotificationDropdown({ onClose }) {
     }
     if (notification.thread_id) {
       onClose();
-      router.push(`/thread/${notification.thread_id}`);
+      const hash = notification.reply_id ? `#reply-${notification.reply_id}` : '';
+      router.push(`/thread/${notification.thread_id}${hash}`);
     }
   };
 

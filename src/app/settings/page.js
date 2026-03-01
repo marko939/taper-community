@@ -6,6 +6,14 @@ import { useProfileStore } from '@/stores/profileStore';
 import { createClient } from '@/lib/supabase/client';
 import Avatar from '@/components/shared/Avatar';
 import { PageLoading } from '@/components/shared/LoadingSpinner';
+import { useFontSize } from '@/lib/fontSizeContext';
+
+const FONT_SIZES = [
+  { key: 'small', label: 'Small' },
+  { key: 'medium', label: 'Medium' },
+  { key: 'large', label: 'Large' },
+  { key: 'xlarge', label: 'Extra Large' },
+];
 
 export default function SettingsPage() {
   const { user, profile, loading: authLoading } = useRequireAuth();
@@ -20,6 +28,9 @@ export default function SettingsPage() {
   const [avatarUrl, setAvatarUrl] = useState('');
   const [uploading, setUploading] = useState(false);
   const [emailNotifications, setEmailNotifications] = useState(true);
+  const [emailDigestEnabled, setEmailDigestEnabled] = useState(true);
+  const [emailRemindersEnabled, setEmailRemindersEnabled] = useState(true);
+  const { fontSize, setFontSize } = useFontSize();
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const fileInputRef = useRef(null);
@@ -34,6 +45,8 @@ export default function SettingsPage() {
       setBio(profile.bio || '');
       setAvatarUrl(profile.avatar_url || '');
       setEmailNotifications(profile.email_notifications !== false);
+      setEmailDigestEnabled(profile.email_digest_enabled !== false);
+      setEmailRemindersEnabled(profile.email_reminders_enabled !== false);
     }
   }, [profile]);
 
@@ -115,6 +128,8 @@ export default function SettingsPage() {
       location: location,
       bio: bio,
       email_notifications: emailNotifications,
+      email_digest_enabled: emailDigestEnabled,
+      email_reminders_enabled: emailRemindersEnabled,
     };
     if (username && username !== profile?.username) {
       updates.username = username;
@@ -250,33 +265,127 @@ export default function SettingsPage() {
           </p>
         </div>
 
+        {/* Font Size */}
+        <div>
+          <label className="mb-1.5 block text-sm font-medium text-foreground">
+            Text Size
+          </label>
+          <p className="mb-3 text-xs text-text-subtle">
+            Adjust the text size across the entire site. Takes effect immediately.
+          </p>
+          <div className="flex gap-2">
+            {FONT_SIZES.map((s) => (
+              <button
+                key={s.key}
+                type="button"
+                onClick={() => setFontSize(s.key)}
+                className="flex-1 rounded-xl border px-3 py-2.5 text-center text-sm font-medium transition"
+                style={{
+                  borderColor: fontSize === s.key ? 'var(--purple)' : 'var(--border-subtle)',
+                  background: fontSize === s.key ? 'var(--purple-ghost)' : 'transparent',
+                  color: fontSize === s.key ? 'var(--purple)' : 'var(--text-muted)',
+                }}
+              >
+                {s.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
         {/* Email Notifications */}
         <div>
           <label className="mb-1.5 block text-sm font-medium text-foreground">
             Email Notifications
           </label>
-          <div className="flex items-center justify-between rounded-xl border px-4 py-3" style={{ borderColor: 'var(--border-subtle)' }}>
-            <div>
-              <p className="text-sm" style={{ color: 'var(--foreground)' }}>
-                Email notifications
-              </p>
-              <p className="text-xs" style={{ color: 'var(--text-subtle)' }}>
-                Get notified when someone replies to your threads or discussions
-              </p>
+          <div className="space-y-2">
+            {/* Master toggle */}
+            <div className="flex items-center justify-between rounded-xl border px-4 py-3" style={{ borderColor: 'var(--border-subtle)' }}>
+              <div>
+                <p className="text-sm" style={{ color: 'var(--foreground)' }}>
+                  Email notifications
+                </p>
+                <p className="text-xs" style={{ color: 'var(--text-subtle)' }}>
+                  Master switch — turn off to stop all emails
+                </p>
+              </div>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={emailNotifications}
+                onClick={() => setEmailNotifications(!emailNotifications)}
+                className="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200"
+                style={{ background: emailNotifications ? 'var(--purple)' : 'var(--border-subtle)' }}
+              >
+                <span
+                  className="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200"
+                  style={{ transform: emailNotifications ? 'translateX(20px)' : 'translateX(0)' }}
+                />
+              </button>
             </div>
-            <button
-              type="button"
-              role="switch"
-              aria-checked={emailNotifications}
-              onClick={() => setEmailNotifications(!emailNotifications)}
-              className="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200"
-              style={{ background: emailNotifications ? 'var(--purple)' : 'var(--border-subtle)' }}
+
+            {/* Daily reply digest */}
+            <div
+              className="flex items-center justify-between rounded-xl border px-4 py-3 transition-opacity"
+              style={{
+                borderColor: 'var(--border-subtle)',
+                opacity: emailNotifications ? 1 : 0.4,
+                pointerEvents: emailNotifications ? 'auto' : 'none',
+              }}
             >
-              <span
-                className="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200"
-                style={{ transform: emailNotifications ? 'translateX(20px)' : 'translateX(0)' }}
-              />
-            </button>
+              <div>
+                <p className="text-sm" style={{ color: 'var(--foreground)' }}>
+                  Daily reply digest
+                </p>
+                <p className="text-xs" style={{ color: 'var(--text-subtle)' }}>
+                  A daily summary of new replies to your threads and discussions
+                </p>
+              </div>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={emailDigestEnabled}
+                onClick={() => setEmailDigestEnabled(!emailDigestEnabled)}
+                className="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200"
+                style={{ background: emailDigestEnabled ? 'var(--purple)' : 'var(--border-subtle)' }}
+              >
+                <span
+                  className="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200"
+                  style={{ transform: emailDigestEnabled ? 'translateX(20px)' : 'translateX(0)' }}
+                />
+              </button>
+            </div>
+
+            {/* Taper tracker reminders */}
+            <div
+              className="flex items-center justify-between rounded-xl border px-4 py-3 transition-opacity"
+              style={{
+                borderColor: 'var(--border-subtle)',
+                opacity: emailNotifications ? 1 : 0.4,
+                pointerEvents: emailNotifications ? 'auto' : 'none',
+              }}
+            >
+              <div>
+                <p className="text-sm" style={{ color: 'var(--foreground)' }}>
+                  Taper tracker reminders
+                </p>
+                <p className="text-xs" style={{ color: 'var(--text-subtle)' }}>
+                  Gentle reminders to log your taper check-in if you haven't in a few days
+                </p>
+              </div>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={emailRemindersEnabled}
+                onClick={() => setEmailRemindersEnabled(!emailRemindersEnabled)}
+                className="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200"
+                style={{ background: emailRemindersEnabled ? 'var(--purple)' : 'var(--border-subtle)' }}
+              >
+                <span
+                  className="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200"
+                  style={{ transform: emailRemindersEnabled ? 'translateX(20px)' : 'translateX(0)' }}
+                />
+              </button>
+            </div>
           </div>
         </div>
 
@@ -284,7 +393,11 @@ export default function SettingsPage() {
           <div>
             <p className="mb-1.5 text-sm font-medium text-foreground">Signature Preview</p>
             <div className="rounded-xl border border-border-subtle bg-slate-50 px-3 py-2">
-              <p className="text-xs italic text-text-subtle">{drugSignature}</p>
+              <p className="text-xs italic text-text-subtle">
+                {drugSignature.split('\n').map((line, i, arr) => (
+                  <span key={i}>{line}{i < arr.length - 1 && <br />}</span>
+                ))}
+              </p>
             </div>
           </div>
         )}

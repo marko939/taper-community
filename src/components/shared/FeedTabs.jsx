@@ -97,7 +97,7 @@ export default function FeedTabs({ activeTab: controlledTab, onTabChange, useUrl
   const fetchFollowing = useFollowStore((s) => s.fetchFollowing);
   const fetchFollowedThreads = useFollowStore((s) => s.fetchFollowedThreads);
 
-  const [localTab, setLocalTab] = useState('hot');
+  const [localTab, setLocalTab] = useState('new');
   const activeTab = controlledTab ?? localTab;
   const [expanded, setExpanded] = useState(false);
   const [showingMore, setShowingMore] = useState(false);
@@ -108,13 +108,13 @@ export default function FeedTabs({ activeTab: controlledTab, onTabChange, useUrl
   activeTabRef.current = activeTab;
 
   // Fetch the active tab's data — called on mount and debounced on tab switch
-  const fetchForTab = useCallback((tab) => {
+  const fetchForTab = useCallback((tab, { force = false } = {}) => {
     if (tab === 'hot') {
-      fetchHotThreads(10);
+      fetchHotThreads(10, { force });
     } else if (tab === 'new') {
-      fetchNewThreads(10);
+      fetchNewThreads(10, { force });
     } else if (tab === 'following' && followingLoaded) {
-      fetchFollowedThreads();
+      fetchFollowedThreads({ force });
     }
   }, [fetchHotThreads, fetchNewThreads, fetchFollowedThreads, followingLoaded]);
 
@@ -205,8 +205,8 @@ export default function FeedTabs({ activeTab: controlledTab, onTabChange, useUrl
   const canExpand = currentThreads.length > 5 && !expanded;
 
   const tabs = [
-    { key: 'hot', label: 'Hot', subtitle: 'Top this week' },
     { key: 'new', label: 'New', subtitle: 'Latest threads' },
+    { key: 'hot', label: 'Hot', subtitle: 'Top this week' },
     { key: 'following', label: 'Following', subtitle: 'From people you follow' },
   ];
 

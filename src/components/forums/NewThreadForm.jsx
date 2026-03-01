@@ -3,6 +3,7 @@
 import { useState, useRef } from 'react';
 import { THREAD_TAGS } from '@/lib/constants';
 import EmojiPickerButton from '@/components/shared/EmojiPickerButton';
+import FormattingToolbar, { makeBulletKeyHandler } from '@/components/shared/FormattingToolbar';
 
 export default function NewThreadForm({ forumId, onSubmit, disabled = false }) {
   const [title, setTitle] = useState('');
@@ -11,6 +12,7 @@ export default function NewThreadForm({ forumId, onSubmit, disabled = false }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const bodyRef = useRef(null);
+  const bulletKeyHandler = makeBulletKeyHandler(bodyRef, setBody);
 
   const toggleTag = (tag) => {
     setSelectedTags((prev) =>
@@ -55,14 +57,20 @@ export default function NewThreadForm({ forumId, onSubmit, disabled = false }) {
         <label htmlFor="body" className="mb-1.5 block text-sm font-medium text-foreground">
           Body
         </label>
+        <FormattingToolbar
+          textareaRef={bodyRef}
+          value={body}
+          onChange={setBody}
+        />
         <textarea
           id="body"
           ref={bodyRef}
           value={body}
           onChange={(e) => setBody(e.target.value)}
+          onKeyDown={bulletKeyHandler}
           placeholder="Share your experience, question, or thoughts..."
           rows={8}
-          className="textarea"
+          className="textarea rounded-t-none"
           required
         />
         <div className="mt-1 flex justify-end">

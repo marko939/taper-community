@@ -25,6 +25,7 @@ export default function QuickPost({ user, profile }) {
   const isFirstPost = !profile?.post_count;
 
   useEffect(() => {
+    let cancelled = false;
     const fetchForums = async () => {
       try {
         const { data } = await supabase
@@ -32,6 +33,7 @@ export default function QuickPost({ user, profile }) {
           .select('id, name, slug, drug_slug, category')
           .order('category')
           .order('name');
+        if (cancelled) return;
         setForums(data || []);
 
         // Auto-select Introductions for first-time posters
@@ -40,11 +42,12 @@ export default function QuickPost({ user, profile }) {
           if (introForum) setSelectedForums([introForum.id]);
         }
       } catch (err) {
-        console.error('[QuickPost] fetch forums error:', err);
+        if (!cancelled) console.error('[QuickPost] fetch forums error:', err);
       }
-      setForumsLoading(false);
+      if (!cancelled) setForumsLoading(false);
     };
     fetchForums();
+    return () => { cancelled = true; };
   }, []);
 
   // Build general forums grouped by category

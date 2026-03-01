@@ -10,6 +10,7 @@ import ReplyList from '@/components/thread/ReplyList';
 import ReplyForm from '@/components/thread/ReplyForm';
 import DeprescriberCTA from '@/components/layout/DeprescriberCTA';
 import QuoteToolbar from '@/components/thread/QuoteToolbar';
+import ImageLightbox from '@/components/shared/ImageLightbox';
 import { PageLoading } from '@/components/shared/LoadingSpinner';
 
 export default function ThreadPage() {
@@ -31,6 +32,19 @@ export default function ThreadPage() {
       fetchReplies(threadId);
     }
   }, [threadId, fetchThread, fetchReplies]);
+
+  // Scroll to specific reply when URL has a hash (e.g. from notification click)
+  useEffect(() => {
+    if (!replies.length) return;
+    if (window.location.hash) {
+      const el = document.querySelector(window.location.hash);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        el.classList.add('highlight-flash');
+        setTimeout(() => el.classList.remove('highlight-flash'), 2000);
+      }
+    }
+  }, [replies.length]);
 
   if (loading) return <PageLoading />;
 
@@ -78,6 +92,7 @@ export default function ThreadPage() {
       </div>
 
       <QuoteToolbar />
+      <ImageLightbox />
       <DeprescriberCTA className="mt-8" />
     </div>
   );

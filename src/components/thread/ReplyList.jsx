@@ -56,7 +56,7 @@ function ReplyCard({ reply, threadId }) {
   };
 
   return (
-    <div className="card">
+    <div id={`reply-${reply.id}`} className="card">
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2 text-sm">
           <Avatar name={displayName} avatarUrl={reply.profiles?.avatar_url} size="sm" foundingMember={reply.profiles?.is_founding_member} />

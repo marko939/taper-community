@@ -68,7 +68,8 @@ export default function NotificationFab() {
     if (!n.read) markAsRead(n.id);
     if (n.thread_id) {
       setOpen(false);
-      router.push(`/thread/${n.thread_id}`);
+      const hash = n.reply_id ? `#reply-${n.reply_id}` : '';
+      router.push(`/thread/${n.thread_id}${hash}`);
     }
   }, [markAsRead, router]);
 

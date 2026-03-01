@@ -73,7 +73,7 @@ export const useFollowStore = create((set, get) => ({
 
       const { data } = await supabase
         .from('threads')
-        .select('*, profiles:user_id(display_name, is_peer_advisor, avatar_url, is_founding_member), forums:forum_id(name, slug, drug_slug), thread_forums(forum_id, forums:forum_id(name, slug, drug_slug))')
+        .select('*, profiles:user_id(display_name, is_peer_advisor, avatar_url, is_founding_member), thread_forums(forum_id, forums:forum_id(name, slug, drug_slug))')
         .in('user_id', followedIds)
         .order('created_at', { ascending: false })
         .limit(20);

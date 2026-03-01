@@ -9,6 +9,7 @@ import DrugSignature from '@/components/shared/DrugSignature';
 import VoteButton from '@/components/shared/VoteButton';
 import { useAuthStore } from '@/stores/authStore';
 import { useThreadStore } from '@/stores/threadStore';
+import { useForumStore } from '@/stores/forumStore';
 import { createClient } from '@/lib/supabase/client';
 import { ADMIN_USER_ID } from '@/lib/blog';
 import { renderBodyWithQuotes } from '@/lib/renderQuotes';
@@ -66,6 +67,7 @@ export default function ThreadView({ thread }) {
           title: editTitle.trim(),
           body: editBody.trim(),
         });
+        useForumStore.getState().invalidate();
         setEditing(false);
       } else {
         console.error('[ThreadView] edit error:', error);
@@ -84,6 +86,7 @@ export default function ThreadView({ thread }) {
         .delete()
         .eq('id', id);
       if (!error) {
+        useForumStore.getState().invalidate();
         router.push('/forums');
       } else {
         console.error('[ThreadView] delete error:', error);

@@ -18,6 +18,31 @@ export const useThreadStore = create((set, get) => ({
   setQuote: (quote) => set({ pendingQuote: quote }),
   clearQuote: () => set({ pendingQuote: null }),
 
+  // Prevent unbounded memory growth — prune old cached threads/replies
+  pruneCache: (keepThreadId) => {
+    const state = get();
+    const threadKeys = Object.keys(state.threads);
+    const MAX_CACHED = 5;
+    if (threadKeys.length <= MAX_CACHED) return;
+
+    // Keep the most recently accessed threads + the current one
+    const toRemove = threadKeys.filter((k) => k !== keepThreadId).slice(0, threadKeys.length - MAX_CACHED);
+    const threads = { ...state.threads };
+    const replies = { ...state.replies };
+    const voteState = { ...state.voteState };
+    const helpfulState = { ...state.helpfulState };
+
+    for (const id of toRemove) {
+      delete threads[id];
+      delete replies[id];
+      // Clean vote/helpful state for removed threads' replies
+      for (const key of Object.keys(voteState)) {
+        if (key.includes(id)) delete voteState[key];
+      }
+    }
+    set({ threads, replies, voteState, helpfulState });
+  },
+
   updateThread: (threadId, partial) => {
     set((state) => ({
       threads: {
@@ -43,6 +68,9 @@ export const useThreadStore = create((set, get) => ({
         set((state) => ({
           threads: { ...state.threads, [threadId]: threadData },
         }));
+
+        // Prune old cached data to prevent memory bloat
+        get().pruneCache(threadId);
 
         // Increment view count (best-effort, fire-and-forget)
         fireAndForget('increment-view-count', () =>

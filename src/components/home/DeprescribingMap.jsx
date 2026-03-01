@@ -19,6 +19,7 @@ function loadCSS(href) {
 export default function DeprescribingMap({ compact = false }) {
   const mapRef = useRef(null);
   const mapInstanceRef = useRef(null);
+  const timersRef = useRef([]);
   const [loaded, setLoaded] = useState(false);
   const [providerCount] = useState(
     new Set(DEPRESCRIBERS.map((d) => d.name)).size
@@ -99,9 +100,10 @@ export default function DeprescribingMap({ compact = false }) {
       setLoaded(true);
 
       // Invalidate size multiple times to ensure tiles render after visibility change
-      setTimeout(() => map.invalidateSize(), 100);
-      setTimeout(() => map.invalidateSize(), 500);
-      setTimeout(() => map.invalidateSize(), 1000);
+      const t1 = setTimeout(() => map.invalidateSize(), 100);
+      const t2 = setTimeout(() => map.invalidateSize(), 500);
+      const t3 = setTimeout(() => map.invalidateSize(), 1000);
+      timersRef.current = [t1, t2, t3];
     }
 
     initMap().catch((err) => {
@@ -110,6 +112,8 @@ export default function DeprescribingMap({ compact = false }) {
 
     return () => {
       cancelled = true;
+      timersRef.current.forEach(clearTimeout);
+      timersRef.current = [];
       if (mapInstanceRef.current) {
         mapInstanceRef.current.remove();
         mapInstanceRef.current = null;
