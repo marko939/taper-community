@@ -61,7 +61,7 @@ create table public.forums (
   id uuid primary key default gen_random_uuid(),
   name text not null,
   drug_slug text unique,
-  category text not null check (category in ('drug', 'general', 'resources', 'start', 'community', 'tapering', 'research', 'lifestyle', 'feedback')),
+  category text not null check (category in ('drug', 'general', 'resources', 'start', 'community', 'tapering', 'research', 'lifestyle', 'feedback', 'our-community')),
   slug text unique,
   description text,
   post_count integer default 0,
@@ -414,3 +414,29 @@ create policy "Users unfollow" on public.user_follows
 
 create index idx_follows_followed on public.user_follows(followed_id);
 create index idx_follows_follower on public.user_follows(follower_id);
+
+-- ============================================================
+-- DIRECT MESSAGES
+-- ============================================================
+create table public.direct_messages (
+  id uuid primary key default gen_random_uuid(),
+  from_user_id uuid not null references public.profiles(id) on delete cascade,
+  to_user_id uuid not null references public.profiles(id) on delete cascade,
+  body text not null,
+  read boolean default false,
+  created_at timestamptz default now()
+);
+
+alter table public.direct_messages enable row level security;
+
+create policy "Users read own DMs" on public.direct_messages
+  for select using (auth.uid() = from_user_id or auth.uid() = to_user_id);
+
+create policy "Users send DMs" on public.direct_messages
+  for insert with check (auth.uid() = from_user_id);
+
+create policy "Recipients mark DMs read" on public.direct_messages
+  for update using (auth.uid() = to_user_id);
+
+create index idx_dm_participants on public.direct_messages(from_user_id, to_user_id, created_at desc);
+create index idx_dm_to_user on public.direct_messages(to_user_id, read, created_at desc);
