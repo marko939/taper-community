@@ -14,6 +14,7 @@ import { createClient } from '@/lib/supabase/client';
 import { ADMIN_USER_ID } from '@/lib/blog';
 import { renderBodyWithQuotes } from '@/lib/renderQuotes';
 import FollowButton from '@/components/shared/FollowButton';
+import FollowThreadButton from '@/components/shared/FollowThreadButton';
 
 export default function ThreadView({ thread }) {
   const { id, title, body, tags = [], view_count, vote_score, created_at, user_id, profiles, thread_forums = [], pinned } = thread;
@@ -186,8 +187,10 @@ export default function ThreadView({ thread }) {
                 <>
                   <div className="flex items-start justify-between gap-3">
                     <h1 className="text-2xl font-semibold text-foreground">{editTitle}</h1>
-                    {(isAdmin || canModify) && (
-                      <div className="flex shrink-0 gap-1.5">
+                    <div className="flex shrink-0 gap-1.5">
+                      <FollowThreadButton threadId={id} />
+                      {(isAdmin || canModify) && (<>
+
                         {isAdmin && (
                           <button
                             type="button"
@@ -225,8 +228,8 @@ export default function ThreadView({ thread }) {
                           </svg>
                           Delete
                         </button>
-                      </div>
-                    )}
+                      </>)}
+                    </div>
                   </div>
 
                   {/* Delete confirmation */}

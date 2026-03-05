@@ -8,17 +8,18 @@ export const useNotificationStore = create((set, get) => ({
   notifications: [],
   unreadCount: 0,
   loading: false,
+  fetchError: false,
   _realtimeChannel: null,
 
   fetchNotifications: async () => {
     const userId = useAuthStore.getState().user?.id;
     if (!userId) return;
 
-    set({ loading: true });
+    set({ loading: true, fetchError: false });
     try {
       const supabase = createClient();
 
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('notifications')
         .select('*, actor:actor_id(display_name, avatar_url), thread:thread_id(title), reply_id')
         .eq('user_id', userId)
@@ -26,10 +27,11 @@ export const useNotificationStore = create((set, get) => ({
         .order('created_at', { ascending: false })
         .limit(50);
 
-      set({ notifications: data || [], loading: false });
+      if (error) throw error;
+      set({ notifications: data || [], loading: false, fetchError: false });
     } catch (err) {
       console.error('[notificationStore] fetchNotifications error:', err);
-      set({ loading: false });
+      set({ loading: false, fetchError: true });
     }
   },
 
@@ -37,20 +39,25 @@ export const useNotificationStore = create((set, get) => ({
     const userId = useAuthStore.getState().user?.id;
     if (!userId) return;
 
-    const supabase = createClient();
+    try {
+      const supabase = createClient();
 
-    const { count } = await supabase
-      .from('notifications')
-      .select('id', { count: 'exact', head: true })
-      .eq('user_id', userId)
-      .eq('read', false)
-      .in('type', ['thread_reply', 'reply_mention', 'badge']);
+      const { count } = await supabase
+        .from('notifications')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', userId)
+        .eq('read', false)
+        .in('type', ['thread_reply', 'reply_mention', 'badge']);
 
-    set({ unreadCount: count || 0 });
+      set({ unreadCount: count || 0 });
+    } catch (err) {
+      console.error('[notificationStore] fetchUnreadCount error:', err);
+    }
   },
 
   markAsRead: async (id) => {
-    const supabase = createClient();
+    const prev = get().notifications;
+    const prevCount = get().unreadCount;
 
     set((state) => ({
       unreadCount: Math.max(0, state.unreadCount - 1),
@@ -59,28 +66,43 @@ export const useNotificationStore = create((set, get) => ({
       ),
     }));
 
-    await supabase
-      .from('notifications')
-      .update({ read: true })
-      .eq('id', id);
+    try {
+      const supabase = createClient();
+      const { error } = await supabase
+        .from('notifications')
+        .update({ read: true })
+        .eq('id', id);
+      if (error) throw error;
+    } catch (err) {
+      console.error('[notificationStore] markAsRead error:', err);
+      set({ notifications: prev, unreadCount: prevCount });
+    }
   },
 
   markAllAsRead: async () => {
     const userId = useAuthStore.getState().user?.id;
     if (!userId) return;
 
-    const supabase = createClient();
+    const prev = get().notifications;
+    const prevCount = get().unreadCount;
 
     set((state) => ({
       unreadCount: 0,
       notifications: state.notifications.map((n) => ({ ...n, read: true })),
     }));
 
-    await supabase
-      .from('notifications')
-      .update({ read: true })
-      .eq('user_id', userId)
-      .eq('read', false);
+    try {
+      const supabase = createClient();
+      const { error } = await supabase
+        .from('notifications')
+        .update({ read: true })
+        .eq('user_id', userId)
+        .eq('read', false);
+      if (error) throw error;
+    } catch (err) {
+      console.error('[notificationStore] markAllAsRead error:', err);
+      set({ notifications: prev, unreadCount: prevCount });
+    }
   },
 
   subscribeRealtime: () => {
@@ -103,10 +125,17 @@ export const useNotificationStore = create((set, get) => ({
           filter: `user_id=eq.${userId}`,
         },
         (payload) => {
+          // Bump unread count immediately for the badge
           set((state) => ({
-            notifications: [payload.new, ...state.notifications],
             unreadCount: state.unreadCount + 1,
           }));
+
+          // Realtime payloads lack joined actor/thread data, so re-fetch
+          // the full list to get proper display names and thread titles.
+          // Only re-fetch if we already have notifications loaded (panel was opened before).
+          if (get().notifications.length > 0) {
+            get().fetchNotifications();
+          }
         }
       )
       .subscribe();

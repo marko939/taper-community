@@ -4,6 +4,8 @@ import { useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { useThreadStore } from '@/stores/threadStore';
+import { useAuthStore } from '@/stores/authStore';
+import { useFollowStore } from '@/stores/followStore';
 import { GENERAL_FORUMS } from '@/lib/forumCategories';
 import ThreadView from '@/components/thread/ThreadView';
 import ReplyList from '@/components/thread/ReplyList';
@@ -20,6 +22,8 @@ export default function ThreadPage() {
   const fetchThread = useThreadStore((s) => s.fetchThread);
   const fetchReplies = useThreadStore((s) => s.fetchReplies);
   const loadMoreReplies = useThreadStore((s) => s.loadMoreReplies);
+  const user = useAuthStore((s) => s.user);
+  const fetchThreadFollows = useFollowStore((s) => s.fetchThreadFollows);
 
   const replies = replyData?.items || [];
   const hasMoreReplies = replyData?.hasMore || false;
@@ -32,6 +36,10 @@ export default function ThreadPage() {
       fetchReplies(threadId);
     }
   }, [threadId, fetchThread, fetchReplies]);
+
+  useEffect(() => {
+    if (user?.id) fetchThreadFollows(user.id);
+  }, [user?.id, fetchThreadFollows]);
 
   // Scroll to specific reply when URL has a hash (e.g. from notification click)
   useEffect(() => {

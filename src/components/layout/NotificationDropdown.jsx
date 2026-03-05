@@ -20,13 +20,8 @@ export default function NotificationDropdown({ onClose }) {
   const ref = useRef(null);
   const { notifications, loading, fetchNotifications, markAsRead, markAllAsRead, unreadCount } =
     useNotificationStore();
-  const hasFetched = useRef(false);
-
   useEffect(() => {
-    if (!hasFetched.current) {
-      hasFetched.current = true;
-      fetchNotifications();
-    }
+    fetchNotifications();
   }, [fetchNotifications]);
 
   // Close on click outside
@@ -106,7 +101,7 @@ export default function NotificationDropdown({ onClose }) {
                     <>
                       <p className="text-sm leading-snug" style={{ color: 'var(--foreground)' }}>
                         <span className="font-semibold">{n.actor?.display_name || 'Someone'}</span>
-                        {' replied to '}
+                        {n.type === 'reply_mention' ? ' mentioned you in ' : ' replied to '}
                         <span className="font-medium">&ldquo;{(n.thread?.title || '').slice(0, 50)}{(n.thread?.title || '').length > 50 ? '...' : ''}&rdquo;</span>
                       </p>
                       {n.body && (

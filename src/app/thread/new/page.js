@@ -10,6 +10,7 @@ import { useRequireAuth } from '@/hooks/useRequireAuth';
 import NewThreadForm from '@/components/forums/NewThreadForm';
 import { PageLoading } from '@/components/shared/LoadingSpinner';
 import { useForumStore } from '@/stores/forumStore';
+import { useFollowStore } from '@/stores/followStore';
 import { GENERAL_FORUMS, FORUM_CATEGORY_ORDER } from '@/lib/forumCategories';
 
 function NewThreadContent() {
@@ -104,6 +105,41 @@ function NewThreadContent() {
       }));
       fireAndForget('link-thread-forums', () => supabase.from('thread_forums').insert(forumLinks));
     }
+
+    // Insert mention notifications (best-effort)
+    fireAndForget('mention-notifications', async () => {
+      const mentionRegex = /@\[([^\]]+)\]\(([a-f0-9-]+)\)/g;
+      const mentionedIds = new Set();
+      let match;
+      while ((match = mentionRegex.exec(body)) !== null) {
+        if (match[2] !== user.id) mentionedIds.add(match[2]);
+      }
+      if (mentionedIds.size === 0) return;
+
+      const preview = body.slice(0, 120);
+      const notifications = [...mentionedIds].map((uid) => ({
+        user_id: uid,
+        type: 'reply_mention',
+        thread_id: thread.id,
+        reply_id: null,
+        actor_id: user.id,
+        title,
+        body: preview,
+      }));
+      await supabase.from('notifications').insert(notifications);
+
+      // Trigger email for mention notifications
+      fetch('/api/notify-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ thread_id: thread.id }),
+      });
+    });
+
+    // Auto-follow the thread so the creator gets notified of replies
+    fireAndForget('auto-follow-thread', () =>
+      useFollowStore.getState().toggleThreadFollow(user.id, thread.id)
+    );
 
     // Bust forum cache so forums page shows the new thread
     useForumStore.getState().invalidate();

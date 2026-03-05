@@ -21,12 +21,12 @@ export default function NotificationFab() {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const panelRef = useRef(null);
-  const hasFetched = useRef(false);
 
   const {
     notifications,
     unreadCount,
     loading,
+    fetchError,
     fetchNotifications,
     fetchUnreadCount,
     subscribeRealtime,
@@ -44,10 +44,9 @@ export default function NotificationFab() {
     }
   }, [user, fetchUnreadCount, subscribeRealtime, unsubscribeRealtime]);
 
-  // Lazy-load full list on first open
+  // Fetch full list every time the panel opens (cheap, 50 rows max)
   useEffect(() => {
-    if (open && !hasFetched.current) {
-      hasFetched.current = true;
+    if (open) {
       fetchNotifications();
     }
   }, [open, fetchNotifications]);
@@ -108,6 +107,17 @@ export default function NotificationFab() {
               <div className="px-4 py-10 text-center text-sm" style={{ color: 'var(--text-subtle)' }}>
                 Loading...
               </div>
+            ) : fetchError && notifications.length === 0 ? (
+              <div className="px-4 py-10 text-center">
+                <p className="text-sm" style={{ color: 'var(--text-subtle)' }}>Could not load notifications.</p>
+                <button
+                  onClick={fetchNotifications}
+                  className="mt-2 text-xs font-medium transition hover:opacity-80"
+                  style={{ color: 'var(--purple)' }}
+                >
+                  Tap to retry
+                </button>
+              </div>
             ) : notifications.length === 0 ? (
               <div className="px-4 py-10 text-center">
                 <svg className="mx-auto h-8 w-8 mb-2" style={{ color: 'var(--text-subtle)' }} fill="none" viewBox="0 0 24 24" strokeWidth={1.2} stroke="currentColor">
@@ -141,7 +151,7 @@ export default function NotificationFab() {
                         <>
                           <p className="text-sm leading-snug" style={{ color: 'var(--foreground)' }}>
                             <span className="font-semibold">{n.actor?.display_name || 'Someone'}</span>
-                            {' replied to '}
+                            {n.type === 'reply_mention' ? ' mentioned you in ' : ' replied to '}
                             <span className="font-medium">
                               &ldquo;{(n.thread?.title || '').slice(0, 50)}
                               {(n.thread?.title || '').length > 50 ? '...' : ''}&rdquo;

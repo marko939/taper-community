@@ -14,6 +14,10 @@ export const useFollowStore = create((set, get) => ({
   followCounts: {},
   followedThreads: { items: [], loading: true },
   followedThreadsLoaded: false,
+  followedForums: new Set(),
+  followedForumsLoaded: false,
+  threadFollows: new Set(),
+  threadFollowsLoaded: false,
 
   fetchFollowing: async (userId) => {
     if (!userId || get().followingLoaded) return;
@@ -157,4 +161,116 @@ export const useFollowStore = create((set, get) => ({
   },
 
   isFollowing: (userId) => get().following.has(userId),
+
+  // ── Forum follows ──────────────────────────────────────────
+
+  fetchFollowedForums: async (userId) => {
+    if (!userId || get().followedForumsLoaded) return;
+
+    try {
+      const supabase = createClient();
+      const { data } = await supabase
+        .from('forum_follows')
+        .select('forum_id')
+        .eq('follower_id', userId);
+
+      const ids = new Set((data || []).map((r) => r.forum_id));
+      set({ followedForums: ids, followedForumsLoaded: true });
+    } catch (err) {
+      console.error('[followStore] fetchFollowedForums error:', err);
+      set({ followedForumsLoaded: true });
+    }
+  },
+
+  toggleForumFollow: async (currentUserId, forumId) => {
+    const { followedForums } = get();
+    const isCurrentlyFollowing = followedForums.has(forumId);
+    const supabase = createClient();
+
+    // Optimistic update
+    const newFollowedForums = new Set(followedForums);
+    if (isCurrentlyFollowing) {
+      newFollowedForums.delete(forumId);
+    } else {
+      newFollowedForums.add(forumId);
+    }
+    set({ followedForums: newFollowedForums });
+
+    try {
+      if (isCurrentlyFollowing) {
+        const { error } = await supabase
+          .from('forum_follows')
+          .delete()
+          .eq('follower_id', currentUserId)
+          .eq('forum_id', forumId);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from('forum_follows')
+          .insert({ follower_id: currentUserId, forum_id: forumId });
+        if (error) throw error;
+      }
+    } catch (err) {
+      console.error('[followStore] toggleForumFollow error:', err);
+      set({ followedForums }); // revert
+    }
+  },
+
+  isFollowingForum: (forumId) => get().followedForums.has(forumId),
+
+  // ── Thread follows ──────────────────────────────────────────
+
+  fetchThreadFollows: async (userId) => {
+    if (!userId || get().threadFollowsLoaded) return;
+
+    try {
+      const supabase = createClient();
+      const { data } = await supabase
+        .from('thread_follows')
+        .select('thread_id')
+        .eq('user_id', userId);
+
+      const ids = new Set((data || []).map((r) => r.thread_id));
+      set({ threadFollows: ids, threadFollowsLoaded: true });
+    } catch (err) {
+      console.error('[followStore] fetchThreadFollows error:', err);
+      set({ threadFollowsLoaded: true });
+    }
+  },
+
+  toggleThreadFollow: async (userId, threadId) => {
+    const { threadFollows } = get();
+    const isCurrentlyFollowing = threadFollows.has(threadId);
+    const supabase = createClient();
+
+    // Optimistic update
+    const newThreadFollows = new Set(threadFollows);
+    if (isCurrentlyFollowing) {
+      newThreadFollows.delete(threadId);
+    } else {
+      newThreadFollows.add(threadId);
+    }
+    set({ threadFollows: newThreadFollows });
+
+    try {
+      if (isCurrentlyFollowing) {
+        const { error } = await supabase
+          .from('thread_follows')
+          .delete()
+          .eq('user_id', userId)
+          .eq('thread_id', threadId);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from('thread_follows')
+          .insert({ user_id: userId, thread_id: threadId });
+        if (error) throw error;
+      }
+    } catch (err) {
+      console.error('[followStore] toggleThreadFollow error:', err);
+      set({ threadFollows }); // revert
+    }
+  },
+
+  isFollowingThread: (threadId) => get().threadFollows.has(threadId),
 }));

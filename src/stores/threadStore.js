@@ -204,6 +204,65 @@ export const useThreadStore = create((set, get) => ({
           body: JSON.stringify({ reply_id: data.id, thread_id: threadId }),
         })
       );
+
+      // Insert mention notifications (best-effort)
+      const mentionedIds = new Set();
+      fireAndForget('mention-notifications', async () => {
+        const mentionRegex = /@\[([^\]]+)\]\(([a-f0-9-]+)\)/g;
+        let match;
+        while ((match = mentionRegex.exec(body)) !== null) {
+          if (match[2] !== userId) mentionedIds.add(match[2]);
+        }
+        if (mentionedIds.size === 0) return;
+
+        const thread = get().threads[threadId];
+        const title = thread?.title || '';
+        const preview = body.slice(0, 120);
+
+        const notifications = [...mentionedIds].map((uid) => ({
+          user_id: uid,
+          type: 'reply_mention',
+          thread_id: threadId,
+          reply_id: data.id,
+          actor_id: userId,
+          title,
+          body: preview,
+        }));
+        await supabase.from('notifications').insert(notifications);
+      });
+
+      // Notify thread followers (best-effort)
+      fireAndForget('thread-follow-notifications', async () => {
+        const { data: followers } = await supabase
+          .from('thread_follows')
+          .select('user_id')
+          .eq('thread_id', threadId);
+
+        if (!followers || followers.length === 0) return;
+
+        const thread = get().threads[threadId];
+        const threadOwnerId = thread?.user_id;
+        const title = thread?.title || '';
+        const preview = body.slice(0, 120);
+
+        // Filter out: reply author, thread owner (already gets thread_reply), mentioned users
+        const followerIds = followers
+          .map((f) => f.user_id)
+          .filter((uid) => uid !== userId && uid !== threadOwnerId && !mentionedIds.has(uid));
+
+        if (followerIds.length === 0) return;
+
+        const notifications = followerIds.map((uid) => ({
+          user_id: uid,
+          type: 'thread_reply',
+          thread_id: threadId,
+          reply_id: data.id,
+          actor_id: userId,
+          title,
+          body: preview,
+        }));
+        await supabase.from('notifications').insert(notifications);
+      });
     }
 
     return data;
