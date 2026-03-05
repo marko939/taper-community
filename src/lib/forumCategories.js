@@ -6,13 +6,13 @@ import { DRUGS } from '@/lib/drugs';
 
 // ── Section order ──────────────────────────────────────────────
 export const FORUM_CATEGORY_ORDER = [
+  { key: 'admin', label: 'Admin' },
   { key: 'community', label: 'Community' },
   { key: 'tapering', label: 'Hyperbolic Tapering: How To, Tips & Tricks' },
   { key: 'research', label: 'Research & News' },
   { key: 'lifestyle', label: 'Relationships & Lifestyle' },
   { key: 'drug', label: 'Drug-Specific Forums' },
   { key: 'feedback', label: 'Feedback' },
-  { key: 'our-community', label: 'Our Community' },
 ];
 
 // ── Category header icons ──────────────────────────────────────
@@ -42,7 +42,7 @@ export const CATEGORY_ICONS = {
       <path strokeLinecap="round" strokeLinejoin="round" d="M11.42 15.17l-5.645 3.182a.535.535 0 01-.779-.596l1.06-6.277L.856 6.447a.535.535 0 01.295-.917l6.263-.914L10.21.516a.536.536 0 01.962 0l2.796 5.1 6.263.914a.535.535 0 01.295.917l-5.2 5.032 1.06 6.277a.535.535 0 01-.779.596L11.42 15.17z" />
     </svg>
   ),
-  'our-community': (
+  admin: (
     <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
       <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
     </svg>
@@ -67,8 +67,8 @@ export const GENERAL_FORUMS = [
   { category: 'research', slug: 'research-and-news', name: 'Research & News', description: 'Scientific papers, news articles, advocacy, and media about psychiatric drug withdrawal.' },
   { category: 'lifestyle', slug: 'lifestyle', name: 'Relationships & Lifestyle', description: 'Diet, exercise, sleep, relationships, and lifestyle during tapering.' },
   { category: 'feedback', slug: 'feature-requests-and-bugs', name: 'Feature Requests & Bug Fixes', description: 'Suggest new features, report bugs, and help us improve TaperMeds.' },
-  { category: 'our-community', slug: 'community-rules', name: 'Community Rules & Guidelines', description: 'Community rules, staff introductions, and how TaperCommunity works.' },
-  { category: 'our-community', slug: 'staff-who-we-are', name: 'Staff \u2013 Who We Are', description: 'Meet the team behind TaperCommunity.' },
+  { category: 'admin', slug: 'community-rules', name: 'Community Rules & Guidelines', description: 'Community rules, staff introductions, and how TaperCommunity works.' },
+  { category: 'admin', slug: 'staff-who-we-are', name: 'Staff \u2013 Who We Are', description: 'Meet the team behind TaperCommunity.' },
 ];
 
 // ── Drug class icons (for the 6-group grid) ────────────────────
