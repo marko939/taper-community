@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuthStore } from '@/stores/authStore';
 import { useProfileStore } from '@/stores/profileStore';
@@ -28,6 +28,7 @@ function timeAgo(dateStr) {
 
 export default function ProfilePage() {
   const { userId } = useParams();
+  const router = useRouter();
   const currentUser = useAuthStore((s) => s.user);
   const profileData = useProfileStore((s) => s.profiles[userId]);
   const fetchProfile = useProfileStore((s) => s.fetchProfile);
@@ -139,16 +140,28 @@ export default function ProfilePage() {
             )}
             <DrugSignature signature={profile.drug_signature} />
             {!isOwnProfile && currentUser && followingLoaded && (
-              <button
-                onClick={() => toggleFollow(currentUser.id, userId)}
-                className={`mt-3 rounded-full px-4 py-1.5 text-sm font-semibold transition ${
-                  isFollowing
-                    ? 'border border-border-subtle bg-surface-glass text-text-muted hover:border-red-400 hover:text-red-500'
-                    : 'bg-accent-blue text-white hover:opacity-90'
-                }`}
-              >
-                {isFollowing ? 'Following' : 'Follow'}
-              </button>
+              <div className="mt-3 flex items-center gap-2">
+                <button
+                  onClick={() => toggleFollow(currentUser.id, userId)}
+                  className={`rounded-full px-4 py-1.5 text-sm font-semibold transition ${
+                    isFollowing
+                      ? 'border border-border-subtle bg-surface-glass text-text-muted hover:border-red-400 hover:text-red-500'
+                      : 'bg-accent-blue text-white hover:opacity-90'
+                  }`}
+                >
+                  {isFollowing ? 'Following' : 'Follow'}
+                </button>
+                <button
+                  onClick={() => router.push(`/messages?to=${userId}`)}
+                  className="flex items-center gap-1.5 rounded-full border px-4 py-1.5 text-sm font-semibold transition hover:bg-purple-ghost"
+                  style={{ borderColor: 'var(--border-subtle)', color: 'var(--text-muted)' }}
+                >
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
+                  </svg>
+                  Message
+                </button>
+              </div>
             )}
           </div>
         </div>

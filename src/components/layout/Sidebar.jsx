@@ -1,10 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
+import { useMessageStore } from '@/stores/messageStore';
 import Avatar from '@/components/shared/Avatar';
 import { isAdmin } from '@/lib/blog';
 
@@ -36,6 +37,16 @@ const NAV_ITEMS = [
         <path strokeLinecap="round" strokeLinejoin="round" d="M20.25 8.511c.884.284 1.5 1.128 1.5 2.097v4.286c0 1.136-.847 2.1-1.98 2.193-.34.027-.68.052-1.02.072v3.091l-3-3c-1.354 0-2.694-.055-4.02-.163a2.115 2.115 0 01-.825-.242m9.345-8.334a2.126 2.126 0 00-.476-.095 48.64 48.64 0 00-8.048 0c-1.131.094-1.976 1.057-1.976 2.192v4.286c0 .837.46 1.58 1.155 1.951m9.345-8.334V6.637c0-1.621-1.152-3.026-2.76-3.235A48.455 48.455 0 0011.25 3c-2.115 0-4.198.137-6.24.402-1.608.209-2.76 1.614-2.76 3.235v6.226c0 1.621 1.152 3.026 2.76 3.235.577.075 1.157.14 1.74.194V21l4.155-4.155" />
       </svg>
     ),
+  },
+  {
+    href: '/messages',
+    label: 'Messages',
+    icon: (
+      <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
+      </svg>
+    ),
+    authOnly: true,
   },
   {
     href: '/education',
@@ -73,11 +84,25 @@ export default function Sidebar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const pathname = usePathname();
   const { user, profile, loading, signOut } = useAuth();
+  const dmUnread = useMessageStore((s) => s.unreadTotal);
+  const fetchDmUnread = useMessageStore((s) => s.fetchUnreadTotal);
+  const subscribeDm = useMessageStore((s) => s.subscribeRealtime);
+  const unsubscribeDm = useMessageStore((s) => s.unsubscribeRealtime);
+
+  useEffect(() => {
+    if (user) {
+      fetchDmUnread();
+      subscribeDm();
+      return () => unsubscribeDm();
+    }
+  }, [user, fetchDmUnread, subscribeDm, unsubscribeDm]);
 
   const isActive = (item) =>
     !item.external && (item.exact
       ? pathname === item.href
       : pathname === item.href || pathname.startsWith(item.href + '/'));
+
+  const visibleNavItems = NAV_ITEMS.filter((item) => !item.authOnly || user);
 
   return (
     <>
@@ -121,7 +146,7 @@ export default function Sidebar() {
             onClick={(e) => e.stopPropagation()}
           >
             <nav className="flex flex-col gap-1 px-3 py-3">
-              {NAV_ITEMS.map((item) => (
+              {visibleNavItems.map((item) => (
                 <Link
                   key={item.href}
                   href={item.href}
@@ -132,7 +157,14 @@ export default function Sidebar() {
                     background: isActive(item) ? 'var(--purple-ghost)' : 'transparent',
                   }}
                 >
-                  <span className="shrink-0">{item.icon}</span>
+                  <span className="relative shrink-0">
+                    {item.icon}
+                    {item.href === '/messages' && dmUnread > 0 && (
+                      <span className="absolute -right-1.5 -top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white">
+                        {dmUnread > 9 ? '9+' : dmUnread}
+                      </span>
+                    )}
+                  </span>
                   <span className="text-sm font-medium">{item.label}</span>
                 </Link>
               ))}
@@ -232,7 +264,7 @@ export default function Sidebar() {
 
           {/* Nav */}
           <nav className="flex flex-1 flex-col gap-1 px-2 py-3">
-            {NAV_ITEMS.map((item) => {
+            {visibleNavItems.map((item) => {
               const Tag = item.external ? 'a' : Link;
               const extraProps = item.external ? { target: '_blank', rel: 'noopener noreferrer' } : {};
               return (
@@ -247,7 +279,14 @@ export default function Sidebar() {
                   title={collapsed ? item.label : undefined}
                   {...extraProps}
                 >
-                  <span className="shrink-0">{item.icon}</span>
+                  <span className="relative shrink-0">
+                    {item.icon}
+                    {item.href === '/messages' && dmUnread > 0 && (
+                      <span className="absolute -right-1.5 -top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white">
+                        {dmUnread > 9 ? '9+' : dmUnread}
+                      </span>
+                    )}
+                  </span>
                   {!collapsed && (
                     <span className="text-sm font-medium">{item.label}</span>
                   )}

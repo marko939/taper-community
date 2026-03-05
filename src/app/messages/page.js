@@ -1,0 +1,302 @@
+'use client';
+
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
+import { useRequireAuth } from '@/hooks/useRequireAuth';
+import { useMessageStore } from '@/stores/messageStore';
+import { createClient } from '@/lib/supabase/client';
+import Avatar from '@/components/shared/Avatar';
+import { PageLoading } from '@/components/shared/LoadingSpinner';
+
+function timeAgo(dateStr) {
+  const seconds = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000);
+  if (seconds < 60) return 'just now';
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  return `${days}d ago`;
+}
+
+export default function MessagesPage() {
+  const { user, loading: authLoading } = useRequireAuth();
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const toParam = searchParams.get('to');
+
+  const {
+    conversations,
+    messages,
+    loading,
+    fetchConversations,
+    fetchMessages,
+    sendMessage,
+    markConversationRead,
+    fetchUnreadTotal,
+  } = useMessageStore();
+
+  const [selectedPartner, setSelectedPartner] = useState(null);
+  const [newMessage, setNewMessage] = useState('');
+  const [sending, setSending] = useState(false);
+  const [mobileShowThread, setMobileShowThread] = useState(false);
+  const messagesEndRef = useRef(null);
+  const inputRef = useRef(null);
+
+  // Load conversations on mount
+  useEffect(() => {
+    if (user) fetchConversations();
+  }, [user, fetchConversations]);
+
+  // Handle ?to= param (deep link from profile)
+  useEffect(() => {
+    if (toParam && user && toParam !== user.id) {
+      loadPartner(toParam);
+    }
+  }, [toParam, user]);
+
+  const loadPartner = useCallback(async (partnerId) => {
+    // Fetch partner profile if not in conversations
+    const existing = conversations.find((c) => c.partnerId === partnerId);
+    if (existing) {
+      setSelectedPartner(existing.partner);
+    } else {
+      const supabase = createClient();
+      const { data } = await supabase
+        .from('profiles')
+        .select('id, display_name, avatar_url')
+        .eq('id', partnerId)
+        .single();
+      if (data) setSelectedPartner(data);
+    }
+    setMobileShowThread(true);
+    fetchMessages(partnerId);
+    markConversationRead(partnerId);
+  }, [conversations, fetchMessages, markConversationRead]);
+
+  const selectConversation = (conv) => {
+    setSelectedPartner(conv.partner);
+    setMobileShowThread(true);
+    fetchMessages(conv.partnerId);
+    markConversationRead(conv.partnerId);
+    // Update URL without navigation
+    router.replace(`/messages?to=${conv.partnerId}`, { scroll: false });
+  };
+
+  // Scroll to bottom when messages change
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
+
+  // Focus input when partner selected
+  useEffect(() => {
+    if (selectedPartner) inputRef.current?.focus();
+  }, [selectedPartner]);
+
+  const handleSend = async (e) => {
+    e.preventDefault();
+    if (!newMessage.trim() || !selectedPartner || sending) return;
+
+    setSending(true);
+    await sendMessage(selectedPartner.id, newMessage);
+    setNewMessage('');
+    setSending(false);
+    fetchUnreadTotal();
+  };
+
+  if (authLoading) return <PageLoading />;
+
+  return (
+    <div className="mx-auto max-w-4xl">
+      <h1
+        className="mb-6 text-2xl font-semibold text-foreground"
+        style={{ fontFamily: 'Fraunces, Georgia, serif' }}
+      >
+        Messages
+      </h1>
+
+      <div
+        className="flex overflow-hidden rounded-xl border"
+        style={{
+          borderColor: 'var(--border-subtle)',
+          background: 'var(--surface-strong)',
+          height: 'calc(100vh - 200px)',
+          minHeight: '500px',
+        }}
+      >
+        {/* Conversation List */}
+        <div
+          className={`w-full flex-shrink-0 border-r md:w-80 md:block ${mobileShowThread ? 'hidden' : 'block'}`}
+          style={{ borderColor: 'var(--border-subtle)' }}
+        >
+          <div className="border-b px-4 py-3" style={{ borderColor: 'var(--border-subtle)' }}>
+            <p className="text-sm font-semibold text-foreground">Conversations</p>
+          </div>
+          <div className="overflow-y-auto" style={{ height: 'calc(100% - 49px)' }}>
+            {loading && conversations.length === 0 ? (
+              <div className="flex items-center justify-center py-12">
+                <svg className="h-5 w-5 animate-spin" style={{ color: 'var(--purple)' }} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                </svg>
+              </div>
+            ) : conversations.length === 0 ? (
+              <div className="px-4 py-12 text-center">
+                <p className="text-sm text-text-muted">No messages yet</p>
+                <p className="mt-1 text-xs text-text-subtle">Visit a member&apos;s profile to send them a message</p>
+              </div>
+            ) : (
+              conversations.map((conv) => (
+                <button
+                  key={conv.partnerId}
+                  onClick={() => selectConversation(conv)}
+                  className={`flex w-full items-center gap-3 px-4 py-3 text-left transition hover:bg-purple-ghost ${
+                    selectedPartner?.id === conv.partnerId ? 'bg-purple-ghost' : ''
+                  }`}
+                  style={selectedPartner?.id === conv.partnerId ? { background: 'var(--purple-ghost)' } : {}}
+                >
+                  <Avatar
+                    name={conv.partner.display_name}
+                    avatarUrl={conv.partner.avatar_url}
+                    size="sm"
+                  />
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center justify-between">
+                      <p className="truncate text-sm font-semibold text-foreground">
+                        {conv.partner.display_name}
+                      </p>
+                      <span className="ml-2 flex-shrink-0 text-[10px] text-text-subtle">
+                        {timeAgo(conv.lastMessage.created_at)}
+                      </span>
+                    </div>
+                    <p className="truncate text-xs text-text-muted">
+                      {conv.lastMessage.from_user_id === user.id ? 'You: ' : ''}
+                      {conv.lastMessage.body}
+                    </p>
+                  </div>
+                  {conv.unreadCount > 0 && (
+                    <span
+                      className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full text-[10px] font-bold text-white"
+                      style={{ background: 'var(--purple)' }}
+                    >
+                      {conv.unreadCount}
+                    </span>
+                  )}
+                </button>
+              ))
+            )}
+          </div>
+        </div>
+
+        {/* Message Thread */}
+        <div className={`flex flex-1 flex-col ${mobileShowThread ? 'block' : 'hidden md:flex'}`}>
+          {selectedPartner ? (
+            <>
+              {/* Thread Header */}
+              <div
+                className="flex items-center gap-3 border-b px-4 py-3"
+                style={{ borderColor: 'var(--border-subtle)' }}
+              >
+                <button
+                  onClick={() => {
+                    setMobileShowThread(false);
+                    router.replace('/messages', { scroll: false });
+                  }}
+                  className="text-text-muted md:hidden"
+                >
+                  <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+                  </svg>
+                </button>
+                <Avatar
+                  name={selectedPartner.display_name}
+                  avatarUrl={selectedPartner.avatar_url}
+                  size="sm"
+                />
+                <p className="text-sm font-semibold text-foreground">{selectedPartner.display_name}</p>
+              </div>
+
+              {/* Messages */}
+              <div className="flex-1 overflow-y-auto px-4 py-4">
+                {messages.length === 0 && !loading ? (
+                  <p className="py-8 text-center text-sm text-text-subtle">
+                    Start the conversation with {selectedPartner.display_name}
+                  </p>
+                ) : (
+                  <div className="space-y-3">
+                    {messages.map((msg) => {
+                      const isMine = msg.from_user_id === user.id;
+                      return (
+                        <div
+                          key={msg.id}
+                          className={`flex ${isMine ? 'justify-end' : 'justify-start'}`}
+                        >
+                          <div
+                            className="max-w-[75%] rounded-2xl px-4 py-2.5"
+                            style={{
+                              background: isMine ? 'var(--purple)' : 'var(--purple-ghost)',
+                              color: isMine ? 'white' : 'var(--foreground)',
+                            }}
+                          >
+                            <p className="text-sm leading-relaxed whitespace-pre-wrap">{msg.body}</p>
+                            <p
+                              className="mt-1 text-[10px]"
+                              style={{ opacity: 0.6 }}
+                            >
+                              {timeAgo(msg.created_at)}
+                            </p>
+                          </div>
+                        </div>
+                      );
+                    })}
+                    <div ref={messagesEndRef} />
+                  </div>
+                )}
+              </div>
+
+              {/* Input */}
+              <form
+                onSubmit={handleSend}
+                className="flex items-center gap-2 border-t px-4 py-3"
+                style={{ borderColor: 'var(--border-subtle)' }}
+              >
+                <input
+                  ref={inputRef}
+                  type="text"
+                  value={newMessage}
+                  onChange={(e) => setNewMessage(e.target.value)}
+                  placeholder="Type a message..."
+                  className="flex-1 rounded-xl border px-4 py-2.5 text-sm outline-none transition focus:ring-2"
+                  style={{
+                    borderColor: 'var(--border-subtle)',
+                    background: 'var(--background)',
+                    focusRingColor: 'var(--purple)',
+                  }}
+                />
+                <button
+                  type="submit"
+                  disabled={!newMessage.trim() || sending}
+                  className="flex h-10 w-10 items-center justify-center rounded-xl text-white transition disabled:opacity-40"
+                  style={{ background: 'var(--purple)' }}
+                >
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5" />
+                  </svg>
+                </button>
+              </form>
+            </>
+          ) : (
+            <div className="flex flex-1 items-center justify-center">
+              <div className="text-center">
+                <svg className="mx-auto h-12 w-12 text-text-subtle" fill="none" viewBox="0 0 24 24" strokeWidth={1} stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
+                </svg>
+                <p className="mt-3 text-sm text-text-muted">Select a conversation</p>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
