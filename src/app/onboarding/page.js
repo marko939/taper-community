@@ -41,7 +41,7 @@ const STEPS = ['meds', 'details', 'clinician', 'signature', 'intro'];
 export default function OnboardingPage() {
   const [step, setStep] = useState(0);
   const [notOnMeds, setNotOnMeds] = useState(false);
-  const [medications, setMedications] = useState([{ drug: '', dose: '', duration: '', stage: '' }]);
+  const [medications, setMedications] = useState([{ _key: crypto.randomUUID(), drug: '', dose: '', duration: '', stage: '' }]);
   const [hasClinician, setHasClinician] = useState(null);
   const [drugSignature, setDrugSignature] = useState('');
   const [signatureEdited, setSignatureEdited] = useState(false);
@@ -58,7 +58,7 @@ export default function OnboardingPage() {
   );
 
   const addMed = () => {
-    setMedications([...medications, { drug: '', dose: '', duration: '', stage: '' }]);
+    setMedications([...medications, { _key: crypto.randomUUID(), drug: '', dose: '', duration: '', stage: '' }]);
   };
 
   const removeMed = (idx) => {
@@ -194,7 +194,7 @@ export default function OnboardingPage() {
             {!notOnMeds && (
               <>
                 {medications.map((med, idx) => (
-                  <div key={idx} className="rounded-xl border p-4 space-y-3" style={{ borderColor: 'var(--border-subtle)' }}>
+                  <div key={med._key} className="rounded-xl border p-4 space-y-3" style={{ borderColor: 'var(--border-subtle)' }}>
                     <div className="flex items-center justify-between">
                       <span className="text-xs font-medium" style={{ color: 'var(--text-subtle)' }}>
                         Medication {medications.length > 1 ? idx + 1 : ''}
@@ -279,7 +279,7 @@ export default function OnboardingPage() {
               </div>
             ) : (
               medications.map((med, idx) => (
-                <div key={idx} className="rounded-xl border p-4 space-y-3" style={{ borderColor: 'var(--border-subtle)' }}>
+                <div key={med._key} className="rounded-xl border p-4 space-y-3" style={{ borderColor: 'var(--border-subtle)' }}>
                   <p className="text-sm font-semibold text-foreground">
                     {med.drug || `Medication ${idx + 1}`}
                   </p>

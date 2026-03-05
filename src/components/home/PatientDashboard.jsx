@@ -40,7 +40,7 @@ export default function PatientDashboard({ user, profile }) {
         }}
       >
         <div className="absolute inset-0">
-          <Image src="/hero-bg.jpg" alt="" fill className="object-cover" priority />
+          <Image src="/hero-bg.png" alt="" fill className="object-cover" priority />
         </div>
         <div className="pointer-events-none absolute inset-0" style={{ background: 'rgba(42,18,80,0.35)' }} />
         <div className="relative z-10">

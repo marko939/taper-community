@@ -198,18 +198,13 @@ export const useForumStore = create((set, get) => ({
         });
       }
 
-      // Hot ranking: thread votes + reply count + reply engagement, decayed by age
-      const now = Date.now();
+      // Hot ranking: pure engagement — thread likes + reply count + reply likes
       threads.sort((a, b) => {
         const replyEngA = replyEngagement[a.id] || 0;
         const replyEngB = replyEngagement[b.id] || 0;
         const scoreA = (a.vote_score || 0) + (a.reply_count || 0) + replyEngA;
         const scoreB = (b.vote_score || 0) + (b.reply_count || 0) + replyEngB;
-        const ageHoursA = Math.max((now - new Date(a.created_at).getTime()) / 3600000, 0.1);
-        const ageHoursB = Math.max((now - new Date(b.created_at).getTime()) / 3600000, 0.1);
-        const hotA = (Math.log10(Math.max(scoreA, 1)) + 1) / Math.pow(ageHoursA / 6 + 1, 0.5);
-        const hotB = (Math.log10(Math.max(scoreB, 1)) + 1) / Math.pow(ageHoursB / 6 + 1, 0.5);
-        return hotB - hotA;
+        return scoreB - scoreA;
       });
       threads = threads.slice(0, limit);
 

@@ -416,6 +416,30 @@ create index idx_follows_followed on public.user_follows(followed_id);
 create index idx_follows_follower on public.user_follows(follower_id);
 
 -- ============================================================
+-- FORUM FOLLOWS
+-- ============================================================
+create table public.forum_follows (
+  follower_id uuid not null references public.profiles(id) on delete cascade,
+  forum_id uuid not null references public.forums(id) on delete cascade,
+  created_at timestamptz default now(),
+  primary key (follower_id, forum_id)
+);
+
+alter table public.forum_follows enable row level security;
+
+create policy "Public forum follows read" on public.forum_follows
+  for select using (true);
+
+create policy "Auth users follow forums" on public.forum_follows
+  for insert with check (auth.uid() = follower_id);
+
+create policy "Users unfollow forums" on public.forum_follows
+  for delete using (auth.uid() = follower_id);
+
+create index idx_forum_follows_forum on public.forum_follows(forum_id);
+create index idx_forum_follows_follower on public.forum_follows(follower_id);
+
+-- ============================================================
 -- DIRECT MESSAGES
 -- ============================================================
 create table public.direct_messages (

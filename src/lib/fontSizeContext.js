@@ -11,12 +11,12 @@ const FONT_SIZE_MAP = {
 };
 
 const FontSizeContext = createContext({
-  fontSize: 'medium',
+  fontSize: 'large',
   setFontSize: () => {},
 });
 
 export function FontSizeProvider({ children }) {
-  const [fontSize, setFontSizeState] = useState('medium');
+  const [fontSize, setFontSizeState] = useState('large');
 
   useEffect(() => {
     const saved = localStorage.getItem(FONT_SIZE_KEY);
@@ -25,7 +25,7 @@ export function FontSizeProvider({ children }) {
 
   const setFontSize = (size) => {
     setFontSizeState(size);
-    document.documentElement.style.fontSize = FONT_SIZE_MAP[size] || '16px';
+    document.documentElement.style.fontSize = FONT_SIZE_MAP[size] || '18px';
     localStorage.setItem(FONT_SIZE_KEY, size);
   };
 

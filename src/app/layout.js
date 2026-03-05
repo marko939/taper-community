@@ -5,6 +5,7 @@ import Footer from '@/components/layout/Footer';
 import StoreInitializer from '@/components/layout/StoreInitializer';
 import NotificationFab from '@/components/layout/NotificationFab';
 import PageViewTracker from '@/components/layout/PageViewTracker';
+import ErrorBoundary from '@/components/layout/ErrorBoundary';
 import { FontSizeProvider } from '@/lib/fontSizeContext';
 import './globals.css';
 
@@ -36,9 +37,9 @@ export default function RootLayout({ children }) {
         <script dangerouslySetInnerHTML={{ __html: `
           (function() {
             try {
-              var size = localStorage.getItem('tapercommunity_font_size') || 'medium';
+              var size = localStorage.getItem('tapercommunity_font_size') || 'large';
               var map = { small: '14px', medium: '16px', large: '18px', xlarge: '20px' };
-              document.documentElement.style.fontSize = map[size] || '16px';
+              document.documentElement.style.fontSize = map[size] || '18px';
             } catch(e) {}
           })();
         `}} />
@@ -49,9 +50,11 @@ export default function RootLayout({ children }) {
           <div className="lg:flex">
             <Sidebar />
             <div className="min-w-0 flex-1">
-              <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-                {children}
-              </main>
+              <ErrorBoundary>
+                <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+                  {children}
+                </main>
+              </ErrorBoundary>
               <Footer />
             </div>
           </div>

@@ -3,6 +3,7 @@
 import { useState, useRef } from 'react';
 import { THREAD_TAGS } from '@/lib/constants';
 import EmojiPickerButton from '@/components/shared/EmojiPickerButton';
+import MentionAutocomplete from '@/components/shared/MentionAutocomplete';
 import FormattingToolbar, { makeBulletKeyHandler } from '@/components/shared/FormattingToolbar';
 
 export default function NewThreadForm({ forumId, onSubmit, disabled = false }) {
@@ -62,17 +63,20 @@ export default function NewThreadForm({ forumId, onSubmit, disabled = false }) {
           value={body}
           onChange={setBody}
         />
-        <textarea
-          id="body"
-          ref={bodyRef}
-          value={body}
-          onChange={(e) => setBody(e.target.value)}
-          onKeyDown={bulletKeyHandler}
-          placeholder="Share your experience, question, or thoughts..."
-          rows={8}
-          className="textarea rounded-t-none"
-          required
-        />
+        <div className="relative">
+          <textarea
+            id="body"
+            ref={bodyRef}
+            value={body}
+            onChange={(e) => setBody(e.target.value)}
+            onKeyDown={bulletKeyHandler}
+            placeholder="Share your experience, question, or thoughts..."
+            rows={8}
+            className="textarea rounded-t-none"
+            required
+          />
+          <MentionAutocomplete textareaRef={bodyRef} value={body} onChange={setBody} />
+        </div>
         <div className="mt-1 flex justify-end">
           <EmojiPickerButton textareaRef={bodyRef} value={body} onChange={setBody} />
         </div>

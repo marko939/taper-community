@@ -7,9 +7,11 @@ import { useForumStore } from '@/stores/forumStore';
 import { useAuthStore } from '@/stores/authStore';
 import { PageLoading } from '@/components/shared/LoadingSpinner';
 import { getGeneralSections, getDrugClassGroups, CATEGORY_ICONS, DRUG_CLASS_ICONS } from '@/lib/forumCategories';
+import { useFollowStore } from '@/stores/followStore';
 import SearchBar from '@/components/shared/SearchBar';
 import ThreadCard from '@/components/forums/ThreadCard';
 import FeedTabs from '@/components/shared/FeedTabs';
+import ForumFollowButton from '@/components/shared/ForumFollowButton';
 
 export default function ForumsPage() {
   return (
@@ -27,6 +29,8 @@ function ForumsContent() {
   const searchState = useForumStore((s) => s.searchState['global']);
   const searchFn = useForumStore((s) => s.search);
 
+  const fetchFollowedForums = useFollowStore((s) => s.fetchFollowedForums);
+
   const searchParams = useSearchParams();
   const router = useRouter();
   const activeTab = searchParams.get('tab') || 'new';
@@ -34,6 +38,10 @@ function ForumsContent() {
   useEffect(() => {
     fetchForums();
   }, [fetchForums]);
+
+  useEffect(() => {
+    if (user?.id) fetchFollowedForums(user.id);
+  }, [user?.id, fetchFollowedForums]);
 
   if (forumsLoading) return <PageLoading />;
 
@@ -125,6 +133,7 @@ function ForumsContent() {
                     <span className="shrink-0 text-xs text-text-subtle">
                       {forum.post_count ?? 0} posts
                     </span>
+                    {user && <ForumFollowButton forumId={forum.id} />}
                     <svg
                       className="h-4 w-4 shrink-0 text-text-subtle transition group-hover:text-purple"
                       fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"
@@ -178,6 +187,7 @@ function ForumsContent() {
                         <span className="text-[11px] text-text-subtle">
                           {forum.post_count ?? 0}
                         </span>
+                        {user && <ForumFollowButton forumId={forum.id} />}
                       </Link>
                     ))}
                     {group.forums.length === 0 && (

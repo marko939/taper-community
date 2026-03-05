@@ -70,14 +70,20 @@ export default function SettingsPage() {
 
     usernameTimerRef.current = setTimeout(async () => {
       setCheckingUsername(true);
-      const supabase = createClient();
-      const { data } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('username', cleaned)
-        .single();
-      setUsernameAvailable(!data);
-      setCheckingUsername(false);
+      try {
+        const supabase = createClient();
+        const { data } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('username', cleaned)
+          .single();
+        setUsernameAvailable(!data);
+      } catch (err) {
+        console.error('[settings] username check error:', err);
+        setUsernameAvailable(true);
+      } finally {
+        setCheckingUsername(false);
+      }
     }, 500);
   };
 

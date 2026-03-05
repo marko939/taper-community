@@ -2,12 +2,18 @@ import DOMPurify from 'dompurify';
 
 const URL_REGEX = /(https?:\/\/[^\s<]+)|(www\.[^\s<]+)/g;
 const MD_LINK_REGEX = /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g;
+const MENTION_REGEX = /@\[([^\]]+)\]\(([a-f0-9-]+)\)/g;
 
 export function linkifyHtml(text) {
   if (!text) return '';
 
-  // First, handle markdown-style links [text](url)
-  let result = text.replace(MD_LINK_REGEX, (_, label, url) => {
+  // First, handle @mentions — convert to profile links
+  let result = text.replace(MENTION_REGEX, (_, displayName, userId) => {
+    return `<a href="/profile/${userId}" style="color:#6B46C1;font-weight:600;">@${displayName}</a>`;
+  });
+
+  // Then, handle markdown-style links [text](url)
+  result = result.replace(MD_LINK_REGEX, (_, label, url) => {
     return `<a href="${url}" target="_blank" rel="noopener noreferrer" style="color:#6B46C1;text-decoration:underline;">${label}</a>`;
   });
 

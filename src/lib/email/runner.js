@@ -5,6 +5,7 @@ import { DailyDigestEmail } from './templates/daily-digest';
 import { TaperReminderEmail } from './templates/taper-reminder';
 import { IntroduceYourselfEmail } from './templates/introduce-yourself';
 import { WeMissYouEmail } from './templates/we-miss-you';
+import { ForumNewPostEmail } from './templates/forum-new-post';
 import React from 'react';
 
 function getServiceClient() {
@@ -19,8 +20,9 @@ export async function runEmailJobs() {
   console.log('[email] starting daily email run:', new Date().toISOString());
   const sentToday = new Set();
 
-  // Priority order: digest > introduce yourself > we miss you > taper reminder
+  // Priority order: digest > forum follows > introduce yourself > we miss you > taper reminder
   await runDigest(sentToday);
+  await runForumFollowDigest(sentToday);
   await runIntroduceYourself(sentToday);
   await runWeMissYou(sentToday);
   await runTaperReminder(sentToday);
@@ -129,6 +131,99 @@ async function runDigest(sentToday) {
       await logEmail(userId, 'daily_digest', { replyCount: replies.length });
       sentToday.add(userId);
       console.log('[email] digest sent to', profile.email);
+    }
+  }
+}
+
+// ── JOB 1b: Forum follow digest (new posts in followed forums) ──────────────
+
+async function runForumFollowDigest(sentToday) {
+  const supabase = getServiceClient();
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://taper.community';
+
+  const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+
+  // Get all threads posted in the last 24h with their forum associations
+  const { data: recentThreads } = await supabase
+    .from('threads')
+    .select('id, title, body, user_id, created_at, profiles:user_id(display_name), thread_forums(forum_id, forums:forum_id(name, slug, drug_slug))')
+    .gte('created_at', twentyFourHoursAgo);
+
+  if (!recentThreads || recentThreads.length === 0) return;
+
+  // Collect all forum IDs that have new posts
+  const forumIds = new Set();
+  for (const thread of recentThreads) {
+    for (const tf of (thread.thread_forums || [])) {
+      forumIds.add(tf.forum_id);
+    }
+  }
+
+  if (forumIds.size === 0) return;
+
+  // Get all followers for those forums
+  const { data: follows } = await supabase
+    .from('forum_follows')
+    .select('follower_id, forum_id')
+    .in('forum_id', Array.from(forumIds));
+
+  if (!follows || follows.length === 0) return;
+
+  // Group by follower: which forums they follow that have new posts
+  const byFollower = {};
+  for (const f of follows) {
+    if (!byFollower[f.follower_id]) byFollower[f.follower_id] = new Set();
+    byFollower[f.follower_id].add(f.forum_id);
+  }
+
+  // Build posts list per follower
+  for (const [userId, followedForumIds] of Object.entries(byFollower)) {
+    if (sentToday.has(userId)) continue;
+    if (await hasReceivedEmailToday(userId)) continue;
+    if (await hasReceivedEmailType(userId, 'forum_follow_digest', 1)) continue;
+
+    const posts = [];
+    for (const thread of recentThreads) {
+      if (thread.user_id === userId) continue; // don't notify about own posts
+      const matchingForum = (thread.thread_forums || []).find((tf) => followedForumIds.has(tf.forum_id));
+      if (!matchingForum) continue;
+
+      const forum = matchingForum.forums;
+      const forumSlug = forum?.drug_slug || forum?.slug || '';
+      posts.push({
+        forumName: forum?.name || 'a forum',
+        threadTitle: thread.title,
+        authorName: thread.profiles?.display_name || 'Someone',
+        preview: (thread.body || '').slice(0, 150),
+        threadUrl: `${siteUrl}/thread/${thread.id}`,
+      });
+    }
+
+    if (posts.length === 0) continue;
+
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('email, display_name, email_notifications')
+      .eq('id', userId)
+      .single();
+
+    if (!profile?.email || profile.email_notifications === false) continue;
+
+    const result = await sendEmail({
+      to: profile.email,
+      subject: posts.length === 1
+        ? `New post in ${posts[0].forumName}`
+        : `${posts.length} new posts in forums you follow`,
+      react: React.createElement(ForumNewPostEmail, {
+        userName: profile.display_name || 'there',
+        posts,
+      }),
+    });
+
+    if (result.success) {
+      await logEmail(userId, 'forum_follow_digest', { postCount: posts.length });
+      sentToday.add(userId);
+      console.log('[email] forum-follow-digest sent to', profile.email, `(${posts.length} posts)`);
     }
   }
 }

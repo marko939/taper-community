@@ -33,37 +33,41 @@ export default function JournalEntryForm({ onSubmit, entryCount = 0 }) {
 
   useEffect(() => {
     const init = async () => {
-      const { data: forumData } = await supabase
-        .from('forums')
-        .select('id, name, slug, drug_slug, category')
-        .order('category')
-        .order('name');
-      setForums(forumData || []);
+      try {
+        const { data: forumData } = await supabase
+          .from('forums')
+          .select('id, name, slug, drug_slug, category')
+          .order('category')
+          .order('name');
+        setForums(forumData || []);
 
-      // Auto-fill drug/dose from most recent entry
-      const userResult = await supabase.auth.getUser();
-      const user = userResult?.data?.user;
-      if (user) {
-        const { data: recent } = await supabase
-          .from('journal_entries')
-          .select('drug, current_dose, dose_numeric')
-          .eq('user_id', user.id)
-          .order('date', { ascending: false })
-          .limit(1);
+        // Auto-fill drug/dose from most recent entry
+        const userResult = await supabase.auth.getUser();
+        const user = userResult?.data?.user;
+        if (user) {
+          const { data: recent } = await supabase
+            .from('journal_entries')
+            .select('drug, current_dose, dose_numeric')
+            .eq('user_id', user.id)
+            .order('date', { ascending: false })
+            .limit(1);
 
-        if (recent && recent.length > 0) {
-          const last = recent[0];
-          if (last.drug) setDrug(last.drug);
-          if (last.current_dose) {
-            const unitMatch = last.current_dose.match(/^([\d.]+)\s*(mg|mcg|mL|drops|beads)$/i);
-            if (unitMatch) {
-              setCurrentDose(unitMatch[1]);
-              setDoseUnit(unitMatch[2].toLowerCase());
-            } else {
-              setCurrentDose(last.current_dose);
+          if (recent && recent.length > 0) {
+            const last = recent[0];
+            if (last.drug) setDrug(last.drug);
+            if (last.current_dose) {
+              const unitMatch = last.current_dose.match(/^([\d.]+)\s*(mg|mcg|mL|drops|beads)$/i);
+              if (unitMatch) {
+                setCurrentDose(unitMatch[1]);
+                setDoseUnit(unitMatch[2].toLowerCase());
+              } else {
+                setCurrentDose(last.current_dose);
+              }
             }
           }
         }
+      } catch (err) {
+        console.error('[JournalEntryForm] init error:', err);
       }
     };
     init();
@@ -74,15 +78,19 @@ export default function JournalEntryForm({ onSubmit, entryCount = 0 }) {
     if (!drug) { setDrugEntryCount(0); return; }
     let cancelled = false;
     (async () => {
-      const userResult2 = await supabase.auth.getUser();
-      const user = userResult2?.data?.user;
-      if (!user || cancelled) return;
-      const { count } = await supabase
-        .from('journal_entries')
-        .select('id', { count: 'exact', head: true })
-        .eq('user_id', user.id)
-        .eq('drug', drug);
-      if (!cancelled) setDrugEntryCount(count || 0);
+      try {
+        const userResult2 = await supabase.auth.getUser();
+        const user = userResult2?.data?.user;
+        if (!user || cancelled) return;
+        const { count } = await supabase
+          .from('journal_entries')
+          .select('id', { count: 'exact', head: true })
+          .eq('user_id', user.id)
+          .eq('drug', drug);
+        if (!cancelled) setDrugEntryCount(count || 0);
+      } catch (err) {
+        console.error('[JournalEntryForm] drug entry count error:', err);
+      }
     })();
     return () => { cancelled = true; };
   }, [drug]);

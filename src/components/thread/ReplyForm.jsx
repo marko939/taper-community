@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useAuthStore } from '@/stores/authStore';
 import { useThreadStore } from '@/stores/threadStore';
 import EmojiPickerButton from '@/components/shared/EmojiPickerButton';
+import MentionAutocomplete from '@/components/shared/MentionAutocomplete';
 import FormattingToolbar, { makeBulletKeyHandler } from '@/components/shared/FormattingToolbar';
 
 export default function ReplyForm({ threadId }) {
@@ -79,16 +80,19 @@ export default function ReplyForm({ threadId }) {
         value={body}
         onChange={setBody}
       />
-      <textarea
-        ref={textareaRef}
-        value={body}
-        onChange={(e) => setBody(e.target.value)}
-        onKeyDown={bulletKeyHandler}
-        placeholder="Share your thoughts or experience..."
-        rows={4}
-        className="textarea rounded-t-none"
-        required
-      />
+      <div className="relative">
+        <textarea
+          ref={textareaRef}
+          value={body}
+          onChange={(e) => setBody(e.target.value)}
+          onKeyDown={bulletKeyHandler}
+          placeholder="Share your thoughts or experience..."
+          rows={4}
+          className="textarea rounded-t-none"
+          required
+        />
+        <MentionAutocomplete textareaRef={textareaRef} value={body} onChange={setBody} />
+      </div>
       {error && (
         <p className="mt-2 rounded-lg bg-red-50 px-4 py-2 text-sm text-red-600">{error}</p>
       )}

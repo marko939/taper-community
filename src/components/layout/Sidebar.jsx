@@ -97,6 +97,11 @@ export default function Sidebar() {
     }
   }, [user, fetchDmUnread, subscribeDm, unsubscribeDm]);
 
+  // Close mobile menu on route change to prevent stale overlay
+  useEffect(() => {
+    setMobileOpen(false);
+  }, [pathname]);
+
   const isActive = (item) =>
     !item.external && (item.exact
       ? pathname === item.href
@@ -244,14 +249,14 @@ export default function Sidebar() {
       <aside
         className="sticky top-0 hidden h-screen shrink-0 border-r transition-all duration-200 lg:block"
         style={{
-          width: collapsed ? '64px' : '220px',
+          width: collapsed ? '64px' : '240px',
           borderColor: 'var(--border-subtle)',
           background: 'var(--surface-strong)',
         }}
       >
         <div className="flex h-full flex-col">
           {/* Logo */}
-          <div className="flex items-center gap-2.5 border-b px-4 py-4" style={{ borderColor: 'var(--border-subtle)' }}>
+          <div className="flex items-center gap-2.5 border-b px-4 py-4" style={{ borderColor: 'var(--border-subtle)', paddingTop: '5%' }}>
             <Link href="/" className="flex items-center gap-2.5 no-underline">
               <Image src="/tapercommunity-logo.png" alt="TaperCommunity" width={28} height={28} className="shrink-0" />
               {!collapsed && (
