@@ -26,16 +26,17 @@ export default function HomePage() {
     );
   }
 
-  // Signed-in: show patient dashboard
+  // Signed-in: hero + patient dashboard
   if (user) {
     return (
       <div className="space-y-12">
+        <Hero />
         <PatientDashboard user={user} profile={profile} />
       </div>
     );
   }
 
-  // Signed-out: show marketing/landing page
+  // Signed-out: hero + marketing/landing page
   return (
     <div className="space-y-12">
       <Hero />
