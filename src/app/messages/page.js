@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { useMessageStore } from '@/stores/messageStore';
@@ -19,7 +19,7 @@ function timeAgo(dateStr) {
   return `${days}d ago`;
 }
 
-export default function MessagesPage() {
+function MessagesContent() {
   const { user, loading: authLoading } = useRequireAuth();
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -40,8 +40,14 @@ export default function MessagesPage() {
   const [newMessage, setNewMessage] = useState('');
   const [sending, setSending] = useState(false);
   const [mobileShowThread, setMobileShowThread] = useState(false);
+  const [showCompose, setShowCompose] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [searching, setSearching] = useState(false);
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
+  const searchInputRef = useRef(null);
+  const searchTimerRef = useRef(null);
 
   // Load conversations on mount
   useEffect(() => {
@@ -98,10 +104,51 @@ export default function MessagesPage() {
     if (!newMessage.trim() || !selectedPartner || sending) return;
 
     setSending(true);
-    await sendMessage(selectedPartner.id, newMessage);
-    setNewMessage('');
-    setSending(false);
-    fetchUnreadTotal();
+    try {
+      await sendMessage(selectedPartner.id, newMessage);
+      setNewMessage('');
+      fetchUnreadTotal();
+    } catch (err) {
+      console.error('[messages] send error:', err);
+    } finally {
+      setSending(false);
+    }
+  };
+
+  // User search for compose
+  const handleSearchChange = (q) => {
+    setSearchQuery(q);
+    clearTimeout(searchTimerRef.current);
+    if (!q || q.trim().length < 2) {
+      setSearchResults([]);
+      return;
+    }
+    setSearching(true);
+    searchTimerRef.current = setTimeout(async () => {
+      try {
+        const supabase = createClient();
+        const { data } = await supabase
+          .from('profiles')
+          .select('id, display_name, avatar_url')
+          .ilike('display_name', `%${q.trim()}%`)
+          .neq('id', user.id)
+          .limit(8);
+        setSearchResults(data || []);
+      } catch {
+        setSearchResults([]);
+      }
+      setSearching(false);
+    }, 300);
+  };
+
+  const selectComposeUser = (profile) => {
+    setSelectedPartner(profile);
+    setMobileShowThread(true);
+    setShowCompose(false);
+    setSearchQuery('');
+    setSearchResults([]);
+    fetchMessages(profile.id);
+    router.replace(`/messages?to=${profile.id}`, { scroll: false });
   };
 
   if (authLoading) return <PageLoading />;
@@ -129,10 +176,62 @@ export default function MessagesPage() {
           className={`w-full flex-shrink-0 border-r md:w-80 md:block ${mobileShowThread ? 'hidden' : 'block'}`}
           style={{ borderColor: 'var(--border-subtle)' }}
         >
-          <div className="border-b px-4 py-3" style={{ borderColor: 'var(--border-subtle)' }}>
+          <div className="flex items-center justify-between border-b px-4 py-3" style={{ borderColor: 'var(--border-subtle)' }}>
             <p className="text-sm font-semibold text-foreground">Conversations</p>
+            <button
+              onClick={() => {
+                setShowCompose(!showCompose);
+                setTimeout(() => searchInputRef.current?.focus(), 100);
+              }}
+              className="flex h-7 w-7 items-center justify-center rounded-lg transition hover:bg-purple-ghost"
+              style={{ color: 'var(--purple)' }}
+              title="New message"
+            >
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
+              </svg>
+            </button>
           </div>
-          <div className="overflow-y-auto" style={{ height: 'calc(100% - 49px)' }}>
+
+          {/* Compose: user search */}
+          {showCompose && (
+            <div className="border-b px-3 py-2" style={{ borderColor: 'var(--border-subtle)' }}>
+              <input
+                ref={searchInputRef}
+                type="text"
+                value={searchQuery}
+                onChange={(e) => handleSearchChange(e.target.value)}
+                placeholder="Search by name..."
+                className="w-full rounded-lg border px-3 py-2 text-sm outline-none transition focus:ring-2"
+                style={{
+                  borderColor: 'var(--border-subtle)',
+                  background: 'var(--background)',
+                }}
+              />
+              {searchQuery.trim().length >= 2 && (
+                <div className="mt-1 max-h-48 overflow-y-auto">
+                  {searching ? (
+                    <p className="px-2 py-3 text-center text-xs text-text-subtle">Searching...</p>
+                  ) : searchResults.length === 0 ? (
+                    <p className="px-2 py-3 text-center text-xs text-text-subtle">No users found</p>
+                  ) : (
+                    searchResults.map((profile) => (
+                      <button
+                        key={profile.id}
+                        onClick={() => selectComposeUser(profile)}
+                        className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left transition hover:bg-purple-ghost"
+                      >
+                        <Avatar name={profile.display_name} avatarUrl={profile.avatar_url} size="xs" />
+                        <span className="text-sm font-medium text-foreground">{profile.display_name}</span>
+                      </button>
+                    ))
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
+          <div className="overflow-y-auto" style={{ height: showCompose ? 'calc(100% - 110px)' : 'calc(100% - 49px)' }}>
             {loading && conversations.length === 0 ? (
               <div className="flex items-center justify-center py-12">
                 <svg className="h-5 w-5 animate-spin" style={{ color: 'var(--purple)' }} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -143,7 +242,7 @@ export default function MessagesPage() {
             ) : conversations.length === 0 ? (
               <div className="px-4 py-12 text-center">
                 <p className="text-sm text-text-muted">No messages yet</p>
-                <p className="mt-1 text-xs text-text-subtle">Visit a member&apos;s profile to send them a message</p>
+                <p className="mt-1 text-xs text-text-subtle">Tap the compose icon above to start a conversation</p>
               </div>
             ) : (
               conversations.map((conv) => (
@@ -298,5 +397,13 @@ export default function MessagesPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function MessagesPage() {
+  return (
+    <Suspense fallback={<PageLoading />}>
+      <MessagesContent />
+    </Suspense>
   );
 }
