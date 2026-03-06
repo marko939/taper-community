@@ -65,7 +65,7 @@ function ReplyCard({ reply, threadId }) {
           </Link>
           {reply.profiles?.is_peer_advisor && <PeerAdvisorBadge />}
           <FollowButton targetUserId={reply.user_id} />
-          {currentUser && currentUser.id !== reply.user_id && (
+          {currentUser && currentUser.id !== reply.user_id && reply.user_id === ADMIN_USER_ID && (
             <Link
               href={`/messages?to=${reply.user_id}`}
               className="text-text-subtle transition hover:text-purple"

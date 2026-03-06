@@ -122,7 +122,7 @@ export default function ThreadView({ thread }) {
                     </Link>
                     {profiles?.is_peer_advisor && <PeerAdvisorBadge />}
                     <FollowButton targetUserId={user_id} />
-                    {currentUser && currentUser.id !== user_id && (
+                    {currentUser && currentUser.id !== user_id && user_id === ADMIN_USER_ID && (
                       <Link
                         href={`/messages?to=${user_id}`}
                         className="text-text-subtle transition hover:text-purple"

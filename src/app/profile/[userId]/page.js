@@ -12,6 +12,7 @@ import { PeerAdvisorBadge } from '@/components/shared/Badge';
 import DrugSignature from '@/components/shared/DrugSignature';
 import JournalEntryCard from '@/components/journal/JournalEntryCard';
 import { PageLoading } from '@/components/shared/LoadingSpinner';
+import { ADMIN_USER_ID } from '@/lib/blog';
 import { useState } from 'react';
 
 function timeAgo(dateStr) {
@@ -151,16 +152,18 @@ export default function ProfilePage() {
                 >
                   {isFollowing ? 'Following' : 'Follow'}
                 </button>
-                <button
-                  onClick={() => router.push(`/messages?to=${userId}`)}
-                  className="flex items-center gap-1.5 rounded-full border px-4 py-1.5 text-sm font-semibold transition hover:bg-purple-ghost"
-                  style={{ borderColor: 'var(--border-subtle)', color: 'var(--text-muted)' }}
-                >
-                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
-                  </svg>
-                  Message
-                </button>
+                {userId === ADMIN_USER_ID && (
+                  <button
+                    onClick={() => router.push(`/messages?to=${userId}`)}
+                    className="flex items-center gap-1.5 rounded-full border px-4 py-1.5 text-sm font-semibold transition hover:bg-purple-ghost"
+                    style={{ borderColor: 'var(--border-subtle)', color: 'var(--text-muted)' }}
+                  >
+                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
+                    </svg>
+                    Message
+                  </button>
+                )}
               </div>
             )}
           </div>
