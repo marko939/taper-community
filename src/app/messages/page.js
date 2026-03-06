@@ -41,6 +41,7 @@ function MessagesContent() {
   const [newMessage, setNewMessage] = useState('');
   const [sending, setSending] = useState(false);
   const [mobileShowThread, setMobileShowThread] = useState(false);
+  const messagesContainerRef = useRef(null);
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
 
@@ -84,9 +85,10 @@ function MessagesContent() {
     router.replace(`/messages?to=${conv.partnerId}`, { scroll: false });
   };
 
-  // Scroll to bottom when messages change
+  // Scroll to bottom of messages container (not the page) when messages change
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    const el = messagesContainerRef.current;
+    if (el) el.scrollTop = el.scrollHeight;
   }, [messages]);
 
   // Focus input when partner selected
@@ -260,7 +262,7 @@ function MessagesContent() {
               </div>
 
               {/* Messages */}
-              <div className="flex-1 overflow-y-auto px-4 py-4">
+              <div ref={messagesContainerRef} className="flex-1 overflow-y-auto px-4 py-4">
                 {messages.length === 0 && !loading ? (
                   <p className="py-8 text-center text-sm text-text-subtle">
                     Start the conversation with {selectedPartner.display_name}
