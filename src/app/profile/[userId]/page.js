@@ -107,7 +107,7 @@ export default function ProfilePage() {
   const journalLoading = publicEntriesData?.loading ?? false;
   const journalEntries = isOwnProfile ? allJournal : publicEntries;
 
-  const tabs = ['posts', 'replies', 'journal'];
+  const tabs = ['posts', 'replies', 'journal', ...(profile?.username ? ['taper journal'] : [])];
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
@@ -173,7 +173,7 @@ export default function ProfilePage() {
       {/* Tabs */}
       <div className="flex gap-1 rounded-full border border-border-subtle bg-surface-glass p-1">
         {tabs.map((t) => {
-          const count = t === 'posts' ? groupedThreads.length : t === 'replies' ? replies.length : journalEntries.length;
+          const count = t === 'posts' ? groupedThreads.length : t === 'replies' ? replies.length : t === 'journal' ? journalEntries.length : null;
           return (
             <button
               key={t}
@@ -184,7 +184,7 @@ export default function ProfilePage() {
                   : 'text-text-muted hover:text-foreground'
               }`}
             >
-              {t} ({count})
+              {t}{count !== null ? ` (${count})` : ''}
             </button>
           );
         })}
@@ -252,6 +252,29 @@ export default function ProfilePage() {
               </Link>
             ))
           )}
+        </div>
+      )}
+
+      {tab === 'taper journal' && profile?.username && (
+        <div className="card text-center py-10">
+          <svg className="mx-auto h-12 w-12 text-text-subtle mb-3" fill="none" viewBox="0 0 24 24" strokeWidth={1.2} stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
+          </svg>
+          <h3 className="text-lg font-semibold text-foreground mb-1">
+            {profile.display_name}&apos;s Taper Journey
+          </h3>
+          <p className="text-sm text-text-muted mb-4">
+            View dose charts, mood tracking, assessments, and public journal entries.
+          </p>
+          <Link
+            href={`/journey/${profile.username}`}
+            className="btn btn-primary inline-flex items-center gap-2 no-underline"
+          >
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
+            </svg>
+            View Taper Journal
+          </Link>
         </div>
       )}
 
