@@ -10,6 +10,7 @@ import Badge from '@/components/shared/Badge';
 import ThreadList from '@/components/forums/ThreadList';
 import SearchBar from '@/components/shared/SearchBar';
 import { PageLoading } from '@/components/shared/LoadingSpinner';
+import ForumFollowButton from '@/components/shared/ForumFollowButton';
 
 export default function ForumPage() {
   const { drugSlug } = useParams();
@@ -112,6 +113,7 @@ export default function ForumPage() {
               )}
             </div>
             <div className="flex shrink-0 items-center gap-2">
+              <ForumFollowButton forumId={forum.id} />
               {drug && (
                 <Link
                   href={`/drugs/${drug.slug}`}
