@@ -572,7 +572,7 @@ async function fetchPageViews(supabase) {
     .sort((a, b) => b.count - a.count)
     .slice(0, 5);
 
-  // Daily page views (last 30 days)
+  // Daily page views (last 30 days) — fill all 30 days so the chart isn't sparse
   const { data: dailyViews } = await supabase
     .from('page_views')
     .select('created_at')
@@ -583,9 +583,13 @@ async function fetchPageViews(supabase) {
     const d = v.created_at.slice(0, 10);
     dayMap[d] = (dayMap[d] || 0) + 1;
   }
-  const dailySeries = Object.entries(dayMap)
-    .map(([date, views]) => ({ date, views }))
-    .sort((a, b) => a.date.localeCompare(b.date));
+  // Pre-fill all 30 days with 0 so every day appears on the chart
+  const dailySeries = [];
+  for (let i = 29; i >= 0; i--) {
+    const d = new Date(now - i * 86400000);
+    const key = d.toISOString().slice(0, 10);
+    dailySeries.push({ date: key, views: dayMap[key] || 0 });
+  }
 
   return {
     today: todayViews.count || 0,

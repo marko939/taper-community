@@ -193,6 +193,17 @@ export const useThreadStore = create((set, get) => ({
         };
       });
 
+      // Recount actual replies and sync reply_count — prevents drift from triggers
+      fireAndForget('sync-reply-count', async () => {
+        const { count } = await supabase
+          .from('replies')
+          .select('id', { count: 'exact', head: true })
+          .eq('thread_id', threadId);
+        if (count != null) {
+          await supabase.from('threads').update({ reply_count: count }).eq('id', threadId);
+        }
+      });
+
       // Bust forum cache (reply count changed)
       useForumStore.getState().invalidate();
 
@@ -206,9 +217,11 @@ export const useThreadStore = create((set, get) => ({
       );
 
       // Insert mention notifications (best-effort)
-      const mentionedIds = new Set();
+      // Note: thread_reply notifications for participants are handled by the
+      // DB trigger handle_reply_notify — only mentions are inserted here.
       fireAndForget('mention-notifications', async () => {
         const mentionRegex = /@\[([^\]]+)\]\(([a-f0-9-]+)\)/g;
+        const mentionedIds = new Set();
         let match;
         while ((match = mentionRegex.exec(body)) !== null) {
           if (match[2] !== userId) mentionedIds.add(match[2]);
@@ -222,39 +235,6 @@ export const useThreadStore = create((set, get) => ({
         const notifications = [...mentionedIds].map((uid) => ({
           user_id: uid,
           type: 'reply_mention',
-          thread_id: threadId,
-          reply_id: data.id,
-          actor_id: userId,
-          title,
-          body: preview,
-        }));
-        await supabase.from('notifications').insert(notifications);
-      });
-
-      // Notify thread followers (best-effort)
-      fireAndForget('thread-follow-notifications', async () => {
-        const { data: followers } = await supabase
-          .from('thread_follows')
-          .select('user_id')
-          .eq('thread_id', threadId);
-
-        if (!followers || followers.length === 0) return;
-
-        const thread = get().threads[threadId];
-        const threadOwnerId = thread?.user_id;
-        const title = thread?.title || '';
-        const preview = body.slice(0, 120);
-
-        // Filter out: reply author, thread owner (already gets thread_reply), mentioned users
-        const followerIds = followers
-          .map((f) => f.user_id)
-          .filter((uid) => uid !== userId && uid !== threadOwnerId && !mentionedIds.has(uid));
-
-        if (followerIds.length === 0) return;
-
-        const notifications = followerIds.map((uid) => ({
-          user_id: uid,
-          type: 'thread_reply',
           thread_id: threadId,
           reply_id: data.id,
           actor_id: userId,
@@ -292,6 +272,18 @@ export const useThreadStore = create((set, get) => ({
           },
         };
       });
+
+      // Recount replies after edit to correct any trigger-induced drift
+      fireAndForget('sync-reply-count', async () => {
+        const { count } = await supabase
+          .from('replies')
+          .select('id', { count: 'exact', head: true })
+          .eq('thread_id', threadId);
+        if (count != null) {
+          await supabase.from('threads').update({ reply_count: count }).eq('id', threadId);
+        }
+      });
+
       return true;
     } catch (err) {
       console.error('[threadStore] editReply error:', err);
@@ -322,6 +314,18 @@ export const useThreadStore = create((set, get) => ({
           },
         };
       });
+
+      // Recount actual replies and sync reply_count — no DB decrement trigger exists
+      fireAndForget('sync-reply-count', async () => {
+        const { count } = await supabase
+          .from('replies')
+          .select('id', { count: 'exact', head: true })
+          .eq('thread_id', threadId);
+        if (count != null) {
+          await supabase.from('threads').update({ reply_count: count }).eq('id', threadId);
+        }
+      });
+
       useForumStore.getState().invalidate();
       return true;
     } catch (err) {

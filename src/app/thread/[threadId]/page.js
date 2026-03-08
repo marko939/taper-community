@@ -87,7 +87,7 @@ export default function ThreadPage() {
 
       <div className="space-y-4">
         <h2 className="text-lg font-semibold text-foreground">
-          {replies.length} {replies.length === 1 ? 'Reply' : 'Replies'}
+          {totalReplies} {totalReplies === 1 ? 'Reply' : 'Replies'}
         </h2>
         <ReplyList
           replies={replies}
