@@ -11,7 +11,7 @@ import { useAuthStore } from '@/stores/authStore';
 import { useThreadStore } from '@/stores/threadStore';
 import { useForumStore } from '@/stores/forumStore';
 import { createClient } from '@/lib/supabase/client';
-import { ADMIN_USER_ID } from '@/lib/blog';
+import { ADMIN_USER_ID, isMod } from '@/lib/blog';
 import { renderBodyWithQuotes } from '@/lib/renderQuotes';
 import FollowButton from '@/components/shared/FollowButton';
 import FollowThreadButton from '@/components/shared/FollowThreadButton';
@@ -19,7 +19,7 @@ import FollowThreadButton from '@/components/shared/FollowThreadButton';
 export default function ThreadView({ thread }) {
   const { id, title, body, tags = [], view_count, vote_score, created_at, user_id, profiles, thread_forums = [], pinned } = thread;
   const currentUser = useAuthStore((s) => s.user);
-  const isAdmin = currentUser?.id === ADMIN_USER_ID;
+  const isAdmin = isMod(currentUser?.id);
   const isOwner = currentUser?.id === user_id;
   const canModify = isAdmin || isOwner;
   const router = useRouter();

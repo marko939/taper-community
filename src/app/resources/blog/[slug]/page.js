@@ -7,7 +7,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { useBlogStore } from '@/stores/blogStore';
 import { useAuth } from '@/hooks/useAuth';
-import { ADMIN_USER_ID } from '@/lib/blog';
+import { isMod } from '@/lib/blog';
 
 export default function BlogPostPage() {
   const { slug } = useParams();
@@ -15,7 +15,7 @@ export default function BlogPostPage() {
   const { user, loading: authLoading } = useAuth();
   const { currentPost: post, currentPostLoading: loading, fetchPost, deletePost } = useBlogStore();
 
-  const isAdmin = !authLoading && user?.id === ADMIN_USER_ID;
+  const isAdmin = !authLoading && isMod(user?.id);
 
   useEffect(() => {
     if (slug) fetchPost(slug);

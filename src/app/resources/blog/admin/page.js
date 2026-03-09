@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { useBlogStore } from '@/stores/blogStore';
-import { ADMIN_USER_ID, toSlug } from '@/lib/blog';
+import { ADMIN_USER_ID, isMod, toSlug } from '@/lib/blog';
 
 export default function BlogAdminPage() {
   return (
@@ -29,7 +29,7 @@ function BlogAdminContent() {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    if (user?.id === ADMIN_USER_ID) {
+    if (isMod(user?.id)) {
       fetchPosts(true);
     }
   }, [user, fetchPosts]);
@@ -51,7 +51,7 @@ function BlogAdminContent() {
     );
   }
 
-  if (!user || user.id !== ADMIN_USER_ID) {
+  if (!user || !isMod(user.id)) {
     return (
       <div className="py-24 text-center">
         <p className="text-lg font-semibold text-foreground">Not authorized</p>

@@ -8,7 +8,7 @@ import VoteButton from '@/components/shared/VoteButton';
 import DrugSignature from '@/components/shared/DrugSignature';
 import { useAuthStore } from '@/stores/authStore';
 import { useThreadStore } from '@/stores/threadStore';
-import { ADMIN_USER_ID } from '@/lib/blog';
+import { ADMIN_USER_ID, isMod } from '@/lib/blog';
 import { renderBodyWithQuotes } from '@/lib/renderQuotes';
 import FollowButton from '@/components/shared/FollowButton';
 
@@ -30,7 +30,7 @@ function ReplyCard({ reply, threadId }) {
   const deleteReply = useThreadStore((s) => s.deleteReply);
 
   const isOwner = currentUser?.id === reply.user_id;
-  const isAdmin = currentUser?.id === ADMIN_USER_ID;
+  const isAdmin = isMod(currentUser?.id);
   const canModify = isOwner || isAdmin;
 
   const [editing, setEditing] = useState(false);

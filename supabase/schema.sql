@@ -102,13 +102,19 @@ create policy "Users update own threads" on public.threads
   for update using (auth.uid() = user_id);
 
 create policy "Admin can update any thread" on public.threads
-  for update using (auth.uid() = '8572637a-2109-4471-bcb4-3163d04094d0'::uuid);
+  for update using (auth.uid() in (
+    '8572637a-2109-4471-bcb4-3163d04094d0'::uuid,
+    'b2fb8e00-bbd0-489b-a762-945fa811861f'::uuid
+  ));
 
 create policy "Users delete own threads" on public.threads
   for delete using (auth.uid() = user_id);
 
 create policy "Admin can delete any thread" on public.threads
-  for delete using (auth.uid() = '8572637a-2109-4471-bcb4-3163d04094d0'::uuid);
+  for delete using (auth.uid() in (
+    '8572637a-2109-4471-bcb4-3163d04094d0'::uuid,
+    'b2fb8e00-bbd0-489b-a762-945fa811861f'::uuid
+  ));
 
 -- Increment forum post_count + user post_count on new thread
 create or replace function public.handle_new_thread()
@@ -156,7 +162,10 @@ create policy "Users delete own replies" on public.replies
   for delete using (auth.uid() = user_id);
 
 create policy "Admin can delete any reply" on public.replies
-  for delete using (auth.uid() = '8572637a-2109-4471-bcb4-3163d04094d0'::uuid);
+  for delete using (auth.uid() in (
+    '8572637a-2109-4471-bcb4-3163d04094d0'::uuid,
+    'b2fb8e00-bbd0-489b-a762-945fa811861f'::uuid
+  ));
 
 -- Increment thread reply_count + user post_count on new reply
 create or replace function public.handle_new_reply()
