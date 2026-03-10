@@ -224,42 +224,6 @@ export default function ResourcesPage() {
 
       {activeTab === 'resources' && (
         <div className="grid gap-4 sm:grid-cols-2">
-          {/* Maudsley Deprescribing Guidelines */}
-          <a
-            href="https://www.sfu-ljubljana.si/sites/default/files/2025-04/Mark%20Horowitz%2C%20David%20M.%20Taylor%20-%20The%20Maudsley%20Deprescribing%20Guidelines_%20Antidepressants%2C%20Benzodiazepines%2C%20Gabapentinoids.pdf"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="group flex items-start gap-4 rounded-2xl border p-6 no-underline transition hover:shadow-elevated"
-            style={{ borderColor: 'var(--purple-pale)', background: 'var(--surface-strong)' }}
-          >
-            <div
-              className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl transition group-hover:scale-110"
-              style={{ background: 'var(--purple)', color: 'white' }}
-            >
-              {/* Medical scales / evidence-based icon */}
-              <svg className="h-7 w-7" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v17.25m0 0c-1.472 0-2.882.265-4.185.75M12 20.25c1.472 0 2.882.265 4.185.75M18.75 4.97A48.416 48.416 0 0012 4.5c-2.291 0-4.545.16-6.75.47m13.5 0c1.01.143 2.01.317 3 .52m-3-.52l2.62 10.726c.122.499-.106 1.028-.589 1.202a5.988 5.988 0 01-2.031.352 5.988 5.988 0 01-2.031-.352c-.483-.174-.711-.703-.59-1.202L18.75 4.971zm-16.5.52c.99-.203 1.99-.377 3-.52m0 0l2.62 10.726c.122.499-.106 1.028-.589 1.202a5.989 5.989 0 01-2.031.352 5.989 5.989 0 01-2.031-.352c-.483-.174-.711-.703-.59-1.202L5.25 4.971z" />
-              </svg>
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="text-sm font-bold text-foreground transition group-hover:text-purple">
-                The Maudsley Deprescribing Guidelines
-              </p>
-              <p className="mt-1 text-xs text-text-muted">
-                By Mark Horowitz & David Taylor. Evidence-based guidance for tapering antidepressants, benzodiazepines, and gabapentinoids.
-              </p>
-              <span
-                className="mt-3 inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-bold text-white"
-                style={{ background: 'var(--purple)' }}
-              >
-                <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
-                </svg>
-                PDF
-              </span>
-            </div>
-          </a>
-
           {/* Ashton Manual */}
           <a
             href="https://www.benzoinfo.com/wp-content/uploads/2022/07/Ashton-Manual.pdf"
