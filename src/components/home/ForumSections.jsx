@@ -99,7 +99,7 @@ export default function ForumSections() {
       <div className="space-y-3">
         <div className="flex items-center gap-2">
           <span style={{ color: 'var(--purple)' }}>{CATEGORY_ICONS.drug}</span>
-          <h3 className="text-xs font-bold uppercase tracking-wider" style={{ color: 'var(--purple)' }}>
+          <h3 className="font-serif text-xl font-semibold" style={{ color: 'var(--foreground)' }}>
             Drug-Specific Forums
           </h3>
         </div>
