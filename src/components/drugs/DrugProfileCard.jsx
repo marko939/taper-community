@@ -103,7 +103,7 @@ export default function DrugProfileCard({ drug }) {
       {/* ── Overview ── */}
       {drug.description && (
         <div className="glass-panel p-6 sm:p-8">
-          <p className="section-eyebrow">Overview</p>
+          <h2 className="section-eyebrow">Overview</h2>
           <p className="mt-3 text-sm leading-relaxed text-text-muted">{drug.description}</p>
         </div>
       )}
@@ -122,7 +122,7 @@ export default function DrugProfileCard({ drug }) {
       {drug.mechanismOfAction && (
         <div className="glass-panel overflow-hidden">
           <div className="border-l-4 border-purple p-6 sm:p-8">
-            <p className="section-eyebrow">Mechanism of Action</p>
+            <h2 className="section-eyebrow">Mechanism of Action</h2>
             <p className="mt-3 text-sm leading-relaxed text-text-muted">{drug.mechanismOfAction}</p>
           </div>
         </div>
@@ -131,13 +131,13 @@ export default function DrugProfileCard({ drug }) {
       {/* ── Taper Notes + Maudsley ── */}
       <div className="grid gap-6 lg:grid-cols-2">
         <div className="glass-panel p-6">
-          <p className="section-eyebrow">Taper Notes</p>
+          <h2 className="section-eyebrow">Taper Notes</h2>
           <p className="mt-3 text-sm leading-relaxed text-text-muted">{drug.taperNotes}</p>
         </div>
 
         <div className="glass-panel overflow-hidden border-purple/20">
           <div className="border-l-4 border-purple p-6">
-            <p className="section-eyebrow text-purple">Maudsley Deprescribing Guidance</p>
+            <h2 className="section-eyebrow text-purple">Maudsley Deprescribing Guidance</h2>
             <p className="mt-3 text-sm leading-relaxed text-text-muted">{drug.maudsleyGuidance}</p>
           </div>
         </div>
@@ -146,7 +146,7 @@ export default function DrugProfileCard({ drug }) {
       {/* ── Tapering Protocol ── */}
       {drug.taperProtocol && drug.taperProtocol.length > 0 && (
         <div className="glass-panel p-6 sm:p-8">
-          <p className="section-eyebrow">Tapering Protocol</p>
+          <h2 className="section-eyebrow">Tapering Protocol</h2>
           <p className="mt-1 text-xs text-text-subtle">Evidence-based phased reduction schedule. Always taper under medical supervision.</p>
           <div className="mt-4 overflow-x-auto">
             <table className="w-full text-sm">
@@ -174,7 +174,7 @@ export default function DrugProfileCard({ drug }) {
       {/* ── Withdrawal Timeline ── */}
       {drug.withdrawalTimeline && (
         <div className="glass-panel p-6 sm:p-8">
-          <p className="section-eyebrow">Withdrawal Timeline</p>
+          <h2 className="section-eyebrow">Withdrawal Timeline</h2>
           <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             {[
               { label: 'Onset', value: drug.withdrawalTimeline.onset, icon: '⏱' },
@@ -198,7 +198,7 @@ export default function DrugProfileCard({ drug }) {
       {drug.communityTips && drug.communityTips.length > 0 && (
         <div className="glass-panel overflow-hidden">
           <div className="border-l-4 border-green-500 p-6 sm:p-8">
-            <p className="section-eyebrow">Community Tips</p>
+            <h2 className="section-eyebrow">Community Tips</h2>
             <p className="mt-1 text-xs text-text-subtle">Practical insights shared by members tapering {drug.name}. Not medical advice — always consult your prescriber.</p>
             <ul className="mt-4 space-y-3">
               {drug.communityTips.map((tip, i) => (
@@ -216,7 +216,7 @@ export default function DrugProfileCard({ drug }) {
 
       {/* ── Withdrawal Symptoms ── */}
       <div className="glass-panel p-6 sm:p-8">
-        <p className="section-eyebrow">Common Withdrawal Symptoms</p>
+        <h2 className="section-eyebrow">Common Withdrawal Symptoms</h2>
         <div className="mt-4 flex flex-wrap gap-2">
           {drug.withdrawalSymptoms.map((symptom) => {
             const isSevere = /severe|seizure|psychosis/i.test(symptom);
@@ -242,7 +242,7 @@ export default function DrugProfileCard({ drug }) {
       {/* ── Interactions & Safety ── */}
       {(drug.drugInteractions || drug.foodInteractions || drug.contraindications) && (
         <div className="glass-panel p-6 sm:p-8">
-          <p className="section-eyebrow">Interactions &amp; Safety</p>
+          <h2 className="section-eyebrow">Interactions &amp; Safety</h2>
           <div className="mt-4 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             <ExpandableList title="Drug Interactions" items={drug.drugInteractions} variant="danger" />
             <ExpandableList title="Food Interactions" items={drug.foodInteractions} variant="warning" />
@@ -263,6 +263,35 @@ export default function DrugProfileCard({ drug }) {
               <p className="mt-1 text-sm leading-relaxed text-amber-900">{drug.toxicity}</p>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* ── External References ── */}
+      {drug.fdaLabelUrl && (
+        <div className="glass-panel p-6 sm:p-8">
+          <h2 className="section-eyebrow">External References</h2>
+          <ul className="mt-3 space-y-2">
+            {drug.fdaLabelUrl && (
+              <li className="flex items-center gap-2 text-sm">
+                <svg className="h-4 w-4 shrink-0 text-purple" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
+                </svg>
+                <a href={drug.fdaLabelUrl} target="_blank" rel="noopener noreferrer" className="text-purple hover:text-purple-light hover:underline">
+                  FDA Prescribing Information — {drug.name} ({drug.generic})
+                </a>
+              </li>
+            )}
+            {drug.pubchemUrl && (
+              <li className="flex items-center gap-2 text-sm">
+                <svg className="h-4 w-4 shrink-0 text-purple" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
+                </svg>
+                <a href={drug.pubchemUrl} target="_blank" rel="noopener noreferrer" className="text-purple hover:text-purple-light hover:underline">
+                  PubChem Compound — {drug.generic}
+                </a>
+              </li>
+            )}
+          </ul>
         </div>
       )}
 

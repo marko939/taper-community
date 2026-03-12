@@ -51,10 +51,10 @@ export default function HomePage() {
             <p className="mb-4 text-[11px] font-bold uppercase tracking-[0.1em] text-white/50">
               Peer Support Community
             </p>
-            <h2 className="font-serif text-[30px] font-semibold leading-tight text-white sm:text-[36px]">
+            <h1 className="font-serif text-[30px] font-semibold leading-tight text-white sm:text-[36px]">
               You&apos;re not alone in your{' '}
               <span style={{ color: '#2EC4B6' }}>taper journey</span>
-            </h2>
+            </h1>
             <p className="mx-auto mt-4 max-w-xl text-[15px] font-semibold leading-relaxed text-white/80">
               A peer support community for safely tapering psychiatric medications.
               Evidence-based guidance, shared experiences, and taper journals.
@@ -76,7 +76,7 @@ export default function HomePage() {
               </Link>
             </div>
             <p className="mt-5 text-[12px] font-medium tracking-wide text-white/40">
-              The fastest-growing tapering support community — 100+ members in our first 10 days
+              Free forever. No credit card required. Join 100+ members tapering safely together.
             </p>
           </div>
         </div>
