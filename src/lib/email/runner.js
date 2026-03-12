@@ -7,6 +7,9 @@ import { IntroduceYourselfEmail } from './templates/introduce-yourself';
 import { WeMissYouEmail } from './templates/we-miss-you';
 import { ForumNewPostEmail } from './templates/forum-new-post';
 import { WelcomeEmail } from './templates/welcome';
+import { Day3JournalEmail } from './templates/day3-journal';
+import { Day7ForumsEmail } from './templates/day7-forums';
+import { Day14DeprescriberEmail } from './templates/day14-deprescriber';
 import React from 'react';
 
 function getServiceClient() {
@@ -21,8 +24,11 @@ export async function runEmailJobs() {
   console.log('[email] starting daily email run:', new Date().toISOString());
   const sentToday = new Set();
 
-  // Priority order: welcome > digest > forum follows > introduce yourself > we miss you > taper reminder
+  // Priority order: welcome > day3 > day7 > day14 > digest > forum follows > introduce yourself > we miss you > taper reminder
   await runWelcome(sentToday);
+  await runDay3Journal(sentToday);
+  await runDay7Forums(sentToday);
+  await runDay14Deprescriber(sentToday);
   await runDigest(sentToday);
   await runForumFollowDigest(sentToday);
   await runIntroduceYourself(sentToday);
@@ -64,6 +70,155 @@ async function runWelcome(sentToday) {
       await logEmail(user.id, 'welcome');
       sentToday.add(user.id);
       console.log('[email] welcome sent to', user.email);
+    }
+  }
+}
+
+// ── JOB 0b: Day 3 — Set up your taper journal ──────────────────────
+
+async function runDay3Journal(sentToday) {
+  const supabase = getServiceClient();
+
+  const threeDaysAgo = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString();
+  const fourDaysAgo = new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString();
+
+  // Users created 3-4 days ago
+  const { data: users } = await supabase
+    .from('profiles')
+    .select('id, email, display_name, email_notifications, created_at')
+    .lte('created_at', threeDaysAgo)
+    .gte('created_at', fourDaysAgo)
+    .eq('email_notifications', true)
+    .not('email', 'is', null);
+
+  if (!users || users.length === 0) return;
+
+  for (const user of users) {
+    if (sentToday.has(user.id)) continue;
+    if (await hasReceivedEmailToday(user.id)) continue;
+    if (await hasReceivedEmailType(user.id, 'day3_journal', 365)) continue;
+
+    // Skip if they already have journal entries
+    const { count } = await supabase
+      .from('journal_entries')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', user.id);
+
+    if ((count || 0) > 0) continue;
+
+    const result = await sendEmail({
+      to: user.email,
+      subject: 'Set up your taper journal — track your progress',
+      react: React.createElement(Day3JournalEmail, {
+        userName: user.display_name || 'there',
+      }),
+    });
+
+    if (result.success) {
+      await logEmail(user.id, 'day3_journal');
+      sentToday.add(user.id);
+      console.log('[email] day3-journal sent to', user.email);
+    }
+  }
+}
+
+// ── JOB 0c: Day 7 — Explore your drug-specific forum ───────────────
+
+async function runDay7Forums(sentToday) {
+  const supabase = getServiceClient();
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://taper.community';
+
+  const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+  const eightDaysAgo = new Date(Date.now() - 8 * 24 * 60 * 60 * 1000).toISOString();
+
+  const { data: users } = await supabase
+    .from('profiles')
+    .select('id, email, display_name, email_notifications, created_at')
+    .lte('created_at', sevenDaysAgo)
+    .gte('created_at', eightDaysAgo)
+    .eq('email_notifications', true)
+    .not('email', 'is', null);
+
+  if (!users || users.length === 0) return;
+
+  for (const user of users) {
+    if (sentToday.has(user.id)) continue;
+    if (await hasReceivedEmailToday(user.id)) continue;
+    if (await hasReceivedEmailType(user.id, 'day7_forums', 365)) continue;
+
+    // Try to find their drug from journal entries
+    let drugForumName = null;
+    let drugForumUrl = null;
+
+    const { data: entry } = await supabase
+      .from('journal_entries')
+      .select('drug')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (entry?.drug) {
+      const slug = entry.drug.toLowerCase().replace(/\s+/g, '-');
+      drugForumName = entry.drug;
+      drugForumUrl = `${siteUrl}/forums/${slug}`;
+    }
+
+    const result = await sendEmail({
+      to: user.email,
+      subject: drugForumName
+        ? `Connect with others tapering ${drugForumName}`
+        : 'Explore the TaperCommunity forums',
+      react: React.createElement(Day7ForumsEmail, {
+        userName: user.display_name || 'there',
+        drugForumName,
+        drugForumUrl,
+      }),
+    });
+
+    if (result.success) {
+      await logEmail(user.id, 'day7_forums');
+      sentToday.add(user.id);
+      console.log('[email] day7-forums sent to', user.email);
+    }
+  }
+}
+
+// ── JOB 0d: Day 14 — Find a deprescriber ───────────────────────────
+
+async function runDay14Deprescriber(sentToday) {
+  const supabase = getServiceClient();
+
+  const fourteenDaysAgo = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString();
+  const fifteenDaysAgo = new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString();
+
+  const { data: users } = await supabase
+    .from('profiles')
+    .select('id, email, display_name, email_notifications, created_at')
+    .lte('created_at', fourteenDaysAgo)
+    .gte('created_at', fifteenDaysAgo)
+    .eq('email_notifications', true)
+    .not('email', 'is', null);
+
+  if (!users || users.length === 0) return;
+
+  for (const user of users) {
+    if (sentToday.has(user.id)) continue;
+    if (await hasReceivedEmailToday(user.id)) continue;
+    if (await hasReceivedEmailType(user.id, 'day14_deprescriber', 365)) continue;
+
+    const result = await sendEmail({
+      to: user.email,
+      subject: 'Find a deprescriber who gets it',
+      react: React.createElement(Day14DeprescriberEmail, {
+        userName: user.display_name || 'there',
+      }),
+    });
+
+    if (result.success) {
+      await logEmail(user.id, 'day14_deprescriber');
+      sentToday.add(user.id);
+      console.log('[email] day14-deprescriber sent to', user.email);
     }
   }
 }

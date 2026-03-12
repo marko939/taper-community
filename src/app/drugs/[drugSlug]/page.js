@@ -15,6 +15,7 @@ export async function generateMetadata({ params }) {
   return {
     title: `${drug.name} (${drug.generic}) Tapering Guide — TaperCommunity`,
     description: `Evidence-based tapering information for ${drug.name} (${drug.generic}). ${drug.mechanismOfAction || drug.taperNotes}`,
+    alternates: { canonical: `/drugs/${drugSlug}` },
   };
 }
 

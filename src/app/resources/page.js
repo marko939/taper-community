@@ -6,6 +6,7 @@ import { getDrugsByClass } from '@/lib/drugs';
 import { DRUG_CATEGORY_GROUPS } from '@/lib/constants';
 import { DRUG_CLASS_ICONS as CATEGORY_ICONS } from '@/lib/forumCategories';
 import { useBlogStore } from '@/stores/blogStore';
+import GuideDownloadCTA from '@/components/shared/GuideDownloadCTA';
 
 const TABS = [
   {
@@ -241,7 +242,11 @@ export default function ResourcesPage() {
       )}
 
       {activeTab === 'resources' && (
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="space-y-4">
+          {/* Taper Preparation Guide */}
+          <GuideDownloadCTA />
+
+          <div className="grid gap-4 sm:grid-cols-2">
           {/* Ashton Manual */}
           <a
             href="https://www.benzoinfo.com/wp-content/uploads/2022/07/Ashton-Manual.pdf"
@@ -277,6 +282,7 @@ export default function ResourcesPage() {
               </span>
             </div>
           </a>
+          </div>
         </div>
       )}
     </div>

@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useAuthStore } from '@/stores/authStore';
+import GuideDownloadCTA from '@/components/shared/GuideDownloadCTA';
 
 /*
   TaperMeds Education Portal
@@ -953,6 +954,11 @@ export default function TaperMedsEducation() {
                   <svg width="16" height="16" viewBox="0 0 24 24" fill={PURPLE}><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/></svg>
                 </button>
               ) : <div />}
+            </div>
+
+            {/* Guide Download CTA */}
+            <div style={{ marginTop: 40 }}>
+              <GuideDownloadCTA variant="inline" />
             </div>
           </div>
         </main>

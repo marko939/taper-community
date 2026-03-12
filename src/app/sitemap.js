@@ -14,6 +14,8 @@ export default function sitemap() {
     { url: `${siteUrl}/auth/signin`, changeFrequency: 'monthly', priority: 0.5 },
     { url: `${siteUrl}/auth/signup`, changeFrequency: 'monthly', priority: 0.5 },
     { url: `${siteUrl}/join`, changeFrequency: 'monthly', priority: 0.6 },
+    { url: `${siteUrl}/compare/survivingantidepressants`, changeFrequency: 'monthly', priority: 0.6 },
+    { url: `${siteUrl}/compare/benzobuddies`, changeFrequency: 'monthly', priority: 0.6 },
   ];
 
   const drugPages = DRUG_LIST.map((drug) => ({

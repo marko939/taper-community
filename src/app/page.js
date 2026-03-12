@@ -8,6 +8,7 @@ import CommunityPulse from '@/components/home/CommunityPulse';
 import ForumSections from '@/components/home/ForumSections';
 import PatientDashboard from '@/components/home/PatientDashboard';
 import InvitePrompt from '@/components/journal/InvitePrompt';
+import ExitIntentPopup from '@/components/shared/ExitIntentPopup';
 
 export default function HomePage() {
   const { user, profile, loading } = useAuth();
@@ -361,6 +362,8 @@ export default function HomePage() {
         </svg>
         Join for Free
       </Link>
+
+      <ExitIntentPopup />
     </div>
   );
 }

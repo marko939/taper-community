@@ -43,6 +43,23 @@ export const DRUGS = {
     fdaApprovalYear: 2002,
     pregnancyCategory: 'Category C (risk cannot be ruled out)',
     blackBoxWarning: 'Suicidality risk in children, adolescents, and young adults under 25 during initial treatment.',
+    taperProtocol: [
+      { phase: 'Initial reductions', duration: '~4 weeks', notes: 'Larger dose steps are generally better tolerated early on. Your prescriber will determine appropriate increments.' },
+      { phase: 'Middle reductions', duration: '4-6 weeks', notes: 'Smaller dose changes become important. Liquid formulation may help with precision at lower doses.' },
+      { phase: 'Final reductions', duration: '8-12 weeks', notes: 'The lowest doses often require the slowest, most gradual approach. Discuss liquid formulation with your prescriber.' },
+    ],
+    withdrawalTimeline: {
+      onset: '1-3 days after dose reduction',
+      peak: '4-7 days',
+      resolution: '2-4 weeks for most symptoms',
+      protracted: 'Brain zaps and emotional blunting may persist 1-3 months in some cases',
+    },
+    communityTips: [
+      'Ask your prescriber about Lexapro liquid formulation — it allows more precise dose adjustments at lower doses.',
+      'Brain zaps are the most commonly reported symptom. They tend to worsen toward the end of the taper.',
+      'If you experience a wave of symptoms, talk to your prescriber about holding at your current dose before any further changes.',
+      'Many members find the final stretch of tapering harder than earlier steps. Go slow and stay in touch with your prescriber.',
+    ],
   },
   zoloft: {
     name: 'Zoloft',
@@ -90,6 +107,25 @@ export const DRUGS = {
     fdaApprovalYear: 1991,
     pregnancyCategory: 'Category C (risk cannot be ruled out)',
     blackBoxWarning: 'Suicidality risk in children, adolescents, and young adults under 25 during initial treatment.',
+    taperProtocol: [
+      { phase: 'Initial reductions', duration: '~4 weeks', notes: 'Larger steps using available tablet strengths. Generally well tolerated at higher doses.' },
+      { phase: 'Middle reductions', duration: '4-6 weeks', notes: 'Smaller tablet strengths for more gradual changes. Monitor for GI disturbance.' },
+      { phase: 'Lower dose reductions', duration: '6-8 weeks', notes: 'Ask your prescriber about oral concentrate for more precise adjustments at lower doses.' },
+      { phase: 'Final reductions', duration: '6-10 weeks', notes: 'The lowest doses often require the slowest approach. Work with your prescriber on liquid dosing.' },
+    ],
+    withdrawalTimeline: {
+      onset: '1-2 days after dose reduction',
+      peak: '3-7 days',
+      resolution: '2-3 weeks for acute symptoms',
+      protracted: 'GI symptoms and irritability may linger 4-8 weeks. Brain zaps typically resolve within 1 month.',
+    },
+    communityTips: [
+      'Ask your prescriber about Zoloft oral concentrate — it allows more precise adjustments than tablet splitting.',
+      'GI upset is often the first withdrawal symptom to appear. Ginger tea and smaller, more frequent meals can help.',
+      'The final stretch of tapering is disproportionately difficult for many members. Patience is key.',
+      'Sertraline has mild dopaminergic activity — some members report motivational dips during the taper that improve after stabilization.',
+      'Track your symptoms daily in your taper journal. Zoloft withdrawal can be subtle and creep up gradually.',
+    ],
   },
   paxil: {
     name: 'Paxil',
@@ -137,6 +173,25 @@ export const DRUGS = {
     fdaApprovalYear: 1992,
     pregnancyCategory: 'Category D (positive evidence of risk — cardiac malformations)',
     blackBoxWarning: 'Suicidality risk in children, adolescents, and young adults under 25 during initial treatment.',
+    taperProtocol: [
+      { phase: 'Initial reductions', duration: '4-6 weeks', notes: 'Use available tablet strengths. Anticholinergic rebound may begin in this phase.' },
+      { phase: 'Middle reductions', duration: '6-8 weeks', notes: 'Ask your prescriber about liquid suspension or CR tablets for smoother transitions.' },
+      { phase: 'Lower dose reductions', duration: '6-8 weeks', notes: 'Paroxetine\'s non-linear kinetics mean even small changes can have an outsized effect. Go slow.' },
+      { phase: 'Final reductions', duration: '8-16 weeks', notes: 'Liquid formulation is often necessary for precise adjustments. Work closely with your prescriber.' },
+    ],
+    withdrawalTimeline: {
+      onset: '12-24 hours after missed dose (shortest onset of all SSRIs)',
+      peak: '2-5 days',
+      resolution: '2-6 weeks for most symptoms',
+      protracted: 'Electric shock sensations, emotional lability, and derealization can persist 2-6 months. Paxil has the highest rate of protracted withdrawal among SSRIs.',
+    },
+    communityTips: [
+      'Ask your prescriber about Paxil liquid suspension — tablets crumble unevenly at lower doses.',
+      'Paroxetine inhibits its own metabolism, so dose reductions at lower doses can feel larger than expected. Discuss this with your prescriber.',
+      'Anticholinergic rebound (sweating, GI cramping, vivid dreams) is unique to Paxil among SSRIs. These symptoms resolve but can be alarming.',
+      'If considering switching formulations (CR to IR), discuss equivalent dosing with your prescriber — they are not 1:1.',
+      'Many members report Paxil as the hardest SSRI to stop. Some prescribers use a fluoxetine bridge strategy — ask yours if it\'s appropriate.',
+    ],
   },
   prozac: {
     name: 'Prozac',
@@ -186,6 +241,23 @@ export const DRUGS = {
     fdaApprovalYear: 1987,
     pregnancyCategory: 'Category C (risk cannot be ruled out)',
     blackBoxWarning: 'Suicidality risk in children, adolescents, and young adults under 25 during initial treatment.',
+    taperProtocol: [
+      { phase: 'Initial reductions', duration: '4-6 weeks', notes: 'Available capsule strengths allow straightforward reductions. The long half-life buffers each step.' },
+      { phase: 'Middle reductions', duration: '4-6 weeks', notes: 'Smaller capsule strengths or oral solution may be used. Most tolerate this phase well.' },
+      { phase: 'Final reductions', duration: '4-8 weeks', notes: 'The long half-life makes Prozac one of the more forgiving SSRIs to taper. Work with your prescriber on the final steps.' },
+    ],
+    withdrawalTimeline: {
+      onset: '3-7 days after dose reduction (delayed by long half-life)',
+      peak: '1-2 weeks',
+      resolution: '2-4 weeks',
+      protracted: 'Uncommon due to long half-life. Some report emotional flatness for 4-6 weeks. Fluoxetine has the mildest withdrawal profile of all SSRIs.',
+    },
+    communityTips: [
+      'Prozac\'s long half-life (plus its active metabolite) means it effectively self-tapers. Missing a dose rarely causes immediate symptoms.',
+      'Oral solution is available but many members taper successfully with capsule strengths alone due to the forgiving pharmacokinetics.',
+      'Prozac is sometimes used as a bridging agent when tapering difficult drugs. Discuss this strategy with your prescriber.',
+      'Track your symptoms in your taper journal — the long half-life means changes can take a week or more to feel.',
+    ],
   },
   celexa: {
     name: 'Celexa',
@@ -412,6 +484,25 @@ export const DRUGS = {
     fdaApprovalYear: 1993,
     pregnancyCategory: 'Category C (risk cannot be ruled out)',
     blackBoxWarning: 'Suicidality risk in children, adolescents, and young adults under 25 during initial treatment.',
+    taperProtocol: [
+      { phase: 'Initial reductions', duration: '4-6 weeks', notes: 'Use available capsule strengths. XR capsules should not be split.' },
+      { phase: 'Middle reductions', duration: '6-8 weeks', notes: 'Withdrawal often intensifies in this phase. Your prescriber may use intermediate steps.' },
+      { phase: 'Lower dose reductions', duration: '6-8 weeks', notes: 'Ask your prescriber about bead counting from XR capsules for more precise adjustments.' },
+      { phase: 'Final reductions', duration: '10-16 weeks', notes: 'Extremely gradual approach needed. Some prescribers use a fluoxetine bridge strategy for this phase.' },
+    ],
+    withdrawalTimeline: {
+      onset: '6-12 hours after missed dose (extremely fast due to 5hr half-life)',
+      peak: '2-4 days',
+      resolution: '2-4 weeks for acute symptoms',
+      protracted: 'Brain zaps, emotional volatility, and vertigo can persist 2-6 months. Effexor is widely regarded as having the most severe SNRI withdrawal.',
+    },
+    communityTips: [
+      'Ask your prescriber about bead counting from XR capsules — it allows more precise adjustments than capsule strengths alone.',
+      'The short half-life means consistent timing matters. Take doses at the same time daily.',
+      'Some prescribers use a fluoxetine bridge strategy during the final phase. Ask yours if it\'s appropriate for your situation.',
+      'Inter-dose withdrawal (symptoms appearing before your next dose) may indicate the taper needs adjustment. Discuss this with your prescriber.',
+      'Effexor XR bead counts can vary between manufacturers — mention brand changes to your prescriber.',
+    ],
   },
   cymbalta: {
     name: 'Cymbalta',
@@ -459,6 +550,25 @@ export const DRUGS = {
     fdaApprovalYear: 2004,
     pregnancyCategory: 'Category C (risk cannot be ruled out)',
     blackBoxWarning: 'Suicidality risk in children, adolescents, and young adults under 25 during initial treatment.',
+    taperProtocol: [
+      { phase: 'Initial reductions', duration: '4-6 weeks', notes: 'Use available capsule strengths. Withdrawal symptoms often first appear in this phase.' },
+      { phase: 'Middle reductions', duration: '6-8 weeks', notes: 'Ask your prescriber about pellet counting or compounded formulations for more gradual adjustments.' },
+      { phase: 'Lower dose reductions', duration: '8-10 weeks', notes: 'Compounding pharmacies can prepare suspensions. Discuss options with your prescriber.' },
+      { phase: 'Final reductions', duration: '8-12 weeks', notes: 'Very gradual approach needed. Work closely with your prescriber — do not rush this phase.' },
+    ],
+    withdrawalTimeline: {
+      onset: '1-2 days after dose reduction',
+      peak: '3-5 days',
+      resolution: '2-4 weeks for most symptoms',
+      protracted: 'Brain zaps, nausea, and cognitive fog may persist 2-4 months. Cymbalta discontinuation lawsuits have documented the severity of its withdrawal.',
+    },
+    communityTips: [
+      'Ask your prescriber about pellet counting from Cymbalta capsules for more precise adjustments. Do not crush the enteric-coated pellets.',
+      'Some compounding pharmacies can prepare duloxetine liquid suspension — ask your prescriber if this is an option.',
+      'Cymbalta withdrawal often includes a distinctive "whooshing" head sensation distinct from classic brain zaps. This is normal and temporary.',
+      'Smaller capsule strengths exist but may not be stocked locally. Ask your pharmacy about ordering options.',
+      'Track symptoms in your taper journal. Cymbalta withdrawal can be intense — having data helps your prescriber adjust the plan.',
+    ],
   },
   pristiq: {
     name: 'Pristiq',
@@ -864,6 +974,23 @@ export const DRUGS = {
     fdaApprovalYear: 1985,
     pregnancyCategory: 'Category C (risk cannot be ruled out)',
     blackBoxWarning: 'Suicidality risk in children, adolescents, and young adults under 25 during initial treatment.',
+    taperProtocol: [
+      { phase: 'Initial reductions', duration: '2-4 weeks', notes: 'Use available XL strengths. Most tolerate initial steps well.' },
+      { phase: 'Formulation switch', duration: '2-4 weeks', notes: 'Your prescriber may switch to SR or IR formulation for more flexible adjustments.' },
+      { phase: 'Final reductions', duration: '4-6 weeks', notes: 'IR tablets offer the most flexibility. Bupropion withdrawal is generally milder than SSRI/SNRI discontinuation.' },
+    ],
+    withdrawalTimeline: {
+      onset: '1-3 days after dose reduction',
+      peak: '3-7 days',
+      resolution: '1-2 weeks for most symptoms',
+      protracted: 'Fatigue and motivational deficits may linger 2-4 weeks. No serotonin-related symptoms (no brain zaps). Wellbutrin has one of the mildest withdrawal profiles among antidepressants.',
+    },
+    communityTips: [
+      'Wellbutrin withdrawal is fundamentally different from SSRIs — no brain zaps, no serotonin discontinuation syndrome. The main issues are fatigue, low motivation, and mild mood dips.',
+      'Ask your prescriber about IR tablets for the final phase — they offer more flexibility than XL or SR formulations.',
+      'Do not crush or split XL or SR tablets — they are designed for extended release. Cutting them can increase seizure risk.',
+      'Some members report increased appetite and mild weight gain when stopping Wellbutrin, which normalizes over several weeks.',
+    ],
   },
 
   // Atypical Antipsychotics
@@ -1092,6 +1219,25 @@ export const DRUGS = {
     fdaApprovalYear: 1975,
     pregnancyCategory: 'Category D (positive evidence of risk)',
     blackBoxWarning: 'Concomitant use with opioids may result in profound sedation, respiratory depression, coma, and death. Risks of abuse, misuse, and addiction, which can lead to overdose and death. Physical dependence and life-threatening withdrawal reactions.',
+    taperProtocol: [
+      { phase: 'Stabilization', duration: '2-4 weeks', notes: 'Establish consistent dosing schedule before beginning taper. Your prescriber will switch PRN to fixed-schedule dosing.' },
+      { phase: 'Initial reductions', duration: '2-4 weeks per step', notes: 'Small, gradual reductions determined by your prescriber. Hold at each dose until stable before proceeding.' },
+      { phase: 'Middle reductions', duration: '3-6 months', notes: 'Progressively smaller reductions. Your prescriber may recommend water titration for precision.' },
+      { phase: 'Final reductions', duration: '3-6 months', notes: 'The hardest phase. Some prescribers recommend crossing over to diazepam for a smoother taper.' },
+    ],
+    withdrawalTimeline: {
+      onset: '1-3 days after reduction (delayed by long half-life)',
+      peak: '5-14 days',
+      resolution: '4-8 weeks for acute symptoms',
+      protracted: 'Anxiety, insomnia, tinnitus, depersonalization, and sensory hypersensitivity can persist 6-18 months. Neurological recovery from long-term use can take 1-2 years.',
+    },
+    communityTips: [
+      'Ask your prescriber about water titration — it allows very precise dose adjustments for clonazepam.',
+      'The Ashton Manual is the most comprehensive benzo tapering resource. Many members bring it to appointments to discuss with their prescriber.',
+      'Seizure risk is real with benzodiazepines — never stop abruptly. If you miss doses or run out, seek medical attention immediately.',
+      'Symptom windows and waves are the norm with benzo withdrawal. A bad week after months of feeling fine does not mean the taper failed.',
+      'Discuss with your prescriber whether caffeine, alcohol, or certain antibiotics should be avoided during your taper.',
+    ],
   },
   ativan: {
     name: 'Ativan',
@@ -1136,6 +1282,24 @@ export const DRUGS = {
     fdaApprovalYear: 1977,
     pregnancyCategory: 'Category D (positive evidence of risk)',
     blackBoxWarning: 'Concomitant use with opioids may result in profound sedation, respiratory depression, coma, and death. Risks of abuse, misuse, and addiction, which can lead to overdose and death. Physical dependence and life-threatening withdrawal reactions.',
+    taperProtocol: [
+      { phase: 'Crossover to diazepam (optional)', duration: '2-4 weeks', notes: 'Some prescribers recommend converting to diazepam for a smoother taper, per the Ashton Manual.' },
+      { phase: 'Initial reductions', duration: '2-4 weeks per step', notes: 'Small, gradual reductions. Your prescriber may recommend oral concentrate for precision.' },
+      { phase: 'Middle reductions', duration: '2-4 months', notes: 'Lorazepam\'s medium half-life means interdose fluctuations are possible. Your prescriber may split doses for more even coverage.' },
+      { phase: 'Final reductions', duration: '2-4 months', notes: 'Oral concentrate allows the most precise adjustments. The final stretch is the most challenging.' },
+    ],
+    withdrawalTimeline: {
+      onset: '12-24 hours after reduction (faster than Klonopin due to shorter half-life)',
+      peak: '3-7 days',
+      resolution: '2-6 weeks for acute symptoms',
+      protracted: 'Anxiety rebound, insomnia, and depersonalization may persist 3-12 months. Shorter half-life than Klonopin means somewhat faster acute resolution but protracted symptoms are similar.',
+    },
+    communityTips: [
+      'Ask your prescriber about Ativan oral concentrate — it allows very precise adjustments at lower doses.',
+      'Lorazepam has no active metabolites and uses glucuronidation (not CYP enzymes), so it has fewer drug interactions than other benzos — relevant if you\'re on multiple medications.',
+      'Discuss dosing schedule with your prescriber — splitting doses throughout the day can help with interdose symptoms.',
+      'Many members find the diazepam crossover worthwhile despite the initial adjustment period. Discuss this option with your prescriber.',
+    ],
   },
   xanax: {
     name: 'Xanax',
@@ -1183,6 +1347,25 @@ export const DRUGS = {
     fdaApprovalYear: 1981,
     pregnancyCategory: 'Category D (positive evidence of risk)',
     blackBoxWarning: 'Concomitant use with opioids may result in profound sedation, respiratory depression, coma, and death. Risks of abuse, misuse, and addiction, which can lead to overdose and death. Physical dependence and life-threatening withdrawal reactions.',
+    taperProtocol: [
+      { phase: 'Crossover to diazepam', duration: '2-4 weeks', notes: 'Strongly recommended due to Xanax\'s short half-life. Your prescriber will determine equivalence and crossover schedule.' },
+      { phase: 'Initial diazepam reductions', duration: '2-4 weeks per step', notes: 'Once stabilized on diazepam, your prescriber begins gradual reductions. Diazepam\'s long half-life makes each step smoother.' },
+      { phase: 'Middle reductions', duration: '3-6 months', notes: 'Progressively smaller reductions. Liquid diazepam may be used for precision.' },
+      { phase: 'Final reductions', duration: '3-6 months', notes: 'Very gradual approach. Work closely with your prescriber through this phase.' },
+    ],
+    withdrawalTimeline: {
+      onset: '6-12 hours after missed dose (fastest of all common benzos)',
+      peak: '2-4 days (acute withdrawal can be medically dangerous)',
+      resolution: '2-4 weeks for acute symptoms if tapered properly',
+      protracted: 'Rebound panic, cognitive impairment, agoraphobia, and depersonalization may persist 6-18 months. Xanax has the highest reported rate of protracted withdrawal among benzos.',
+    },
+    communityTips: [
+      'Xanax\'s short half-life makes direct tapering very challenging. Discuss the diazepam crossover approach (recommended by Ashton and Maudsley) with your prescriber.',
+      'If your prescriber recommends direct tapering, ask about XR formulation — it provides a smoother plasma curve than IR.',
+      'Rebound panic attacks during Xanax taper are common and can feel indistinguishable from the original anxiety disorder. They are temporary and will resolve.',
+      'Never adjust your Xanax dose on your own — always work with your prescriber. Contact them if withdrawal symptoms are unmanageable.',
+      'Track your symptoms daily in your taper journal. This data is invaluable for your prescriber in planning pace adjustments.',
+    ],
   },
   valium: {
     name: 'Valium',

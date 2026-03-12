@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import Badge from '@/components/shared/Badge';
 import PharmacokineticPanel from '@/components/drugs/PharmacokineticPanel';
+import GuideDownloadCTA from '@/components/shared/GuideDownloadCTA';
 
 function ExpandableList({ title, items, variant = 'default' }) {
   const [expanded, setExpanded] = useState(false);
@@ -142,6 +143,77 @@ export default function DrugProfileCard({ drug }) {
         </div>
       </div>
 
+      {/* ── Tapering Protocol ── */}
+      {drug.taperProtocol && drug.taperProtocol.length > 0 && (
+        <div className="glass-panel p-6 sm:p-8">
+          <p className="section-eyebrow">Tapering Protocol</p>
+          <p className="mt-1 text-xs text-text-subtle">Evidence-based phased reduction schedule. Always taper under medical supervision.</p>
+          <div className="mt-4 overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-border-subtle">
+                  <th className="pb-2 pr-4 text-left text-xs font-semibold text-purple">Phase</th>
+                  <th className="pb-2 pr-4 text-left text-xs font-semibold text-purple">Duration</th>
+                  <th className="pb-2 text-left text-xs font-semibold text-purple">Notes</th>
+                </tr>
+              </thead>
+              <tbody>
+                {drug.taperProtocol.map((step, i) => (
+                  <tr key={i} className={i < drug.taperProtocol.length - 1 ? 'border-b border-border-subtle/50' : ''}>
+                    <td className="py-3 pr-4 font-medium text-foreground">{step.phase}</td>
+                    <td className="py-3 pr-4 text-text-muted whitespace-nowrap">{step.duration}</td>
+                    <td className="py-3 text-text-muted">{step.notes}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* ── Withdrawal Timeline ── */}
+      {drug.withdrawalTimeline && (
+        <div className="glass-panel p-6 sm:p-8">
+          <p className="section-eyebrow">Withdrawal Timeline</p>
+          <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            {[
+              { label: 'Onset', value: drug.withdrawalTimeline.onset, icon: '⏱' },
+              { label: 'Peak Severity', value: drug.withdrawalTimeline.peak, icon: '📈' },
+              { label: 'Resolution', value: drug.withdrawalTimeline.resolution, icon: '📉' },
+              { label: 'Protracted Risk', value: drug.withdrawalTimeline.protracted, icon: '⚠️' },
+            ].map((item) => (
+              <div key={item.label} className="rounded-lg border border-border-subtle bg-surface-strong p-4">
+                <div className="flex items-center gap-2">
+                  <span className="text-base">{item.icon}</span>
+                  <span className="text-xs font-semibold text-purple">{item.label}</span>
+                </div>
+                <p className="mt-2 text-sm text-text-muted">{item.value}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ── Community Tips ── */}
+      {drug.communityTips && drug.communityTips.length > 0 && (
+        <div className="glass-panel overflow-hidden">
+          <div className="border-l-4 border-green-500 p-6 sm:p-8">
+            <p className="section-eyebrow">Community Tips</p>
+            <p className="mt-1 text-xs text-text-subtle">Practical insights shared by members tapering {drug.name}. Not medical advice — always consult your prescriber.</p>
+            <ul className="mt-4 space-y-3">
+              {drug.communityTips.map((tip, i) => (
+                <li key={i} className="flex items-start gap-3 text-sm text-text-muted">
+                  <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-green-100 text-xs font-bold text-green-700">
+                    {i + 1}
+                  </span>
+                  {tip}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      )}
+
       {/* ── Withdrawal Symptoms ── */}
       <div className="glass-panel p-6 sm:p-8">
         <p className="section-eyebrow">Common Withdrawal Symptoms</p>
@@ -193,6 +265,9 @@ export default function DrugProfileCard({ drug }) {
           </div>
         </div>
       )}
+
+      {/* ── Guide Download CTA ── */}
+      <GuideDownloadCTA variant="inline" />
 
       {/* ── Pharmacokinetics (ADME) — at bottom ── */}
       <PharmacokineticPanel drug={drug} />

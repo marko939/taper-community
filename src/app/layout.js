@@ -37,6 +37,9 @@ export const metadata = {
   twitter: {
     card: 'summary_large_image',
   },
+  alternates: {
+    canonical: '/',
+  },
 };
 
 export default function RootLayout({ children }) {
