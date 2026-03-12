@@ -241,7 +241,7 @@ const MODULES = [
       { type: "h3", text: "The SSRI Difficulty Spectrum" },
       { type: "p", bold: "Hardest: Paroxetine. ", text: "Very short half-life (~21 hours), no active metabolites, strong receptor binding, and anticholinergic properties. Widely regarded as the most difficult SSRI to taper." },
       { type: "p", bold: "Hard: Sertraline, citalopram, escitalopram. ", text: "Moderate half-lives (~24–36 hours). Withdrawal is common with rapid discontinuation but manageable with proper tapering." },
-      { type: "p", bold: "Easiest: Fluoxetine. ", text: "Very long half-life (4–6 days parent, 4–16 days active metabolite). Fluoxetine effectively self-tapers due to its slow elimination." },
+      { type: "p", bold: "Easiest: Fluoxetine. ", text: "Very long half-life (4–6 days parent, 4–16 days active metabolite)." },
       { type: "h3", text: "Paroxetine: The Hardest Case" },
       { type: "list", items: [
         "Use liquid paroxetine (10mg/5mL) for fine dose control",
