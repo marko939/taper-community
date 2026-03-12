@@ -61,7 +61,7 @@ export default function DrugProfileCard({ drug }) {
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div>
               <h1 className="font-serif text-3xl font-semibold text-foreground sm:text-4xl">
-                {drug.name}
+                {drug.name} Tapering Guide
               </h1>
               <p className="mt-1 text-lg text-text-muted">{drug.generic}</p>
               <div className="mt-3 flex flex-wrap items-center gap-2">

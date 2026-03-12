@@ -66,7 +66,7 @@ export const GENERAL_FORUMS = [
   { category: 'tapering', slug: 'symptoms-self-care', name: 'Symptoms & Self-Care', description: 'Withdrawal symptoms, coping strategies, sleep, anxiety, supplements, and wellbeing during your taper.' },
   { category: 'research', slug: 'research-and-news', name: 'Research & News', description: 'Scientific papers, news articles, advocacy, and media about psychiatric drug withdrawal.' },
   { category: 'lifestyle', slug: 'lifestyle', name: 'Relationships & Lifestyle', description: 'Diet, exercise, sleep, relationships, and lifestyle during tapering.' },
-  { category: 'feedback', slug: 'feature-requests-and-bugs', name: 'Feature Requests & Bug Fixes', description: 'Suggest new features, report bugs, and help us improve TaperMeds.' },
+  { category: 'feedback', slug: 'feature-requests-and-bugs', name: 'Feature Requests & Bug Fixes', description: 'Suggest new features, report bugs, and help us improve TaperCommunity.' },
   { category: 'admin', slug: 'community-rules', name: 'Community Rules & Guidelines', description: 'Community rules, staff introductions, and how TaperCommunity works.' },
   { category: 'admin', slug: 'staff-who-we-are', name: 'Staff \u2013 Who We Are', description: 'Meet the team behind TaperCommunity.' },
 ];

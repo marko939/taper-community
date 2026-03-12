@@ -54,13 +54,13 @@ export default function Footer() {
               >
                 Find a Deprescriber
               </a>
-              <a
-                href="mailto:dom@tapermeds.com"
+              <Link
+                href="/about"
                 className="text-sm no-underline transition hover:text-purple"
                 style={{ color: 'var(--text-muted)' }}
               >
                 Contact Us
-              </a>
+              </Link>
               <span className="text-sm" style={{ color: 'var(--text-muted)' }}>
                 Crisis? Call 988 Suicide & Crisis Lifeline
               </span>

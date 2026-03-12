@@ -10,6 +10,7 @@ import { WelcomeEmail } from './templates/welcome';
 import { Day3JournalEmail } from './templates/day3-journal';
 import { Day7ForumsEmail } from './templates/day7-forums';
 import { Day14DeprescriberEmail } from './templates/day14-deprescriber';
+import { Day30ReengageEmail } from './templates/day30-reengage';
 import React from 'react';
 
 function getServiceClient() {
@@ -29,6 +30,7 @@ export async function runEmailJobs() {
   await runDay3Journal(sentToday);
   await runDay7Forums(sentToday);
   await runDay14Deprescriber(sentToday);
+  await runDay30Reengage(sentToday);
   await runDigest(sentToday);
   await runForumFollowDigest(sentToday);
   await runIntroduceYourself(sentToday);
@@ -219,6 +221,58 @@ async function runDay14Deprescriber(sentToday) {
       await logEmail(user.id, 'day14_deprescriber');
       sentToday.add(user.id);
       console.log('[email] day14-deprescriber sent to', user.email);
+    }
+  }
+}
+
+// ── JOB 0e: Day 30 — Re-engage silent users ─────────────────────────
+
+async function runDay30Reengage(sentToday) {
+  const supabase = getServiceClient();
+
+  const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+  const thirtyOneDaysAgo = new Date(Date.now() - 31 * 24 * 60 * 60 * 1000).toISOString();
+
+  const { data: users } = await supabase
+    .from('profiles')
+    .select('id, email, display_name, email_notifications, created_at')
+    .lte('created_at', thirtyDaysAgo)
+    .gte('created_at', thirtyOneDaysAgo)
+    .eq('email_notifications', true)
+    .not('email', 'is', null);
+
+  if (!users || users.length === 0) return;
+
+  for (const user of users) {
+    if (sentToday.has(user.id)) continue;
+    if (await hasReceivedEmailToday(user.id)) continue;
+    if (await hasReceivedEmailType(user.id, 'day30_reengage', 365)) continue;
+
+    // Skip if they've ever posted a thread or reply
+    const { count: threadCount } = await supabase
+      .from('threads')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', user.id);
+
+    const { count: replyCount } = await supabase
+      .from('replies')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', user.id);
+
+    if ((threadCount || 0) > 0 || (replyCount || 0) > 0) continue;
+
+    const result = await sendEmail({
+      to: user.email,
+      subject: 'The community has grown — come back when you\'re ready',
+      react: React.createElement(Day30ReengageEmail, {
+        userName: user.display_name || 'there',
+      }),
+    });
+
+    if (result.success) {
+      await logEmail(user.id, 'day30_reengage');
+      sentToday.add(user.id);
+      console.log('[email] day30-reengage sent to', user.email);
     }
   }
 }

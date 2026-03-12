@@ -131,9 +131,15 @@ export default function DeprescribingMap({ compact = false }) {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="section-eyebrow">Find Support Near You</p>
-          <h2 className="mt-1 font-serif text-2xl font-semibold" style={{ color: 'var(--foreground)' }}>
-            Deprescribing Providers
-          </h2>
+          {compact ? (
+            <h2 className="mt-1 font-serif text-2xl font-semibold" style={{ color: 'var(--foreground)' }}>
+              Deprescribing Providers
+            </h2>
+          ) : (
+            <h1 className="mt-1 font-serif text-2xl font-semibold" style={{ color: 'var(--foreground)' }}>
+              Find a Deprescribing Provider Near You
+            </h1>
+          )}
           <p className="mt-2 max-w-xl text-sm" style={{ color: 'var(--text-muted)' }}>
             {providerCount}+ clinicians worldwide who specialize in safe, guided medication tapering.
             Click any marker to see provider details.

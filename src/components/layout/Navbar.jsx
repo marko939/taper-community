@@ -14,7 +14,7 @@ export default function Navbar() {
   const navLinks = [
     { href: '/forums', label: 'Forums' },
     { href: '/journal', label: 'Journal' },
-    { href: 'https://tapermeds.com/education', label: 'Education', external: true },
+    { href: '/education', label: 'Education' },
     { href: '/deprescribers', label: 'Find a Provider' },
     { href: '/resources', label: 'Resources' },
   ];

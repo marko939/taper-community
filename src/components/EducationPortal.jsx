@@ -6,7 +6,7 @@ import { useAuthStore } from '@/stores/authStore';
 import GuideDownloadCTA from '@/components/shared/GuideDownloadCTA';
 
 /*
-  TaperMeds Education Portal
+  TaperCommunity Education Portal
   Notion-style, content-first, radically simple.
   Purple brand (#5B2E91), system sans-serif body, Georgia headings.
 */
@@ -672,7 +672,7 @@ function ContentBlock({ block }) {
 }
 
 // ─── Main App ───
-export default function TaperMedsEducation() {
+export default function TaperCommunityEducation() {
   const [activeId, setActiveId] = useState('intro');
   const [viewportWidth, setViewportWidth] = useState(1280);
   const contentRef = useRef(null);
@@ -735,7 +735,7 @@ export default function TaperMedsEducation() {
               <svg width="14" height="14" viewBox="0 0 24 24" fill="#fff"><path d="M3.5 18.49l6-6.01 4 4L22 6.92l-1.41-1.41-7.09 7.97-4-4L2 16.99z"/></svg>
             </div>
             <div>
-              <span style={{ fontSize: 16, fontWeight: 700, color: PURPLE }}>TaperMeds</span>
+              <span style={{ fontSize: 16, fontWeight: 700, color: PURPLE }}>TaperCommunity</span>
               <span style={{ fontSize: 11, color: MUTED, marginLeft: 6, fontWeight: 500 }}>Education</span>
             </div>
           </div>
@@ -797,7 +797,7 @@ export default function TaperMedsEducation() {
           }}>
             <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
               <span style={{ fontSize: 11, color: MUTED, textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 600 }}>
-                TaperMeds Education Portal
+                TaperCommunity Education Portal
               </span>
               <span style={{ fontSize: 13, color: MUTED }}>
                 {active?.layer > 0 ? `Layer ${active.layer}` : ""}{active?.num ? ` / ${active.num}` : ""}

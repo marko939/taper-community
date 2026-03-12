@@ -33,6 +33,7 @@ export const metadata = {
     description: 'A peer support community for safely tapering psychiatric medications. Evidence-based guidance, shared experiences, and taper journals.',
     siteName: 'TaperCommunity',
     type: 'website',
+    images: [{ url: '/og-image.png', width: 1200, height: 630, alt: 'TaperCommunity — Peer Support for Medication Tapering' }],
   },
   twitter: {
     card: 'summary_large_image',
@@ -65,6 +66,12 @@ export default function RootLayout({ children }) {
             },
           }) }}
         />
+        {/* Plausible Analytics — privacy-respecting, no cookies, GDPR-compliant */}
+        <script async src="https://plausible.io/js/pa-TXjD9GUz0fIYQgcqOnIQL.js" />
+        <script dangerouslySetInnerHTML={{ __html: `
+          window.plausible=window.plausible||function(){(plausible.q=plausible.q||[]).push(arguments)},plausible.init=plausible.init||function(i){plausible.o=i||{}};
+          plausible.init();
+        `}} />
         {/* Apply saved font size before first paint to prevent flash */}
         <script dangerouslySetInnerHTML={{ __html: `
           (function() {

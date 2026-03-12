@@ -9,6 +9,7 @@ import ForumSections from '@/components/home/ForumSections';
 import PatientDashboard from '@/components/home/PatientDashboard';
 import InvitePrompt from '@/components/journal/InvitePrompt';
 import ExitIntentPopup from '@/components/shared/ExitIntentPopup';
+import TestimonialCarousel from '@/components/home/TestimonialCarousel';
 
 export default function HomePage() {
   const { user, profile, loading } = useAuth();
@@ -63,7 +64,7 @@ export default function HomePage() {
               <Link
                 href="/auth/signup"
                 className="inline-flex items-center gap-2 rounded-xl px-8 py-3 text-[14px] font-semibold text-white no-underline transition hover:opacity-90"
-                style={{ background: '#2EC4B6' }}
+                style={{ background: '#1FA89B' }}
               >
                 Join Free
               </Link>
@@ -289,65 +290,7 @@ export default function HomePage() {
       </section>
 
       {/* Testimonials */}
-      <section className="space-y-6">
-        <div className="text-center">
-          <p className="text-[11px] font-bold uppercase tracking-[0.1em]" style={{ color: 'var(--purple)' }}>
-            Community Voices
-          </p>
-          <h2 className="mt-2 font-serif text-2xl font-semibold text-foreground sm:text-3xl">
-            What our members{' '}
-            <span style={{ color: 'var(--purple)' }}>say</span>
-          </h2>
-        </div>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div
-            className="rounded-2xl border p-6"
-            style={{ borderColor: 'var(--border-subtle)', background: 'var(--surface-strong)' }}
-          >
-            <svg className="mb-3 h-6 w-6" style={{ color: 'var(--purple)' }} fill="currentColor" viewBox="0 0 24 24">
-              <path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10H14.017zM0 21v-7.391c0-5.704 3.731-9.57 8.983-10.609L9.983 5.151c-2.432.917-3.995 3.638-3.995 5.849h4v10H0z" />
-            </svg>
-            <p className="text-sm leading-relaxed text-text-muted">
-              After years on Surviving Antidepressants and BenzoBuddies, TaperCommunity is the first place that actually felt like home. The taper tracker and symptom logging are tools I didn&apos;t know I needed — they changed everything about how I approach my taper. I believed in it so much that I joined as a community support member to help it grow.
-            </p>
-            <div className="mt-4 flex items-center gap-3">
-              <div
-                className="flex h-9 w-9 items-center justify-center rounded-full text-sm font-bold text-white"
-                style={{ background: 'var(--purple)' }}
-              >
-                C
-              </div>
-              <div>
-                <p className="text-sm font-semibold text-foreground">Catina</p>
-                <p className="text-xs text-text-subtle">Community Support Member</p>
-              </div>
-            </div>
-          </div>
-          <div
-            className="flex flex-col rounded-2xl border p-6"
-            style={{ borderColor: 'var(--border-subtle)', background: 'var(--surface-strong)' }}
-          >
-            <svg className="mb-3 h-6 w-6" style={{ color: 'var(--purple)' }} fill="currentColor" viewBox="0 0 24 24">
-              <path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10H14.017zM0 21v-7.391c0-5.704 3.731-9.57 8.983-10.609L9.983 5.151c-2.432.917-3.995 3.638-3.995 5.849h4v10H0z" />
-            </svg>
-            <p className="flex-1 text-sm leading-relaxed text-text-muted">
-              Being able to track my symptoms and share daily check-ins has made all the difference. I actually look forward to logging in each day — the community keeps me accountable and reminds me I&apos;m not doing this alone. For the first time, I feel in control of my taper.
-            </p>
-            <div className="mt-4 flex items-center gap-3 pt-4">
-              <div
-                className="flex h-9 w-9 items-center justify-center rounded-full text-sm font-bold text-white"
-                style={{ background: '#2EC4B6' }}
-              >
-                S
-              </div>
-              <div>
-                <p className="text-sm font-semibold text-foreground">STVE</p>
-                <p className="text-xs text-text-subtle">Member</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+      <TestimonialCarousel />
 
       <ForumSections />
 
@@ -355,7 +298,7 @@ export default function HomePage() {
       <Link
         href="/auth/signup"
         className="fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-full px-5 py-3 text-sm font-bold text-white shadow-lg no-underline transition hover:scale-105 hover:shadow-xl"
-        style={{ background: 'var(--purple)', boxShadow: '0 6px 24px rgba(91,46,145,0.35)' }}
+        style={{ background: '#1FA89B', boxShadow: '0 6px 24px rgba(31,168,155,0.35)' }}
       >
         <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
