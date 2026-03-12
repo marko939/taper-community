@@ -1,11 +1,14 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect, useRef, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { useAuth } from '@/hooks/useAuth';
 import { useBlogStore } from '@/stores/blogStore';
 import { ADMIN_USER_ID, isMod, toSlug } from '@/lib/blog';
+import FormattingToolbar, { makeBulletKeyHandler } from '@/components/shared/FormattingToolbar';
 
 export default function BlogAdminPage() {
   return (
@@ -27,6 +30,9 @@ function BlogAdminContent() {
   const [editing, setEditing] = useState(null); // null = list view, 'new' or post id
   const [form, setForm] = useState({ title: '', excerpt: '', body: '', cover_image_url: '', tags: '', published: false });
   const [saving, setSaving] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
+  const bodyRef = useRef(null);
+  const bulletKeyHandler = makeBulletKeyHandler(bodyRef, (val) => setForm((f) => ({ ...f, body: val })));
 
   useEffect(() => {
     if (isMod(user?.id)) {
@@ -153,15 +159,43 @@ function BlogAdminContent() {
           </div>
 
           <div>
-            <label className="mb-1 block text-xs font-semibold text-text-muted">Body</label>
-            <textarea
-              value={form.body}
-              onChange={(e) => setForm({ ...form, body: e.target.value })}
-              rows={16}
-              className="w-full rounded-xl border px-4 py-3 text-sm text-foreground outline-none transition focus:border-purple"
-              style={{ borderColor: 'var(--border-subtle)', background: 'var(--surface-strong)' }}
-              placeholder="Write your post content here..."
-            />
+            <div className="mb-1 flex items-center justify-between">
+              <label className="block text-xs font-semibold text-text-muted">Body</label>
+              <button
+                type="button"
+                onClick={() => setShowPreview(!showPreview)}
+                className="rounded px-2 py-0.5 text-xs font-medium transition hover:bg-purple-ghost/50"
+                style={{ color: 'var(--purple)' }}
+              >
+                {showPreview ? 'Edit' : 'Preview'}
+              </button>
+            </div>
+            {showPreview ? (
+              <div
+                className="prose prose-sm max-w-none rounded-xl border px-4 py-3 text-foreground"
+                style={{ borderColor: 'var(--border-subtle)', background: 'var(--surface-strong)', minHeight: '400px' }}
+              >
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>{form.body || '*Nothing to preview*'}</ReactMarkdown>
+              </div>
+            ) : (
+              <>
+                <FormattingToolbar
+                  textareaRef={bodyRef}
+                  value={form.body}
+                  onChange={(val) => setForm({ ...form, body: val })}
+                />
+                <textarea
+                  ref={bodyRef}
+                  value={form.body}
+                  onChange={(e) => setForm({ ...form, body: e.target.value })}
+                  onKeyDown={bulletKeyHandler}
+                  rows={16}
+                  className="w-full rounded-b-xl rounded-t-none border px-4 py-3 text-sm text-foreground outline-none transition focus:border-purple"
+                  style={{ borderColor: 'var(--border-subtle)', background: 'var(--surface-strong)' }}
+                  placeholder="Write your post content here... Use **bold** and *italic* formatting."
+                />
+              </>
+            )}
           </div>
 
           <div>

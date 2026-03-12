@@ -143,10 +143,11 @@ export default function Sidebar() {
       {mobileOpen && (
         <div
           className="fixed inset-0 top-[57px] z-40 lg:hidden"
+          style={{ background: 'rgba(0,0,0,0.3)' }}
           onClick={() => setMobileOpen(false)}
         >
           <div
-            className="border-b shadow-lg"
+            className="max-h-[calc(100vh-57px)] overflow-y-auto border-b shadow-lg"
             style={{ background: 'var(--surface-strong)', borderColor: 'var(--border-subtle)' }}
             onClick={(e) => e.stopPropagation()}
           >

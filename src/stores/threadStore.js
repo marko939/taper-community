@@ -207,14 +207,8 @@ export const useThreadStore = create((set, get) => ({
       // Bust forum cache (reply count changed)
       useForumStore.getState().invalidate();
 
-      // Fire email notifications (best-effort)
-      fireAndForget('notify-email', () =>
-        fetch('/api/notify-email', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ reply_id: data.id, thread_id: threadId }),
-        })
-      );
+      // Reply email notifications are now sent as a daily digest
+      // via the cron job (/api/email/send → runner.js → runDigest)
 
       // Insert mention notifications (best-effort)
       // Note: thread_reply notifications for participants are handled by the

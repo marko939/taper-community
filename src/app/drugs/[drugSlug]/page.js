@@ -33,8 +33,24 @@ export default async function DrugProfilePage({ params }) {
 
   const otherDrugs = DRUG_SLUGS.filter((s) => s !== drugSlug).slice(0, 4);
 
+  const drugSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'Drug',
+    name: drug.name,
+    nonProprietaryName: drug.generic,
+    drugClass: { '@type': 'DrugClass', name: drug.class },
+    description: drug.description || drug.taperNotes,
+    mechanismOfAction: drug.mechanismOfAction || undefined,
+    administrationRoute: 'Oral',
+    url: `https://taper.community/drugs/${drug.slug}`,
+  };
+
   return (
     <div className="space-y-8">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(drugSchema) }}
+      />
       <div className="mb-2 flex items-center gap-2">
         <Link href="/forums" className="text-sm text-text-subtle hover:text-foreground">
           Forums

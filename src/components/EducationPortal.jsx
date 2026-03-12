@@ -1,6 +1,8 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import Link from 'next/link';
+import { useAuthStore } from '@/stores/authStore';
 
 /*
   TaperMeds Education Portal
@@ -673,6 +675,8 @@ export default function TaperMedsEducation() {
   const [activeId, setActiveId] = useState('intro');
   const [viewportWidth, setViewportWidth] = useState(1280);
   const contentRef = useRef(null);
+  const user = useAuthStore((s) => s.user);
+  const isSignedIn = !!user;
 
   useEffect(() => {
     const handleResize = () => setViewportWidth(window.innerWidth);
@@ -750,18 +754,25 @@ export default function TaperMedsEducation() {
                 )}
                 {layer.modules.map((mod) => {
                   const isActive = activeId === mod.id;
+                  const isLocked = !isSignedIn && mod.id !== 'intro';
                   return (
                     <button key={mod.id} onClick={() => goTo(mod.id)} style={{
                       width: "100%", textAlign: "left", padding: "8px 12px", fontSize: 13.5,
                       borderRadius: 10, border: "none", cursor: "pointer",
                       background: isActive ? PURPLE_LIGHT : "transparent",
-                      color: isActive ? PURPLE : TEXT,
+                      color: isLocked ? MUTED : isActive ? PURPLE : TEXT,
                       fontWeight: isActive ? 600 : 400,
+                      opacity: isLocked ? 0.65 : 1,
                       lineHeight: 1.4, transition: "all 0.1s",
-                      display: "flex", gap: 8,
+                      display: "flex", gap: 8, alignItems: "center",
                     }}>
                       {mod.num && <span style={{ color: MUTED, fontWeight: 500, minWidth: 26 }}>{mod.num}</span>}
-                      <span>{mod.title}</span>
+                      <span style={{ flex: 1 }}>{mod.title}</span>
+                      {isLocked && (
+                        <svg width="12" height="12" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke={MUTED}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+                        </svg>
+                      )}
                     </button>
                   );
                 })}
@@ -867,11 +878,52 @@ export default function TaperMedsEducation() {
             )}
 
             {/* Content blocks */}
-            {active?.content.map((block, i) => <ContentBlock key={i} block={block} />)}
-
-            {/* Assessment */}
-            {active?.isAssessment && active?.questions && (
-              <Quiz questions={active.questions} />
+            {(isSignedIn || activeId === 'intro') ? (
+              <>
+                {active?.content.map((block, i) => <ContentBlock key={i} block={block} />)}
+                {active?.isAssessment && active?.questions && (
+                  <Quiz questions={active.questions} />
+                )}
+              </>
+            ) : (
+              <div style={{ position: 'relative' }}>
+                {active?.content.slice(0, 2).map((block, i) => <ContentBlock key={i} block={block} />)}
+                <div style={{
+                  position: 'absolute', bottom: 0, left: 0, right: 0, height: 200,
+                  background: 'linear-gradient(transparent, #FEFCFF)',
+                  pointerEvents: 'none',
+                }} />
+                <div style={{
+                  marginTop: 16, padding: '32px 24px', borderRadius: 16,
+                  background: 'linear-gradient(135deg, #F7F3FB 0%, #EDE5F4 100%)',
+                  border: `1px solid ${BORDER}`, textAlign: 'center',
+                }}>
+                  <svg style={{ margin: '0 auto 12px', color: PURPLE }} width="32" height="32" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+                  </svg>
+                  <h3 style={{ fontSize: 18, fontWeight: 700, color: TEXT, marginBottom: 8 }}>
+                    Sign in to continue reading
+                  </h3>
+                  <p style={{ fontSize: 14, color: MUTED, maxWidth: 440, margin: '0 auto 20px', lineHeight: 1.6 }}>
+                    Create a free account to access the full deprescribing curriculum — {MODULES.length} modules covering evidence-based tapering protocols.
+                  </p>
+                  <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
+                    <Link href="/auth/signin" style={{
+                      padding: '10px 24px', borderRadius: 10, fontSize: 14, fontWeight: 600,
+                      background: PURPLE, color: '#fff', textDecoration: 'none',
+                    }}>
+                      Sign In
+                    </Link>
+                    <Link href="/auth/signup" style={{
+                      padding: '10px 24px', borderRadius: 10, fontSize: 14, fontWeight: 600,
+                      background: '#fff', color: PURPLE, textDecoration: 'none',
+                      border: `1px solid ${PURPLE}`,
+                    }}>
+                      Create Free Account
+                    </Link>
+                  </div>
+                </div>
+              </div>
             )}
 
             {/* Navigation */}

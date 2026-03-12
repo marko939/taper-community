@@ -164,12 +164,22 @@ export default function ResourcesPage() {
               <div className="h-8 w-8 animate-spin rounded-full border-2 border-purple border-t-transparent" />
             </div>
           ) : posts.length === 0 ? (
-            <div className="rounded-2xl border p-12 text-center" style={{ borderColor: 'var(--border-subtle)', background: 'var(--surface-strong)' }}>
-              <svg className="mx-auto h-12 w-12 text-text-subtle" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
-              </svg>
-              <p className="mt-4 text-sm font-semibold text-foreground">No blog posts yet</p>
-              <p className="mt-1 text-xs text-text-muted">Check back soon for articles and insights.</p>
+            <div className="rounded-2xl border p-12 text-center" style={{ borderColor: 'var(--purple-pale)', background: 'var(--purple-ghost)' }}>
+              <div
+                className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl"
+                style={{ background: 'var(--purple-pale)', color: 'var(--purple)' }}
+              >
+                <svg className="h-7 w-7" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
+                </svg>
+              </div>
+              <p className="mt-4 text-sm font-semibold text-foreground">New articles published regularly</p>
+              <p className="mt-1 text-xs text-text-muted">
+                Explore our{' '}
+                <Link href="/education" className="font-medium" style={{ color: 'var(--purple)' }}>education portal</Link>{' '}
+                for in-depth deprescribing guidance, or join the{' '}
+                <Link href="/forums" className="font-medium" style={{ color: 'var(--purple)' }}>community forums</Link>.
+              </p>
             </div>
           ) : (
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -200,6 +210,14 @@ export default function ResourcesPage() {
                       <span className="text-[11px] text-text-subtle">
                         {new Date(post.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                       </span>
+                      {(post.comment_count ?? 0) > 0 && (
+                        <span className="inline-flex items-center gap-1 text-[11px] text-text-subtle">
+                          <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 20.25c4.97 0 9-3.694 9-8.25s-4.03-8.25-9-8.25S3 7.444 3 12c0 2.104.859 4.023 2.273 5.48.432.447.74 1.04.586 1.641a4.483 4.483 0 01-.923 1.785A5.969 5.969 0 006 21c1.282 0 2.47-.402 3.445-1.087.81.22 1.668.337 2.555.337z" />
+                          </svg>
+                          {post.comment_count}
+                        </span>
+                      )}
                       {post.tags?.length > 0 && (
                         <div className="flex flex-wrap gap-1">
                           {post.tags.slice(0, 2).map((tag) => (

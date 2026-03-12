@@ -109,13 +109,12 @@ export default function JournalEntryForm({ onSubmit, entryCount = 0 }) {
   }, [moodScore, symptoms]);
 
   const autoTitle = useMemo(() => {
-    const dateFmt = new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
     const moodTag = moodScore === 1 ? 'In a Crisis' : `Feeling ${MOOD_LABELS[moodScore]}`;
     if (drug) {
-      return `${ordinal(drugEntryCount + 1)} ${drug} Update - ${moodTag} - ${dateFmt}`;
+      return `${ordinal(drugEntryCount + 1)} ${drug} Update - ${moodTag}`;
     }
-    return `Check-in - ${moodTag} - ${dateFmt}`;
-  }, [drug, date, drugEntryCount, moodScore]);
+    return `Check-in - ${moodTag}`;
+  }, [drug, drugEntryCount, moodScore]);
 
   // Auto-update title and notes when user hasn't manually edited them
   useEffect(() => {

@@ -3,11 +3,10 @@
 import { useState, useEffect, useRef, useCallback, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
-import { useMessageStore } from '@/stores/messageStore';
+import { useMessageStore, STAFF_IDS } from '@/stores/messageStore';
 import { createClient } from '@/lib/supabase/client';
 import Avatar from '@/components/shared/Avatar';
 import { PageLoading } from '@/components/shared/LoadingSpinner';
-import { ADMIN_USER_ID } from '@/lib/blog';
 
 function timeAgo(dateStr) {
   const seconds = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000);
@@ -50,15 +49,14 @@ function MessagesContent() {
     if (user) fetchConversations();
   }, [user, fetchConversations]);
 
-  // Handle ?to= param (deep link from profile)
+  // Handle ?to= param (deep link from profile or other pages)
   useEffect(() => {
-    if (toParam && user && toParam !== user.id && (toParam === ADMIN_USER_ID || user.id === ADMIN_USER_ID)) {
+    if (toParam && user && toParam !== user.id) {
       loadPartner(toParam);
     }
   }, [toParam, user]);
 
   const loadPartner = useCallback(async (partnerId) => {
-    // Fetch partner profile if not in conversations
     const existing = conversations.find((c) => c.partnerId === partnerId);
     if (existing) {
       setSelectedPartner(existing.partner);
@@ -81,11 +79,10 @@ function MessagesContent() {
     setMobileShowThread(true);
     fetchMessages(conv.partnerId);
     markConversationRead(conv.partnerId);
-    // Update URL without navigation
     router.replace(`/messages?to=${conv.partnerId}`, { scroll: false });
   };
 
-  // Scroll to bottom of messages container (not the page) when messages change
+  // Scroll to bottom of messages container when messages change
   useEffect(() => {
     const el = messagesContainerRef.current;
     if (el) el.scrollTop = el.scrollHeight;
@@ -110,29 +107,6 @@ function MessagesContent() {
     } finally {
       setSending(false);
     }
-  };
-
-  // Compose: load admin profile directly (users can only DM admin)
-  const loadAdminForCompose = useCallback(async () => {
-    if (!user || user.id === ADMIN_USER_ID) return;
-    try {
-      const supabase = createClient();
-      const { data } = await supabase
-        .from('profiles')
-        .select('id, display_name, avatar_url')
-        .eq('id', ADMIN_USER_ID)
-        .single();
-      if (data) selectComposeUser(data);
-    } catch {
-      // ignore
-    }
-  }, [user]);
-
-  const selectComposeUser = (profile) => {
-    setSelectedPartner(profile);
-    setMobileShowThread(true);
-    fetchMessages(profile.id);
-    router.replace(`/messages?to=${profile.id}`, { scroll: false });
   };
 
   if (authLoading) return <PageLoading />;
@@ -162,20 +136,7 @@ function MessagesContent() {
         >
           <div className="flex items-center justify-between border-b px-4 py-3" style={{ borderColor: 'var(--border-subtle)' }}>
             <p className="text-sm font-semibold text-foreground">Conversations</p>
-            {user?.id !== ADMIN_USER_ID && (
-              <button
-                onClick={loadAdminForCompose}
-                className="flex h-7 w-7 items-center justify-center rounded-lg transition hover:bg-purple-ghost"
-                style={{ color: 'var(--purple)' }}
-                title="Message admin"
-              >
-                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
-                </svg>
-              </button>
-            )}
           </div>
-
 
           <div className="overflow-y-auto" style={{ height: 'calc(100% - 49px)' }}>
             {loading && conversations.length === 0 ? (
@@ -188,7 +149,6 @@ function MessagesContent() {
             ) : conversations.length === 0 ? (
               <div className="px-4 py-12 text-center">
                 <p className="text-sm text-text-muted">No messages yet</p>
-                <p className="mt-1 text-xs text-text-subtle">Tap the compose icon above to message admin</p>
               </div>
             ) : (
               conversations.map((conv) => (
@@ -210,13 +170,16 @@ function MessagesContent() {
                       <p className="truncate text-sm font-semibold text-foreground">
                         {conv.partner.display_name}
                       </p>
-                      <span className="ml-2 flex-shrink-0 text-[10px] text-text-subtle">
-                        {timeAgo(conv.lastMessage.created_at)}
-                      </span>
+                      {conv.lastMessage && (
+                        <span className="ml-2 flex-shrink-0 text-[10px] text-text-subtle">
+                          {timeAgo(conv.lastMessage.created_at)}
+                        </span>
+                      )}
                     </div>
                     <p className="truncate text-xs text-text-muted">
-                      {conv.lastMessage.from_user_id === user.id ? 'You: ' : ''}
-                      {conv.lastMessage.body}
+                      {conv.lastMessage
+                        ? `${conv.lastMessage.from_user_id === user.id ? 'You: ' : ''}${conv.lastMessage.body}`
+                        : 'Start a conversation'}
                     </p>
                   </div>
                   {conv.unreadCount > 0 && (

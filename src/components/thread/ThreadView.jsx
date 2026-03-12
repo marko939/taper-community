@@ -15,6 +15,7 @@ import { ADMIN_USER_ID, isMod } from '@/lib/blog';
 import { renderBodyWithQuotes } from '@/lib/renderQuotes';
 import FollowButton from '@/components/shared/FollowButton';
 import FollowThreadButton from '@/components/shared/FollowThreadButton';
+import ShareButtons from '@/components/shared/ShareButtons';
 
 export default function ThreadView({ thread }) {
   const { id, title, body, tags = [], view_count, vote_score, created_at, user_id, profiles, thread_forums = [], pinned } = thread;
@@ -264,6 +265,12 @@ export default function ThreadView({ thread }) {
                     <span>{view_count} views</span>
                     <span>&middot;</span>
                     <VoteButton type="thread" targetId={id} initialScore={vote_score || 0} />
+                    <span>&middot;</span>
+                    <ShareButtons
+                      url={`https://taper.community/thread/${id}`}
+                      title={title}
+                      text={`${title} — TaperCommunity`}
+                    />
                   </div>
 
                   {crossPostedForums.length > 1 && (

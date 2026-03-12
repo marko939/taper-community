@@ -23,45 +23,87 @@ export default function ForumSections() {
     );
   }
 
-  const generalSections = getGeneralSections(forums);
+  const generalSections = getGeneralSections(forums).filter((s) => s.key !== 'admin');
   const drugGroups = getDrugClassGroups(forums);
 
+  // Sum post counts per section
+  const sectionTiles = generalSections.map((section) => ({
+    key: section.key,
+    label: section.label,
+    icon: CATEGORY_ICONS[section.key],
+    postCount: section.forums.reduce((sum, f) => sum + (f.post_count ?? 0), 0),
+    href: '/forums',
+  }));
+
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <h2 className="font-serif text-2xl font-semibold" style={{ color: 'var(--foreground)' }}>Forums</h2>
 
-      {/* General forum sections */}
-      {generalSections.map((section) => (
-        <div key={section.key} className="glass-panel overflow-hidden">
-          <div
-            className="flex items-center gap-3 border-b px-5 py-3"
-            style={{ borderColor: 'var(--border-subtle)', background: 'var(--purple-ghost)' }}
-          >
-            <span style={{ color: 'var(--purple)' }}>{CATEGORY_ICONS[section.key]}</span>
-            <h3 className="text-sm font-bold uppercase tracking-wider" style={{ color: 'var(--purple)' }}>
-              {section.label}
-            </h3>
-          </div>
-          <div className="divide-y" style={{ borderColor: 'var(--border-light)' }}>
-            {section.forums.map((forum) => (
-              <ForumRow key={forum.slug} forum={forum} />
+      {/* General sections — pyramid: 3 on top, 2 on bottom centered */}
+      <div className="space-y-3">
+        {/* Top row: first 3 */}
+        <div className="grid grid-cols-3 gap-3">
+          {sectionTiles.slice(0, 3).map((tile) => (
+            <Link
+              key={tile.key}
+              href={tile.href}
+              className="group flex flex-col items-center gap-2 rounded-2xl border p-4 no-underline transition hover:border-purple hover:shadow-elevated"
+              style={{ borderColor: 'var(--border-subtle)', background: 'var(--surface-strong)' }}
+            >
+              <div
+                className="flex h-10 w-10 items-center justify-center rounded-xl"
+                style={{ background: 'var(--purple-ghost)', color: 'var(--purple)' }}
+              >
+                {tile.icon}
+              </div>
+              <p className="text-center text-sm font-bold text-foreground">{tile.label}</p>
+              <span
+                className="rounded-full px-2.5 py-0.5 text-[11px] font-bold"
+                style={{ background: 'var(--purple-pale)', color: 'var(--purple)' }}
+              >
+                {tile.postCount} posts
+              </span>
+            </Link>
+          ))}
+        </div>
+        {/* Bottom row: remaining tiles centered */}
+        {sectionTiles.length > 3 && (
+          <div className="flex justify-center gap-3">
+            {sectionTiles.slice(3).map((tile) => (
+              <Link
+                key={tile.key}
+                href={tile.href}
+                className="group flex w-1/3 flex-col items-center gap-2 rounded-2xl border p-4 no-underline transition hover:border-purple hover:shadow-elevated"
+                style={{ borderColor: 'var(--border-subtle)', background: 'var(--surface-strong)' }}
+              >
+                <div
+                  className="flex h-10 w-10 items-center justify-center rounded-xl"
+                  style={{ background: 'var(--purple-ghost)', color: 'var(--purple)' }}
+                >
+                  {tile.icon}
+                </div>
+                <p className="text-center text-sm font-bold text-foreground">{tile.label}</p>
+                <span
+                  className="rounded-full px-2.5 py-0.5 text-[11px] font-bold"
+                  style={{ background: 'var(--purple-pale)', color: 'var(--purple)' }}
+                >
+                  {tile.postCount} posts
+                </span>
+              </Link>
             ))}
           </div>
-        </div>
-      ))}
+        )}
+      </div>
 
-      {/* Drug-Specific Forums — grouped by class */}
-      <div className="glass-panel overflow-hidden">
-        <div
-          className="flex items-center gap-3 border-b px-5 py-3"
-          style={{ borderColor: 'var(--border-subtle)', background: 'var(--purple-ghost)' }}
-        >
+      {/* Drug-Specific Forums — 3 + 3 grid */}
+      <div className="space-y-3">
+        <div className="flex items-center gap-2">
           <span style={{ color: 'var(--purple)' }}>{CATEGORY_ICONS.drug}</span>
-          <h3 className="text-sm font-bold uppercase tracking-wider" style={{ color: 'var(--purple)' }}>
+          <h3 className="text-xs font-bold uppercase tracking-wider" style={{ color: 'var(--purple)' }}>
             Drug-Specific Forums
           </h3>
         </div>
-        <div className="grid grid-cols-2 gap-3 p-4 sm:grid-cols-3">
+        <div className="grid grid-cols-3 gap-3">
           {drugGroups.map((group) => (
             <Link
               key={group.key}
@@ -70,14 +112,13 @@ export default function ForumSections() {
               style={{ borderColor: 'var(--border-subtle)', background: 'var(--surface-strong)' }}
             >
               <div
-                className="flex h-12 w-12 items-center justify-center rounded-2xl transition group-hover:scale-110"
+                className="flex h-10 w-10 items-center justify-center rounded-xl transition group-hover:scale-110"
                 style={{ background: 'var(--purple-ghost)', color: 'var(--purple)' }}
               >
                 {DRUG_CLASS_ICONS[group.key]}
               </div>
               <div className="text-center">
                 <p className="text-sm font-bold text-foreground">{group.label}</p>
-                <p className="mt-0.5 text-[11px] text-text-subtle">{group.desc}</p>
               </div>
               <span
                 className="rounded-full px-2.5 py-0.5 text-[11px] font-bold"

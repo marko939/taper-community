@@ -29,7 +29,7 @@ export default function Footer() {
             </div>
             <p className="mt-2 text-sm" style={{ color: 'var(--text-muted)' }}>
               Peer support for safely tapering psychiatric medications.
-              Continuing the legacy of SurvivingAntidepressants.org.
+              Evidence-based guidance, shared experiences, and taper journals.
             </p>
           </div>
 
@@ -53,6 +53,13 @@ export default function Footer() {
                 style={{ color: 'var(--text-muted)' }}
               >
                 Find a Deprescriber
+              </a>
+              <a
+                href="mailto:dom@tapermeds.com"
+                className="text-sm no-underline transition hover:text-purple"
+                style={{ color: 'var(--text-muted)' }}
+              >
+                Contact Us
               </a>
               <span className="text-sm" style={{ color: 'var(--text-muted)' }}>
                 Crisis? Call 988 Suicide & Crisis Lifeline

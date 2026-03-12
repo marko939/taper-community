@@ -1,10 +1,9 @@
 export const metadata = {
-  title: 'Find a Deprescribing Provider — TaperCommunity',
-  description:
-    'Browse our map of clinicians worldwide who specialize in safe, guided tapering of psychiatric medications. Find a deprescribing-informed provider near you.',
+  title: 'Resources — TaperCommunity',
+  description: 'Evidence-based tapering articles, drug profiles, and deprescribing guides. Free resources for safely tapering psychiatric medications.',
 };
 
-export default function DeprescribersLayout({ children }) {
+export default function Layout({ children }) {
   return (
     <>
       <script
@@ -14,7 +13,7 @@ export default function DeprescribersLayout({ children }) {
           '@type': 'BreadcrumbList',
           itemListElement: [
             { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://taper.community' },
-            { '@type': 'ListItem', position: 2, name: 'Find a Deprescriber', item: 'https://taper.community/deprescribers' },
+            { '@type': 'ListItem', position: 2, name: 'Resources', item: 'https://taper.community/resources' },
           ],
         }) }}
       />

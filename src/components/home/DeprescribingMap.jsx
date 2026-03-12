@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { DEPRESCRIBERS } from '@/lib/deprescribers';
+import { useAuthStore } from '@/stores/authStore';
 
 function loadCSS(href) {
   if (document.querySelector(`link[href="${href}"]`)) return Promise.resolve();
@@ -21,6 +22,7 @@ export default function DeprescribingMap({ compact = false }) {
   const mapInstanceRef = useRef(null);
   const timersRef = useRef([]);
   const [loaded, setLoaded] = useState(false);
+  const user = useAuthStore((s) => s.user);
   const [providerCount] = useState(
     new Set(DEPRESCRIBERS.map((d) => d.name)).size
   );
@@ -166,8 +168,33 @@ export default function DeprescribingMap({ compact = false }) {
         <div
           ref={mapRef}
           className={`${mapHeight} w-full`}
-          style={loaded ? { zIndex: 1 } : { position: 'absolute', top: 0, left: 0, visibility: 'hidden', zIndex: -1 }}
+          style={loaded ? { zIndex: 1, filter: !user ? 'blur(3px)' : undefined, pointerEvents: !user ? 'none' : undefined } : { position: 'absolute', top: 0, left: 0, visibility: 'hidden', zIndex: -1 }}
         />
+        {loaded && !user && (
+          <div style={{
+            position: 'absolute', inset: 0, zIndex: 10,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            background: 'rgba(255,255,255,0.3)', backdropFilter: 'blur(2px)',
+          }}>
+            <div
+              className="rounded-2xl border p-8 text-center"
+              style={{ borderColor: 'var(--border-subtle)', background: 'rgba(255,255,255,0.95)', maxWidth: 400, boxShadow: '0 8px 32px rgba(91,46,145,0.15)' }}
+            >
+              <svg className="mx-auto mb-3 h-8 w-8" style={{ color: 'var(--purple)' }} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
+              </svg>
+              <h3 className="text-lg font-semibold text-foreground">Sign in to find a deprescriber</h3>
+              <p className="mx-auto mt-2 max-w-sm text-sm text-text-muted">
+                Create a free account to browse {providerCount}+ deprescribing providers across 6 countries.
+              </p>
+              <div className="mt-5 flex flex-wrap justify-center gap-3">
+                <Link href="/auth/signin" className="btn btn-primary text-sm no-underline">Sign In</Link>
+                <Link href="/auth/signup" className="btn btn-secondary text-sm no-underline">Create Free Account</Link>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Stats footer */}

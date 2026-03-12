@@ -6,6 +6,7 @@ import { TaperReminderEmail } from './templates/taper-reminder';
 import { IntroduceYourselfEmail } from './templates/introduce-yourself';
 import { WeMissYouEmail } from './templates/we-miss-you';
 import { ForumNewPostEmail } from './templates/forum-new-post';
+import { WelcomeEmail } from './templates/welcome';
 import React from 'react';
 
 function getServiceClient() {
@@ -20,7 +21,8 @@ export async function runEmailJobs() {
   console.log('[email] starting daily email run:', new Date().toISOString());
   const sentToday = new Set();
 
-  // Priority order: digest > forum follows > introduce yourself > we miss you > taper reminder
+  // Priority order: welcome > digest > forum follows > introduce yourself > we miss you > taper reminder
+  await runWelcome(sentToday);
   await runDigest(sentToday);
   await runForumFollowDigest(sentToday);
   await runIntroduceYourself(sentToday);
@@ -28,6 +30,42 @@ export async function runEmailJobs() {
   await runTaperReminder(sentToday);
 
   console.log('[email] run complete. Emails sent to', sentToday.size, 'users');
+}
+
+// ── JOB 0: Welcome email (within 24h of signup) ──────────────────────
+
+async function runWelcome(sentToday) {
+  const supabase = getServiceClient();
+
+  const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+
+  // Find users created in the last 24h
+  const { data: users } = await supabase
+    .from('profiles')
+    .select('id, email, display_name, email_notifications, created_at')
+    .gte('created_at', twentyFourHoursAgo)
+    .not('email', 'is', null);
+
+  if (!users || users.length === 0) return;
+
+  for (const user of users) {
+    if (sentToday.has(user.id)) continue;
+    if (await hasReceivedEmailType(user.id, 'welcome', 365)) continue; // only once ever
+
+    const result = await sendEmail({
+      to: user.email,
+      subject: 'Welcome to TaperCommunity — here\'s how to get started',
+      react: React.createElement(WelcomeEmail, {
+        userName: user.display_name || 'there',
+      }),
+    });
+
+    if (result.success) {
+      await logEmail(user.id, 'welcome');
+      sentToday.add(user.id);
+      console.log('[email] welcome sent to', user.email);
+    }
+  }
 }
 
 // ── JOB 1: Daily reply digest ──────────────────────────────────────

@@ -4,6 +4,14 @@ import { create } from 'zustand';
 import { createClient } from '@/lib/supabase/client';
 import { useAuthStore } from './authStore';
 
+// Staff user IDs in display order — always shown as pre-existing chats for regular users
+export const STAFF_IDS = [
+  '8572637a-2109-4471-bcb4-3163d04094d0',
+  'b2fb8e00-bbd0-489b-a762-945fa811861f',
+  'cf5e37af-df59-44e3-a446-3f97e5e4c558',
+  '5da61b1a-c487-44c1-9f1e-c7d35ca9e46b',
+];
+
 export const useMessageStore = create((set, get) => ({
   conversations: [],
   messages: [],
@@ -16,6 +24,7 @@ export const useMessageStore = create((set, get) => ({
     const userId = useAuthStore.getState().user?.id;
     if (!userId) return;
 
+    const isStaff = STAFF_IDS.includes(userId);
     set({ loading: true });
     try {
       const supabase = createClient();
@@ -27,14 +36,9 @@ export const useMessageStore = create((set, get) => ({
         .or(`from_user_id.eq.${userId},to_user_id.eq.${userId}`)
         .order('created_at', { ascending: false });
 
-      if (!allDms || allDms.length === 0) {
-        set({ conversations: [], loading: false, conversationsLoaded: true });
-        return;
-      }
-
       // Group by conversation partner
       const byPartner = {};
-      for (const dm of allDms) {
+      for (const dm of (allDms || [])) {
         const partnerId = dm.from_user_id === userId ? dm.to_user_id : dm.from_user_id;
         if (!byPartner[partnerId]) {
           byPartner[partnerId] = {
@@ -48,24 +52,67 @@ export const useMessageStore = create((set, get) => ({
         }
       }
 
+      // For regular users: ensure all staff appear as conversations (even with no messages)
+      // For staff: only show conversations where someone has actually messaged them
+      const allPartnerIds = new Set(Object.keys(byPartner));
+      if (!isStaff) {
+        for (const staffId of STAFF_IDS) {
+          if (staffId === userId) continue; // don't show yourself
+          if (!allPartnerIds.has(staffId)) {
+            byPartner[staffId] = {
+              partnerId: staffId,
+              lastMessage: null,
+              unreadCount: 0,
+            };
+            allPartnerIds.add(staffId);
+          }
+        }
+      }
+
       // Fetch partner profiles
-      const partnerIds = Object.keys(byPartner);
-      const { data: profiles } = await supabase
-        .from('profiles')
-        .select('id, display_name, avatar_url')
-        .in('id', partnerIds);
+      const partnerIds = [...allPartnerIds];
+      const { data: profiles } = partnerIds.length > 0
+        ? await supabase.from('profiles').select('id, display_name, avatar_url').in('id', partnerIds)
+        : { data: [] };
 
       const profileMap = {};
       for (const p of (profiles || [])) {
         profileMap[p.id] = p;
       }
 
-      const conversations = Object.values(byPartner)
+      let conversations = Object.values(byPartner)
         .map((c) => ({
           ...c,
           partner: profileMap[c.partnerId] || { id: c.partnerId, display_name: 'Unknown' },
-        }))
-        .sort((a, b) => new Date(b.lastMessage.created_at) - new Date(a.lastMessage.created_at));
+        }));
+
+      if (!isStaff) {
+        // For regular users: sort staff in the defined order, always at top
+        const staffOrder = STAFF_IDS.filter((id) => id !== userId);
+        const staffConvs = [];
+        const otherConvs = [];
+        for (const c of conversations) {
+          if (staffOrder.includes(c.partnerId)) {
+            staffConvs.push(c);
+          } else {
+            otherConvs.push(c);
+          }
+        }
+        staffConvs.sort((a, b) => staffOrder.indexOf(a.partnerId) - staffOrder.indexOf(b.partnerId));
+        otherConvs.sort((a, b) => {
+          if (!a.lastMessage) return 1;
+          if (!b.lastMessage) return -1;
+          return new Date(b.lastMessage.created_at) - new Date(a.lastMessage.created_at);
+        });
+        conversations = [...staffConvs, ...otherConvs];
+      } else {
+        // For staff: sort by most recent message
+        conversations.sort((a, b) => {
+          if (!a.lastMessage) return 1;
+          if (!b.lastMessage) return -1;
+          return new Date(b.lastMessage.created_at) - new Date(a.lastMessage.created_at);
+        });
+      }
 
       set({ conversations, loading: false, conversationsLoaded: true });
     } catch (err) {
