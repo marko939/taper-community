@@ -1,7 +1,8 @@
 'use client';
 
-import { useRef, useState, useCallback } from 'react';
+import { useRef, useState, useCallback, useEffect } from 'react';
 import Image from 'next/image';
+import { createClient } from '@/lib/supabase/client';
 
 const QUOTE_ICON = (
   <svg className="mb-3 h-6 w-6" style={{ color: 'var(--purple)' }} fill="currentColor" viewBox="0 0 24 24">
@@ -9,12 +10,24 @@ const QUOTE_ICON = (
   </svg>
 );
 
+// uid → testimonial index mapping for dynamic avatar fetching
+const PROFILE_UIDS = {
+  '2cf08926-2d7e-461f-b28b-3c83f1dfd850': 1, // Jules
+  'b2fb8e00-bbd0-489b-a762-945fa811861f': 2, // Catina
+};
+
 const TESTIMONIALS = [
   {
     quote: "TaperCommunity is doing the work that our training programs haven\u2019t caught up to yet. I recommend it to patients who want to be informed and supported through the process.",
     name: 'Imraan Allarakhia, MD',
     role: 'Georgetown University School of Medicine',
     avatar: { type: 'image', src: '/images/dr-allarakhia.jpg' },
+  },
+  {
+    quote: "When I started tapering ten years ago, most of us were figuring it out alone.\n\nThis space gives people what many of us never had: others who truly understand. That\u2019s why I\u2019m here. I just wish it had existed sooner.",
+    name: 'Jules',
+    role: 'Community Member',
+    avatar: { type: 'letter', letter: 'J', bg: '#E07A5F' },
   },
   {
     quote: "Being able to track my taper is helping me in ways I never realized. I\u2019m proud to call Taper Community my new home.",
@@ -34,6 +47,26 @@ export default function TestimonialCarousel() {
   const scrollRef = useRef(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(true);
+  const [avatarUrls, setAvatarUrls] = useState({});
+
+  // Fetch real avatar URLs for community members
+  useEffect(() => {
+    const uids = Object.keys(PROFILE_UIDS);
+    if (uids.length === 0) return;
+    const supabase = createClient();
+    supabase
+      .from('profiles')
+      .select('id, avatar_url')
+      .in('id', uids)
+      .then(({ data }) => {
+        if (!data) return;
+        const map = {};
+        data.forEach((p) => {
+          if (p.avatar_url) map[PROFILE_UIDS[p.id]] = p.avatar_url;
+        });
+        setAvatarUrls(map);
+      });
+  }, []);
 
   const updateArrows = useCallback(() => {
     const el = scrollRef.current;
@@ -94,40 +127,49 @@ export default function TestimonialCarousel() {
         className="flex gap-4 overflow-x-auto pb-2 snap-x snap-mandatory"
         style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', WebkitOverflowScrolling: 'touch' }}
       >
-        {TESTIMONIALS.map((t) => (
-          <div
-            key={t.name}
-            data-card
-            className="flex w-[calc(50%-8px)] min-w-[280px] flex-shrink-0 snap-start flex-col rounded-2xl border p-6"
-            style={{ borderColor: 'var(--border-subtle)', background: 'var(--surface-strong)' }}
-          >
-            {QUOTE_ICON}
-            <p className="flex-1 text-sm leading-relaxed text-text-muted">{t.quote}</p>
-            <div className="mt-4 flex items-center gap-3">
-              {t.avatar.type === 'image' ? (
-                <Image
-                  src={t.avatar.src}
-                  alt={t.name}
-                  width={36}
-                  height={36}
-                  className="rounded-full object-cover"
-                  style={{ width: 36, height: 36 }}
-                />
-              ) : (
-                <div
-                  className="flex h-9 w-9 items-center justify-center rounded-full text-sm font-bold text-white"
-                  style={{ background: t.avatar.bg }}
-                >
-                  {t.avatar.letter}
+        {TESTIMONIALS.map((t, idx) => {
+          const dynamicUrl = avatarUrls[idx];
+          return (
+            <div
+              key={t.name}
+              data-card
+              className="flex w-[calc(50%-8px)] min-w-[280px] flex-shrink-0 snap-start flex-col rounded-2xl border p-6"
+              style={{ borderColor: 'var(--border-subtle)', background: 'var(--surface-strong)' }}
+            >
+              {QUOTE_ICON}
+              <p className="flex-1 text-sm leading-relaxed text-text-muted whitespace-pre-line">{t.quote}</p>
+              <div className="mt-4 flex items-center gap-3">
+                {t.avatar.type === 'image' ? (
+                  <Image
+                    src={t.avatar.src}
+                    alt={t.name}
+                    width={36}
+                    height={36}
+                    className="rounded-full object-cover"
+                    style={{ width: 36, height: 36 }}
+                  />
+                ) : dynamicUrl ? (
+                  <img
+                    src={dynamicUrl}
+                    alt={t.name}
+                    className="h-9 w-9 rounded-full object-cover"
+                  />
+                ) : (
+                  <div
+                    className="flex h-9 w-9 items-center justify-center rounded-full text-sm font-bold text-white"
+                    style={{ background: t.avatar.bg }}
+                  >
+                    {t.avatar.letter}
+                  </div>
+                )}
+                <div>
+                  <p className="text-sm font-semibold text-foreground">{t.name}</p>
+                  <p className="text-xs text-text-subtle">{t.role}</p>
                 </div>
-              )}
-              <div>
-                <p className="text-sm font-semibold text-foreground">{t.name}</p>
-                <p className="text-xs text-text-subtle">{t.role}</p>
               </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </section>
   );

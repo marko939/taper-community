@@ -12,7 +12,7 @@ import { PeerAdvisorBadge } from '@/components/shared/Badge';
 import DrugSignature from '@/components/shared/DrugSignature';
 import JournalEntryCard from '@/components/journal/JournalEntryCard';
 import { PageLoading } from '@/components/shared/LoadingSpinner';
-import { ADMIN_USER_ID } from '@/lib/blog';
+import { ADMIN_USER_ID, isMod } from '@/lib/blog';
 import { useState } from 'react';
 
 function timeAgo(dateStr) {
@@ -152,7 +152,7 @@ export default function ProfilePage() {
                 >
                   {isFollowing ? 'Following' : 'Follow'}
                 </button>
-                {userId === ADMIN_USER_ID && (
+                {(userId === ADMIN_USER_ID || isMod(currentUser?.id)) && (
                   <button
                     onClick={() => router.push(`/messages?to=${userId}`)}
                     className="flex items-center gap-1.5 rounded-full border px-4 py-1.5 text-sm font-semibold transition hover:bg-purple-ghost"

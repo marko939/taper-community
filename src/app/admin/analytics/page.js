@@ -121,9 +121,6 @@ export default function AnalyticsDashboard() {
           {/* Top Members */}
           <TopMembersTable members={data.topMembers} />
 
-          {/* Posts by Forum */}
-          <ForumBreakdownChart forums={data.forumBreakdown} />
-
           {/* Time to First Post */}
           <TimeToFirstPost data={data.timeToFirstPost} />
 
@@ -132,6 +129,7 @@ export default function AnalyticsDashboard() {
 
           {/* Site Traffic */}
           <PageViewsSection pageViews={data.pageViews} />
+          {data.plausible && <PlausibleSection plausible={data.plausible} />}
 
           {/* Period Comparisons — DoD / WoW / MoM */}
           {data.periodComparisons && (
@@ -514,27 +512,6 @@ function TopMembersTable({ members }) {
   );
 }
 
-function ForumBreakdownChart({ forums }) {
-  if (!forums || forums.length === 0) return <SectionUnavailable label="Posts by Forum" />;
-
-  return (
-    <Card>
-      <h2 className="text-sm font-semibold text-foreground">Posts by Forum (30 days)</h2>
-      <div className="mt-4 h-72">
-        <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={forums} layout="vertical">
-            <CartesianGrid strokeDasharray="3 3" stroke="var(--border-subtle)" />
-            <XAxis type="number" tick={{ fontSize: 11, fill: 'var(--text-subtle)' }} />
-            <YAxis dataKey="name" type="category" tick={{ fontSize: 11, fill: 'var(--text-subtle)' }} width={120} />
-            <Tooltip contentStyle={tooltipStyle} />
-            <Bar dataKey="count" name="Posts" fill="#5B2E91" radius={[0, 4, 4, 0]} />
-          </BarChart>
-        </ResponsiveContainer>
-      </div>
-    </Card>
-  );
-}
-
 function TimeToFirstPost({ data }) {
   if (!data) return <SectionUnavailable label="Time to First Post" />;
 
@@ -662,6 +639,120 @@ function TaperTrackerSection({ tracker }) {
         </div>
       </div>
     </Card>
+  );
+}
+
+// ═══════════════════════════════════════════════════════
+// Plausible Analytics
+// ═══════════════════════════════════════════════════════
+
+function PlausibleSection({ plausible }) {
+  if (!plausible) return <SectionUnavailable label="Site Traffic (Plausible)" />;
+
+  const { realtime, today, week, month, topPages, topSources, topCountries } = plausible;
+
+  const fmtDuration = (s) => {
+    if (!s) return '0s';
+    const m = Math.floor(s / 60);
+    const sec = s % 60;
+    return m > 0 ? `${m}m ${sec}s` : `${sec}s`;
+  };
+
+  const periods = [
+    { label: 'Today', d: today },
+    { label: '7 Days', d: week },
+    { label: '30 Days', d: month },
+  ];
+
+  return (
+    <div className="space-y-4">
+      {/* Header with realtime */}
+      <div className="flex items-center gap-3">
+        <h2 className="text-sm font-semibold text-foreground">Site Traffic</h2>
+        {realtime != null && (
+          <span className="flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-medium"
+            style={{ background: 'rgba(46,196,182,0.12)', color: '#2EC4B6' }}>
+            <span className="inline-block h-2 w-2 rounded-full" style={{ background: '#2EC4B6', animation: 'pulse 2s infinite' }} />
+            {realtime} online now
+          </span>
+        )}
+      </div>
+
+      {/* Aggregate stat cards */}
+      <div className="grid gap-4 sm:grid-cols-3">
+        {periods.map(({ label, d }) => (
+          <Card key={label}>
+            <p className="mb-3 text-xs font-semibold text-text-muted">{label}</p>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <p className="text-[10px] text-text-subtle">Visitors</p>
+                <p className="text-lg font-bold text-foreground">{d?.visitors?.value?.toLocaleString() ?? '—'}</p>
+              </div>
+              <div>
+                <p className="text-[10px] text-text-subtle">Pageviews</p>
+                <p className="text-lg font-bold text-foreground">{d?.pageviews?.value?.toLocaleString() ?? '—'}</p>
+              </div>
+              <div>
+                <p className="text-[10px] text-text-subtle">Bounce Rate</p>
+                <p className="text-lg font-bold text-foreground">{d?.bounce_rate?.value != null ? `${d.bounce_rate.value}%` : '—'}</p>
+              </div>
+              <div>
+                <p className="text-[10px] text-text-subtle">Avg Duration</p>
+                <p className="text-lg font-bold text-foreground">{fmtDuration(d?.visit_duration?.value)}</p>
+              </div>
+            </div>
+          </Card>
+        ))}
+      </div>
+
+      {/* Breakdowns grid */}
+      <div className="grid gap-4 sm:grid-cols-3">
+        {/* Top Pages */}
+        {topPages?.length > 0 && (
+          <Card>
+            <h3 className="mb-3 text-xs font-semibold text-text-muted">Top Pages (7d)</h3>
+            <div className="space-y-2">
+              {topPages.map((p) => (
+                <div key={p.page} className="flex items-center justify-between text-xs">
+                  <span className="truncate text-foreground" style={{ maxWidth: '65%' }}>{p.page}</span>
+                  <span className="font-semibold" style={{ color: '#2EC4B6' }}>{p.visitors}</span>
+                </div>
+              ))}
+            </div>
+          </Card>
+        )}
+
+        {/* Top Sources */}
+        {topSources?.length > 0 && (
+          <Card>
+            <h3 className="mb-3 text-xs font-semibold text-text-muted">Top Sources (7d)</h3>
+            <div className="space-y-2">
+              {topSources.map((s) => (
+                <div key={s.source} className="flex items-center justify-between text-xs">
+                  <span className="truncate text-foreground" style={{ maxWidth: '65%' }}>{s.source}</span>
+                  <span className="font-semibold" style={{ color: '#E8A838' }}>{s.visitors}</span>
+                </div>
+              ))}
+            </div>
+          </Card>
+        )}
+
+        {/* Top Countries */}
+        {topCountries?.length > 0 && (
+          <Card>
+            <h3 className="mb-3 text-xs font-semibold text-text-muted">Top Countries (7d)</h3>
+            <div className="space-y-2">
+              {topCountries.map((c) => (
+                <div key={c.country} className="flex items-center justify-between text-xs">
+                  <span className="truncate text-foreground" style={{ maxWidth: '65%' }}>{c.country}</span>
+                  <span className="font-semibold" style={{ color: '#9B5DE5' }}>{c.visitors}</span>
+                </div>
+              ))}
+            </div>
+          </Card>
+        )}
+      </div>
+    </div>
   );
 }
 

@@ -158,7 +158,10 @@ export const useForumStore = create((set, get) => ({
       if (error) console.error('[forumStore] fetchHotThreads query error:', error);
 
       // Stale response — a newer request was fired, ignore this one
-      if (requestId !== _hotRequestId) return;
+      if (requestId !== _hotRequestId) {
+        set({ recentThreads: { items: get().recentThreads.items, loading: false } });
+        return;
+      }
 
       let threads = data || [];
 
@@ -174,7 +177,10 @@ export const useForumStore = create((set, get) => ({
         if (backfillError) console.error('[forumStore] fetchHotThreads backfill error:', backfillError);
 
         // Check staleness again after second await
-        if (requestId !== _hotRequestId) return;
+        if (requestId !== _hotRequestId) {
+          set({ recentThreads: { items: get().recentThreads.items, loading: false } });
+          return;
+        }
 
         (backfillData || []).forEach((t) => {
           if (!existingIds.has(t.id)) threads.push(t);
@@ -190,7 +196,10 @@ export const useForumStore = create((set, get) => ({
           .select('thread_id, vote_score, helpful_count')
           .in('thread_id', threadIds);
 
-        if (requestId !== _hotRequestId) return;
+        if (requestId !== _hotRequestId) {
+          set({ recentThreads: { items: get().recentThreads.items, loading: false } });
+          return;
+        }
 
         (replyData || []).forEach((r) => {
           if (!replyEngagement[r.thread_id]) replyEngagement[r.thread_id] = 0;
@@ -210,7 +219,10 @@ export const useForumStore = create((set, get) => ({
 
       set({ recentThreads: { items: threads, loading: false }, hotThreadsLoaded: true });
     } catch (err) {
-      if (requestId !== _hotRequestId) return;
+      if (requestId !== _hotRequestId) {
+        set({ recentThreads: { items: get().recentThreads.items, loading: false } });
+        return;
+      }
       console.error('[forumStore] fetchHotThreads error:', err);
       // Don't mark as loaded on error — allow retries
       set({ recentThreads: { items: get().recentThreads.items, loading: false } });
@@ -232,11 +244,17 @@ export const useForumStore = create((set, get) => ({
       if (error) console.error('[forumStore] fetchNewThreads query error:', error);
 
       // Stale response — a newer request was fired, ignore this one
-      if (requestId !== _newRequestId) return;
+      if (requestId !== _newRequestId) {
+        set({ newThreads: { items: get().newThreads.items, loading: false } });
+        return;
+      }
 
       set({ newThreads: { items: data || [], loading: false }, newThreadsLoaded: true });
     } catch (err) {
-      if (requestId !== _newRequestId) return;
+      if (requestId !== _newRequestId) {
+        set({ newThreads: { items: get().newThreads.items, loading: false } });
+        return;
+      }
       console.error('[forumStore] fetchNewThreads error:', err);
       set({ newThreads: { items: get().newThreads.items, loading: false } });
     }

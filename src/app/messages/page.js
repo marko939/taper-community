@@ -7,6 +7,7 @@ import { useMessageStore, STAFF_IDS } from '@/stores/messageStore';
 import { createClient } from '@/lib/supabase/client';
 import Avatar from '@/components/shared/Avatar';
 import { PageLoading } from '@/components/shared/LoadingSpinner';
+import { isMod } from '@/lib/blog';
 
 function timeAgo(dateStr) {
   const seconds = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000);
@@ -40,9 +41,52 @@ function MessagesContent() {
   const [newMessage, setNewMessage] = useState('');
   const [sending, setSending] = useState(false);
   const [mobileShowThread, setMobileShowThread] = useState(false);
+  const [showCompose, setShowCompose] = useState(false);
+  const [composeQuery, setComposeQuery] = useState('');
+  const [composeResults, setComposeResults] = useState([]);
+  const [composeSearching, setComposeSearching] = useState(false);
   const messagesContainerRef = useRef(null);
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
+  const composeInputRef = useRef(null);
+  const composeTimerRef = useRef(null);
+
+  const isCurrentMod = isMod(user?.id);
+
+  // Compose search — debounced profile lookup
+  useEffect(() => {
+    if (!showCompose || composeQuery.trim().length < 2) {
+      setComposeResults([]);
+      return;
+    }
+    clearTimeout(composeTimerRef.current);
+    composeTimerRef.current = setTimeout(async () => {
+      setComposeSearching(true);
+      try {
+        const supabase = createClient();
+        const { data } = await supabase
+          .from('profiles')
+          .select('id, display_name, avatar_url')
+          .ilike('display_name', `%${composeQuery.trim()}%`)
+          .neq('id', user.id)
+          .limit(10);
+        setComposeResults(data || []);
+      } catch { setComposeResults([]); }
+      setComposeSearching(false);
+    }, 300);
+    return () => clearTimeout(composeTimerRef.current);
+  }, [composeQuery, showCompose, user?.id]);
+
+  const selectComposeUser = (profile) => {
+    setSelectedPartner(profile);
+    setMobileShowThread(true);
+    fetchMessages(profile.id);
+    markConversationRead(profile.id);
+    router.replace(`/messages?to=${profile.id}`, { scroll: false });
+    setShowCompose(false);
+    setComposeQuery('');
+    setComposeResults([]);
+  };
 
   // Load conversations on mount
   useEffect(() => {
@@ -136,7 +180,65 @@ function MessagesContent() {
         >
           <div className="flex items-center justify-between border-b px-4 py-3" style={{ borderColor: 'var(--border-subtle)' }}>
             <p className="text-sm font-semibold text-foreground">Conversations</p>
+            {isCurrentMod && (
+              <button
+                onClick={() => { setShowCompose(true); setTimeout(() => composeInputRef.current?.focus(), 100); }}
+                className="flex h-7 w-7 items-center justify-center rounded-full transition hover:bg-purple-ghost"
+                style={{ color: 'var(--purple)' }}
+                title="New message"
+              >
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931z" />
+                </svg>
+              </button>
+            )}
           </div>
+
+          {/* Compose search overlay for mods */}
+          {showCompose && (
+            <div className="border-b px-3 py-2" style={{ borderColor: 'var(--border-subtle)', background: 'var(--background)' }}>
+              <div className="relative">
+                <input
+                  ref={composeInputRef}
+                  type="text"
+                  value={composeQuery}
+                  onChange={(e) => setComposeQuery(e.target.value)}
+                  placeholder="Search by name…"
+                  className="w-full rounded-lg border px-3 py-2 text-sm outline-none focus:ring-2"
+                  style={{ borderColor: 'var(--border-subtle)', background: 'var(--surface-strong)' }}
+                  onKeyDown={(e) => { if (e.key === 'Escape') { setShowCompose(false); setComposeQuery(''); setComposeResults([]); } }}
+                />
+                <button
+                  onClick={() => { setShowCompose(false); setComposeQuery(''); setComposeResults([]); }}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-text-subtle hover:text-foreground"
+                >
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              {composeSearching && (
+                <p className="mt-2 text-xs text-text-subtle">Searching…</p>
+              )}
+              {composeResults.length > 0 && (
+                <div className="mt-1 max-h-48 overflow-y-auto">
+                  {composeResults.map((p) => (
+                    <button
+                      key={p.id}
+                      onClick={() => selectComposeUser(p)}
+                      className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left transition hover:bg-purple-ghost"
+                    >
+                      <Avatar name={p.display_name} avatarUrl={p.avatar_url} size="xs" />
+                      <span className="text-sm text-foreground">{p.display_name}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+              {composeQuery.trim().length >= 2 && !composeSearching && composeResults.length === 0 && (
+                <p className="mt-2 text-xs text-text-subtle">No users found</p>
+              )}
+            </div>
+          )}
 
           <div className="overflow-y-auto" style={{ height: 'calc(100% - 49px)' }}>
             {loading && conversations.length === 0 ? (

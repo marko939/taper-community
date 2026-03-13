@@ -42,13 +42,14 @@ export async function GET() {
       fetchTopMembers(supabase),
       fetchThreadFunnel(supabase),
       fetchPageViews(supabase),
+      fetchPlausibleStats(),
     ]);
 
     const [
       topLine, signupSeries, periodComparisons, dailyActivity,
       retention, engagement, forumBreakdown, timeToFirstPost,
       peakHours, taperTracker, newVsReturning, churnRisk,
-      topMembers, threadFunnel, pageViews,
+      topMembers, threadFunnel, pageViews, plausible,
     ] = results.map(r => r.status === 'fulfilled' ? r.value : null);
 
     return NextResponse.json({
@@ -67,6 +68,7 @@ export async function GET() {
       topMembers,
       threadFunnel,
       pageViews,
+      plausible,
       fetchedAt: new Date().toISOString(),
     });
   } catch (err) {
@@ -583,13 +585,15 @@ async function fetchPageViews(supabase) {
     const d = v.created_at.slice(0, 10);
     dayMap[d] = (dayMap[d] || 0) + 1;
   }
-  // Pre-fill all 30 days with 0 so every day appears on the chart
-  const dailySeries = [];
+  // Build 30-day series, then trim leading zeros (before tracking started)
+  const fullSeries = [];
   for (let i = 29; i >= 0; i--) {
     const d = new Date(now - i * 86400000);
     const key = d.toISOString().slice(0, 10);
-    dailySeries.push({ date: key, views: dayMap[key] || 0 });
+    fullSeries.push({ date: key, views: dayMap[key] || 0 });
   }
+  const firstDataIdx = fullSeries.findIndex(d => d.views > 0);
+  const dailySeries = firstDataIdx >= 0 ? fullSeries.slice(firstDataIdx) : fullSeries;
 
   return {
     today: todayViews.count || 0,
@@ -608,4 +612,47 @@ function getStartOfWeek(date) {
   const day = d.getDay();
   const diff = d.getDate() - day + (day === 0 ? -6 : 1);
   return new Date(d.getFullYear(), d.getMonth(), diff);
+}
+
+// ── Plausible Analytics API ──
+const PLAUSIBLE_API = 'https://plausible.io/api/v1/stats';
+const PLAUSIBLE_KEY = process.env.PLAUSIBLE_API_KEY;
+const PLAUSIBLE_SITE = process.env.PLAUSIBLE_SITE_ID || 'taper.community';
+
+async function plausibleFetch(endpoint, params = {}) {
+  const url = new URL(`${PLAUSIBLE_API}/${endpoint}`);
+  url.searchParams.set('site_id', PLAUSIBLE_SITE);
+  for (const [k, v] of Object.entries(params)) url.searchParams.set(k, v);
+
+  const res = await fetch(url.toString(), {
+    headers: { Authorization: `Bearer ${PLAUSIBLE_KEY}` },
+  });
+  if (!res.ok) throw new Error(`Plausible ${endpoint}: ${res.status}`);
+  return res.json();
+}
+
+async function fetchPlausibleStats() {
+  if (!PLAUSIBLE_KEY) return null;
+
+  const [realtime, today, week, month, timeseries, topPages, topSources, topCountries] = await Promise.all([
+    plausibleFetch('realtime/visitors'),
+    plausibleFetch('aggregate', { period: 'day', metrics: 'visitors,pageviews,bounce_rate,visit_duration' }),
+    plausibleFetch('aggregate', { period: '7d', metrics: 'visitors,pageviews,bounce_rate,visit_duration' }),
+    plausibleFetch('aggregate', { period: '30d', metrics: 'visitors,pageviews,bounce_rate,visit_duration' }),
+    plausibleFetch('timeseries', { period: '30d', metrics: 'visitors,pageviews' }),
+    plausibleFetch('breakdown', { period: '7d', property: 'event:page', metrics: 'visitors,pageviews', limit: '10' }),
+    plausibleFetch('breakdown', { period: '7d', property: 'visit:source', metrics: 'visitors', limit: '10' }),
+    plausibleFetch('breakdown', { period: '7d', property: 'visit:country', metrics: 'visitors', limit: '10' }),
+  ]);
+
+  return {
+    realtime,
+    today: today.results,
+    week: week.results,
+    month: month.results,
+    timeseries: timeseries.results,
+    topPages: topPages.results,
+    topSources: topSources.results,
+    topCountries: topCountries.results,
+  };
 }
