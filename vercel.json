@@ -1,9 +1,5 @@
 {
-  "functions": {
-    "api/**/*.js": { "maxDuration": 60 }
-  },
   "crons": [
-    { "path": "/api/bot/run", "schedule": "0 6 * * *" },
     { "path": "/api/email/send", "schedule": "0 12 * * *" }
   ]
 }
