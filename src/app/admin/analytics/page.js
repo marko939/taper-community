@@ -134,17 +134,17 @@ export default function AnalyticsDashboard() {
           {/* Period Comparisons — DoD / WoW / MoM */}
           {data.periodComparisons && (
             <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-              <ComparisonTable title="Day over Day" data={data.periodComparisons.daily} labels={['Today', 'Yesterday', 'DoD']} />
-              <ComparisonTable title="Week over Week" data={data.periodComparisons.weekly} labels={['This Week', 'Last Week', 'WoW']} />
-              <ComparisonTable title="Month over Month" data={data.periodComparisons.monthly} labels={['This Month', 'Last Month', 'MoM']} />
+              <ComparisonTable title="Day over Day" data={data.periodComparisons.daily} labels={['Today', 'Yesterday', 'DoD']} historicalSeries={data.periodHistorical?.daily} />
+              <ComparisonTable title="Week over Week" data={data.periodComparisons.weekly} labels={['This Week', 'Last Week', 'WoW']} historicalSeries={data.periodHistorical?.weekly} />
+              <ComparisonTable title="Month over Month" data={data.periodComparisons.monthly} labels={['This Month', 'Last Month', 'MoM']} historicalSeries={data.periodHistorical?.monthly} />
             </div>
           )}
 
           {/* 13. QoQ / YoY */}
           {data.periodComparisons && (
             <div className="grid gap-4 sm:grid-cols-2">
-              <ComparisonTable title="Quarter over Quarter" data={data.periodComparisons.quarterly} labels={['This Quarter', 'Last Quarter', 'QoQ']} />
-              <ComparisonTable title="Year over Year" data={data.periodComparisons.yearly} labels={['This Year', 'Last Year', 'YoY']} />
+              <ComparisonTable title="Quarter over Quarter" data={data.periodComparisons.quarterly} labels={['This Quarter', 'Last Quarter', 'QoQ']} historicalSeries={data.periodHistorical?.quarterly} />
+              <ComparisonTable title="Year over Year" data={data.periodComparisons.yearly} labels={['This Year', 'Last Year', 'YoY']} historicalSeries={data.periodHistorical?.yearly} />
             </div>
           )}
         </>
@@ -233,18 +233,97 @@ function SignupBarChart({ series, range, setRange }) {
   );
 }
 
-function ComparisonTable({ title, data, labels }) {
+function ComparisonTable({ title, data, labels, historicalSeries }) {
   if (!data) return null;
+  const [expanded, setExpanded] = useState(false);
+  const [drillMetric, setDrillMetric] = useState(null); // e.g. 'signups'
 
-  const metrics = Object.entries(data).map(([key, val]) => ({
+  const metricKeys = Object.keys(data);
+  const metrics = metricKeys.map(key => ({
+    key,
     name: key.charAt(0).toUpperCase() + key.slice(1),
-    ...val,
+    ...data[key],
   }));
+
+  const chartData = metrics.map(m => ({
+    name: m.name,
+    [labels[0]]: m.current,
+    [labels[1]]: m.previous,
+  }));
+
+  const metricColors = { signups: '#5B2E91', posts: '#2EC4B6', comments: '#E8A838', active: '#34A853' };
+
+  // Build drill-down chart data from historical series
+  const drillChartData = drillMetric && historicalSeries
+    ? historicalSeries.map(d => ({ label: d.label, [drillMetric]: d[drillMetric] }))
+    : null;
+
+  const handleMetricClick = (key) => {
+    if (!historicalSeries) return;
+    setDrillMetric(drillMetric === key ? null : key);
+    if (!expanded) setExpanded(true);
+  };
 
   return (
     <Card>
-      <h3 className="mb-3 text-xs font-semibold uppercase tracking-wide text-text-muted">{title}</h3>
-      <table className="w-full text-xs">
+      <button
+        onClick={() => { setExpanded(!expanded); if (expanded) setDrillMetric(null); }}
+        className="flex w-full items-center justify-between text-left"
+      >
+        <h3 className="text-xs font-semibold uppercase tracking-wide text-text-muted">{title}</h3>
+        <svg
+          className="h-4 w-4 text-text-subtle transition-transform"
+          style={{ transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)' }}
+          fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+        </svg>
+      </button>
+
+      {expanded && !drillMetric && (
+        <div className="mt-4 h-48">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={chartData} barGap={4}>
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--border-subtle)" />
+              <XAxis dataKey="name" tick={{ fontSize: 11, fill: 'var(--text-subtle)' }} />
+              <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: 'var(--text-subtle)' }} />
+              <Tooltip contentStyle={tooltipStyle} />
+              <Legend wrapperStyle={{ fontSize: 11 }} />
+              <Bar dataKey={labels[0]} fill="#5B2E91" radius={[4, 4, 0, 0]} />
+              <Bar dataKey={labels[1]} fill="#B8A0D4" radius={[4, 4, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      )}
+
+      {expanded && drillMetric && drillChartData && (
+        <div className="mt-4">
+          <div className="mb-2 flex items-center justify-between">
+            <p className="text-xs font-semibold text-foreground">
+              {drillMetric.charAt(0).toUpperCase() + drillMetric.slice(1)} — Historical Trend
+            </p>
+            <button
+              onClick={() => setDrillMetric(null)}
+              className="rounded-lg px-2 py-0.5 text-[11px] font-medium text-purple transition hover:bg-purple-ghost"
+            >
+              ← Back to overview
+            </button>
+          </div>
+          <div className="h-48">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={drillChartData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--border-subtle)" />
+                <XAxis dataKey="label" tick={{ fontSize: 10, fill: 'var(--text-subtle)' }} />
+                <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: 'var(--text-subtle)' }} />
+                <Tooltip contentStyle={tooltipStyle} />
+                <Bar dataKey={drillMetric} fill={metricColors[drillMetric] || '#5B2E91'} radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      )}
+
+      <table className="mt-3 w-full text-xs">
         <thead>
           <tr className="border-b" style={{ borderColor: 'var(--border-subtle)' }}>
             <th className="pb-2 text-left font-medium text-text-subtle">Metric</th>
@@ -255,8 +334,24 @@ function ComparisonTable({ title, data, labels }) {
         </thead>
         <tbody>
           {metrics.map(m => (
-            <tr key={m.name} className="border-b last:border-0" style={{ borderColor: 'var(--border-light)' }}>
-              <td className="py-2 font-medium text-foreground">{m.name}</td>
+            <tr
+              key={m.key}
+              className="border-b last:border-0 transition"
+              style={{
+                borderColor: 'var(--border-light)',
+                cursor: historicalSeries ? 'pointer' : 'default',
+                background: drillMetric === m.key ? 'var(--purple-pale)' : 'transparent',
+              }}
+              onClick={() => handleMetricClick(m.key)}
+            >
+              <td className="py-2 font-medium text-foreground">
+                <span className="inline-flex items-center gap-1.5">
+                  {historicalSeries && (
+                    <span className="inline-block h-2 w-2 rounded-full" style={{ background: metricColors[m.key] || '#5B2E91' }} />
+                  )}
+                  {m.name}
+                </span>
+              </td>
               <td className="py-2 text-right font-semibold text-foreground">{m.current.toLocaleString()}</td>
               <td className="py-2 text-right text-text-muted">{m.previous.toLocaleString()}</td>
               <td className="py-2 text-right"><ChangeIndicator value={m.change} /></td>

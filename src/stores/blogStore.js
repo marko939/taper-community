@@ -5,6 +5,16 @@ import { createClient } from '@/lib/supabase/client';
 import { ensureSession } from '@/lib/ensureSession';
 import { useAuthStore } from './authStore';
 
+const DB_TIMEOUT_MS = 15_000;
+
+function withDbTimeout(promise) {
+  let timer;
+  const timeout = new Promise((_, reject) => {
+    timer = setTimeout(() => reject(new Error('Request timed out after 15 seconds. Please try again.')), DB_TIMEOUT_MS);
+  });
+  return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
+}
+
 export const useBlogStore = create((set, get) => ({
   posts: [],
   postsLoaded: false,
@@ -66,37 +76,53 @@ export const useBlogStore = create((set, get) => ({
   createPost: async (post) => {
     try {
       const supabase = createClient();
-      const { data, error } = await supabase
-        .from('blog_posts')
-        .insert(post)
-        .select()
-        .single();
+      let { data, error } = await withDbTimeout(
+        supabase.from('blog_posts').insert(post).select().single()
+      );
+
+      // If slug conflict, append timestamp and retry once
+      if (error && error.message?.includes('blog_posts_slug_key')) {
+        post.slug = `${post.slug}-${Date.now()}`;
+        ({ data, error } = await withDbTimeout(
+          supabase.from('blog_posts').insert(post).select().single()
+        ));
+      }
 
       if (error) throw error;
       set({ postsLoaded: false });
       return data;
     } catch (err) {
       console.error('[blogStore] createPost error:', err);
-      return null;
+      throw new Error(
+        err.message?.includes('timed out')
+          ? 'Post failed to submit — your draft has been saved. Please try again.'
+          : 'Failed to create post: ' + (err.message || 'Unknown error')
+      );
     }
   },
 
   updatePost: async (id, updates) => {
     try {
       const supabase = createClient();
-      const { data, error } = await supabase
-        .from('blog_posts')
-        .update({ ...updates, updated_at: new Date().toISOString() })
-        .eq('id', id)
-        .select()
-        .single();
+      const { data, error } = await withDbTimeout(
+        supabase
+          .from('blog_posts')
+          .update({ ...updates, updated_at: new Date().toISOString() })
+          .eq('id', id)
+          .select()
+          .single()
+      );
 
       if (error) throw error;
       set({ postsLoaded: false });
       return data;
     } catch (err) {
       console.error('[blogStore] updatePost error:', err);
-      return null;
+      throw new Error(
+        err.message?.includes('timed out')
+          ? 'Post failed to save — your draft has been saved. Please try again.'
+          : 'Failed to update post: ' + (err.message || 'Unknown error')
+      );
     }
   },
 
@@ -185,6 +211,40 @@ export const useBlogStore = create((set, get) => ({
     }
 
     return data;
+  },
+
+  editComment: async (blogPostId, commentId, newBody) => {
+    try {
+      await ensureSession();
+      const supabase = createClient();
+      const { data, error } = await supabase
+        .from('blog_comments')
+        .update({ body: newBody.trim() })
+        .eq('id', commentId)
+        .select('*, profiles:user_id(display_name, avatar_url, is_peer_advisor, drug, taper_stage, is_founding_member)')
+        .single();
+
+      if (error) throw error;
+
+      set((state) => {
+        const current = state.comments[blogPostId];
+        if (!current) return state;
+        return {
+          comments: {
+            ...state.comments,
+            [blogPostId]: {
+              ...current,
+              items: current.items.map((c) => (c.id === commentId ? data : c)),
+            },
+          },
+        };
+      });
+      return data;
+    } catch (err) {
+      console.error('[blogStore] editComment error:', err);
+      alert('Failed to edit comment: ' + (err.message || 'Unknown error'));
+      return null;
+    }
   },
 
   deleteComment: async (blogPostId, commentId) => {

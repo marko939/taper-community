@@ -6,7 +6,9 @@ import { getDrugsByClass } from '@/lib/drugs';
 import { DRUG_CATEGORY_GROUPS } from '@/lib/constants';
 import { DRUG_CLASS_ICONS as CATEGORY_ICONS } from '@/lib/forumCategories';
 import { useBlogStore } from '@/stores/blogStore';
-import GuideDownloadCTA from '@/components/shared/GuideDownloadCTA';
+import { useAuth } from '@/hooks/useAuth';
+import { isPrimaryAdmin } from '@/lib/blog';
+// import GuideDownloadCTA from '@/components/shared/GuideDownloadCTA';
 
 const TABS = [
   {
@@ -46,6 +48,8 @@ export default function ResourcesPage() {
   const drugsByClass = getDrugsByClass();
   const [expanded, setExpanded] = useState(null);
   const { posts, postsLoading, fetchPosts } = useBlogStore();
+  const { user } = useAuth();
+  const showAdminLink = isPrimaryAdmin(user?.id);
 
   useEffect(() => {
     fetchPosts();
@@ -160,6 +164,20 @@ export default function ResourcesPage() {
 
       {activeTab === 'blog' && (
         <div>
+          {showAdminLink && (
+            <div className="mb-4 flex justify-end">
+              <Link
+                href="/resources/blog/admin?new=1"
+                className="inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-sm font-semibold text-white no-underline transition hover:opacity-90"
+                style={{ background: 'var(--purple)' }}
+              >
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                </svg>
+                New Post
+              </Link>
+            </div>
+          )}
           {postsLoading ? (
             <div className="flex items-center justify-center py-16">
               <div className="h-8 w-8 animate-spin rounded-full border-2 border-purple border-t-transparent" />
@@ -243,8 +261,7 @@ export default function ResourcesPage() {
 
       {activeTab === 'resources' && (
         <div className="space-y-4">
-          {/* Taper Preparation Guide */}
-          <GuideDownloadCTA />
+          {/* Taper Preparation Guide — temporarily removed */}
 
           <div className="grid gap-4 sm:grid-cols-2">
           {/* Ashton Manual */}

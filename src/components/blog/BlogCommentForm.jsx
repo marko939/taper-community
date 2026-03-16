@@ -4,10 +4,9 @@ import { useState, useRef } from 'react';
 import Link from 'next/link';
 import { useAuthStore } from '@/stores/authStore';
 import { useBlogStore } from '@/stores/blogStore';
-import EmojiPickerButton from '@/components/shared/EmojiPickerButton';
-import FormattingToolbar, { makeBulletKeyHandler } from '@/components/shared/FormattingToolbar';
+import { makeBulletKeyHandler } from '@/components/shared/FormattingToolbar';
 
-export default function BlogCommentForm({ blogPostId }) {
+export default function BlogCommentForm({ blogPostId, quotedText, onQuoteUsed }) {
   const [body, setBody] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -34,10 +33,19 @@ export default function BlogCommentForm({ blogPostId }) {
     setLoading(true);
     setError('');
 
+    // Prepend quoted text as a blockquote if present
+    const fullBody = quotedText
+      ? `> ${quotedText}\n\n${body}`
+      : body;
+
     try {
-      const result = await addComment(blogPostId, body);
-      if (result) setBody('');
-      else setError('Comment could not be posted. Please try again.');
+      const result = await addComment(blogPostId, fullBody);
+      if (result) {
+        setBody('');
+        if (onQuoteUsed) onQuoteUsed();
+      } else {
+        setError('Comment could not be posted. Please try again.');
+      }
     } catch (err) {
       setError(err?.message || 'Failed to post comment. Please try again.');
     } finally {
@@ -46,32 +54,31 @@ export default function BlogCommentForm({ blogPostId }) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="card">
-      <h3 className="mb-3 text-sm font-semibold text-foreground">Leave a Comment</h3>
-      <FormattingToolbar textareaRef={textareaRef} value={body} onChange={setBody} />
-      <textarea
-        ref={textareaRef}
-        value={body}
-        onChange={(e) => setBody(e.target.value)}
-        onKeyDown={bulletKeyHandler}
-        placeholder="Share your thoughts on this article..."
-        rows={3}
-        className="textarea rounded-t-none"
-        required
-      />
-      {error && (
-        <p className="mt-2 rounded-lg bg-red-50 px-4 py-2 text-sm text-red-600">{error}</p>
-      )}
-      <div className="mt-3 flex items-center justify-end gap-2">
-        <EmojiPickerButton textareaRef={textareaRef} value={body} onChange={setBody} />
-        <button
-          type="submit"
-          disabled={loading || !body.trim()}
-          className="btn btn-primary disabled:opacity-50"
-        >
-          {loading ? 'Posting...' : 'Post Comment'}
-        </button>
+    <form onSubmit={handleSubmit} className="flex items-end gap-2">
+      <div className="min-w-0 flex-1">
+        <textarea
+          ref={textareaRef}
+          value={body}
+          onChange={(e) => setBody(e.target.value)}
+          onKeyDown={bulletKeyHandler}
+          placeholder="Share your thoughts on this article..."
+          rows={1}
+          className="textarea w-full resize-none"
+          style={{ maxHeight: '120px' }}
+          onInput={(e) => { e.target.style.height = 'auto'; e.target.style.height = Math.min(e.target.scrollHeight, 120) + 'px'; }}
+          required
+        />
+        {error && (
+          <p className="mt-1 text-xs text-red-600">{error}</p>
+        )}
       </div>
+      <button
+        type="submit"
+        disabled={loading || !body.trim()}
+        className="btn btn-primary shrink-0 disabled:opacity-50"
+      >
+        {loading ? 'Posting...' : 'Post'}
+      </button>
     </form>
   );
 }

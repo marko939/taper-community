@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import Badge from '@/components/shared/Badge';
 import PharmacokineticPanel from '@/components/drugs/PharmacokineticPanel';
-import GuideDownloadCTA from '@/components/shared/GuideDownloadCTA';
+// import GuideDownloadCTA from '@/components/shared/GuideDownloadCTA';
 
 function ExpandableList({ title, items, variant = 'default' }) {
   const [expanded, setExpanded] = useState(false);
@@ -295,8 +295,7 @@ export default function DrugProfileCard({ drug }) {
         </div>
       )}
 
-      {/* ── Guide Download CTA ── */}
-      <GuideDownloadCTA variant="inline" />
+      {/* ── Guide Download CTA — temporarily removed ── */}
 
       {/* ── Pharmacokinetics (ADME) — at bottom ── */}
       <PharmacokineticPanel drug={drug} />

@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useAuthStore } from '@/stores/authStore';
-import GuideDownloadCTA from '@/components/shared/GuideDownloadCTA';
+// import GuideDownloadCTA from '@/components/shared/GuideDownloadCTA';
 
 /*
   TaperCommunity Education Portal
@@ -956,10 +956,7 @@ export default function TaperCommunityEducation() {
               ) : <div />}
             </div>
 
-            {/* Guide Download CTA */}
-            <div style={{ marginTop: 40 }}>
-              <GuideDownloadCTA variant="inline" />
-            </div>
+            {/* Guide Download CTA — temporarily removed */}
           </div>
         </main>
       </div>

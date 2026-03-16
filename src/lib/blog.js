@@ -1,5 +1,6 @@
 // Primary admin user ID — used for DM routing and profile badge display
 export const ADMIN_USER_ID = '8572637a-2109-4471-bcb4-3163d04094d0';
+export const isPrimaryAdmin = (uid) => uid === ADMIN_USER_ID;
 
 // Analytics admin IDs — can access the analytics dashboard
 export const ADMIN_IDS = [

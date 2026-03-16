@@ -23,12 +23,17 @@ function timeAgo(dateStr) {
 function CommentCard({ comment, blogPostId }) {
   const currentUser = useAuthStore((s) => s.user);
   const deleteComment = useBlogStore((s) => s.deleteComment);
+  const editComment = useBlogStore((s) => s.editComment);
   const isOwner = currentUser?.id === comment.user_id;
   const isAdmin = isMod(currentUser?.id);
   const canDelete = isOwner || isAdmin;
+  const canEdit = isOwner || isAdmin;
 
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [editBody, setEditBody] = useState(comment.body);
+  const [editLoading, setEditLoading] = useState(false);
 
   const displayName = comment.profiles?.display_name || 'Anonymous';
 
@@ -36,6 +41,14 @@ function CommentCard({ comment, blogPostId }) {
     setDeleteLoading(true);
     await deleteComment(blogPostId, comment.id);
     setDeleteLoading(false);
+  };
+
+  const handleEdit = async () => {
+    if (!editBody.trim()) return;
+    setEditLoading(true);
+    const result = await editComment(blogPostId, comment.id, editBody);
+    setEditLoading(false);
+    if (result) setEditing(false);
   };
 
   return (
@@ -55,19 +68,59 @@ function CommentCard({ comment, blogPostId }) {
         </p>
       )}
 
-      <div className="mt-3 whitespace-pre-wrap text-sm leading-relaxed text-text-muted">
-        {comment.body}
-      </div>
+      {editing ? (
+        <div className="mt-3 space-y-2">
+          <textarea
+            value={editBody}
+            onChange={(e) => setEditBody(e.target.value)}
+            rows={3}
+            className="w-full rounded-xl border px-3 py-2 text-sm text-foreground outline-none transition focus:border-purple"
+            style={{ borderColor: 'var(--border-subtle)', background: 'var(--surface-strong)' }}
+          />
+          <div className="flex gap-2">
+            <button
+              onClick={handleEdit}
+              disabled={editLoading || !editBody.trim()}
+              className="rounded-lg px-3 py-1.5 text-xs font-semibold text-white transition hover:opacity-90 disabled:opacity-50"
+              style={{ background: 'var(--purple)' }}
+            >
+              {editLoading ? 'Saving...' : 'Save'}
+            </button>
+            <button
+              onClick={() => { setEditing(false); setEditBody(comment.body); }}
+              className="rounded-lg border px-3 py-1.5 text-xs font-medium"
+              style={{ borderColor: 'var(--border-subtle)', color: 'var(--text-muted)' }}
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div className="mt-3 whitespace-pre-wrap text-sm leading-relaxed text-text-muted">
+          {comment.body}
+        </div>
+      )}
 
-      {canDelete && !showDeleteConfirm && (
-        <div className="mt-2 flex justify-end">
-          <button
-            type="button"
-            onClick={() => setShowDeleteConfirm(true)}
-            className="rounded px-1.5 py-0.5 text-[11px] text-text-subtle transition hover:bg-red-50 hover:text-red-500"
-          >
-            Delete
-          </button>
+      {!editing && (canEdit || canDelete) && !showDeleteConfirm && (
+        <div className="mt-2 flex justify-end gap-1">
+          {canEdit && (
+            <button
+              type="button"
+              onClick={() => setEditing(true)}
+              className="rounded px-1.5 py-0.5 text-[11px] text-text-subtle transition hover:bg-purple-ghost hover:text-purple"
+            >
+              Edit
+            </button>
+          )}
+          {canDelete && (
+            <button
+              type="button"
+              onClick={() => setShowDeleteConfirm(true)}
+              className="rounded px-1.5 py-0.5 text-[11px] text-text-subtle transition hover:bg-red-50 hover:text-red-500"
+            >
+              Delete
+            </button>
+          )}
         </div>
       )}
 

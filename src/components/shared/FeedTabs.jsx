@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useForumStore } from '@/stores/forumStore';
 import { useAuthStore } from '@/stores/authStore';
 import { useFollowStore } from '@/stores/followStore';
+import { useBlogStore } from '@/stores/blogStore';
 import { GENERAL_FORUMS } from '@/lib/forumCategories';
 import FollowButton from '@/components/shared/FollowButton';
 
@@ -85,6 +86,61 @@ function ThreadRow({ thread, rank }) {
   );
 }
 
+function BlogPostRow({ post }) {
+  return (
+    <Link
+      href={`/resources/blog/${post.slug}`}
+      className="group flex items-center gap-4 bg-surface-strong p-5 no-underline transition hover:bg-purple-ghost/50"
+    >
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center gap-2">
+          <span
+            className="shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold"
+            style={{ background: 'var(--purple)', color: '#fff' }}
+          >
+            Blog
+          </span>
+          <p className="font-semibold text-foreground transition group-hover:text-purple">
+            {post.title}
+          </p>
+        </div>
+        {post.excerpt && (
+          <p className="mt-1 line-clamp-1 text-xs text-text-muted">{post.excerpt}</p>
+        )}
+        <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-text-subtle">
+          <span>{timeAgo(post.created_at)}</span>
+          {(post.comment_count ?? 0) > 0 && (
+            <>
+              <span>·</span>
+              <span>{post.comment_count} comments</span>
+            </>
+          )}
+          {post.tags?.length > 0 && (
+            <>
+              <span>·</span>
+              {post.tags.slice(0, 2).map((tag) => (
+                <span
+                  key={tag}
+                  className="rounded-full px-2 py-0.5 text-[11px] font-semibold"
+                  style={{ background: 'var(--purple-ghost)', color: 'var(--purple)' }}
+                >
+                  {tag}
+                </span>
+              ))}
+            </>
+          )}
+        </div>
+      </div>
+      <svg
+        className="h-4 w-4 shrink-0 text-text-subtle transition group-hover:text-purple"
+        fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"
+      >
+        <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+      </svg>
+    </Link>
+  );
+}
+
 export default function FeedTabs({ activeTab: controlledTab, onTabChange, useUrlParams = false }) {
   const user = useAuthStore((s) => s.user);
   const recentThreads = useForumStore((s) => s.recentThreads);
@@ -96,6 +152,9 @@ export default function FeedTabs({ activeTab: controlledTab, onTabChange, useUrl
   const followingLoaded = useFollowStore((s) => s.followingLoaded);
   const fetchFollowing = useFollowStore((s) => s.fetchFollowing);
   const fetchFollowedThreads = useFollowStore((s) => s.fetchFollowedThreads);
+
+  const blogPosts = useBlogStore((s) => s.posts);
+  const fetchBlogPosts = useBlogStore((s) => s.fetchPosts);
 
   const [localTab, setLocalTab] = useState('new');
   const activeTab = controlledTab ?? localTab;
@@ -122,7 +181,8 @@ export default function FeedTabs({ activeTab: controlledTab, onTabChange, useUrl
   useEffect(() => {
     fetchHotThreads(10);
     fetchNewThreads(10);
-  }, [fetchHotThreads, fetchNewThreads]);
+    fetchBlogPosts();
+  }, [fetchHotThreads, fetchNewThreads, fetchBlogPosts]);
 
   useEffect(() => {
     if (user?.id) fetchFollowing(user.id);
@@ -156,15 +216,28 @@ export default function FeedTabs({ activeTab: controlledTab, onTabChange, useUrl
   }, [onTabChange, fetchForTab]);
 
   // Safety timeout — if loading is stuck for 10 seconds, force reset
-  let currentThreads, currentLoading;
+  let currentItems, currentLoading;
   if (activeTab === 'hot') {
-    currentThreads = recentThreads.items || [];
+    // Merge hot threads + recent blog posts (last 7 days) into Top This Week
+    const hotThreads = (recentThreads.items || []).map((t) => ({ ...t, _type: 'thread' }));
+    const oneWeekAgo = new Date(Date.now() - 7 * 86400000);
+    const recentBlogs = (blogPosts || [])
+      .filter((p) => new Date(p.created_at) >= oneWeekAgo)
+      .map((p) => ({ ...p, _type: 'blog' }));
+    currentItems = [...hotThreads, ...recentBlogs].sort(
+      (a, b) => new Date(b.created_at) - new Date(a.created_at)
+    );
     currentLoading = recentThreads.loading;
   } else if (activeTab === 'new') {
-    currentThreads = newThreads.items || [];
+    // Merge threads + blog posts sorted by created_at desc
+    const threads = (newThreads.items || []).map((t) => ({ ...t, _type: 'thread' }));
+    const blogs = (blogPosts || []).map((p) => ({ ...p, _type: 'blog' }));
+    currentItems = [...threads, ...blogs].sort(
+      (a, b) => new Date(b.created_at) - new Date(a.created_at)
+    );
     currentLoading = newThreads.loading;
   } else {
-    currentThreads = followedThreads.items || [];
+    currentItems = (followedThreads.items || []).map((t) => ({ ...t, _type: 'thread' }));
     currentLoading = followedThreads.loading;
   }
 
@@ -201,8 +274,8 @@ export default function FeedTabs({ activeTab: controlledTab, onTabChange, useUrl
     setTimeout(() => setShowingMore(false), 300);
   }, [showingMore]);
 
-  const visibleItems = expanded ? currentThreads.slice(0, 10) : currentThreads.slice(0, 5);
-  const canExpand = currentThreads.length > 5 && !expanded;
+  const visibleItems = expanded ? currentItems.slice(0, 10) : currentItems.slice(0, 5);
+  const canExpand = currentItems.length > 5 && !expanded;
 
   const tabs = [
     { key: 'new', label: 'New', subtitle: 'Latest threads' },
@@ -245,17 +318,21 @@ export default function FeedTabs({ activeTab: controlledTab, onTabChange, useUrl
           You are not following anyone yet. Follow members to see their posts here.{' '}
           <Link href="/forums/introductions" className="font-medium" style={{ color: 'var(--purple)' }}>Browse Introductions</Link>
         </div>
-      ) : currentThreads.length === 0 ? (
+      ) : currentItems.length === 0 ? (
         <div className="p-8 text-center text-sm text-text-muted">No threads yet.</div>
       ) : (
         <>
           <div className="divide-y" style={{ borderColor: 'var(--border-subtle)' }}>
-            {visibleItems.map((thread, i) => (
-              <ThreadRow
-                key={thread.id}
-                thread={thread}
-                rank={activeTab === 'hot' ? i : null}
-              />
+            {visibleItems.map((item, i) => (
+              item._type === 'blog' ? (
+                <BlogPostRow key={`blog-${item.id}`} post={item} />
+              ) : (
+                <ThreadRow
+                  key={item.id}
+                  thread={item}
+                  rank={activeTab === 'hot' ? i : null}
+                />
+              )
             ))}
           </div>
           {canExpand && (

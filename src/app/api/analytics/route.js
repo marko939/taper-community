@@ -30,6 +30,7 @@ export async function GET() {
       fetchTopLineStats(supabase),
       fetchSignupSeries(supabase),
       fetchPeriodComparisons(supabase),
+      fetchPeriodHistoricalSeries(supabase),
       fetchDailyActivity(supabase),
       fetchRetention(supabase),
       fetchEngagement(supabase),
@@ -46,7 +47,7 @@ export async function GET() {
     ]);
 
     const [
-      topLine, signupSeries, periodComparisons, dailyActivity,
+      topLine, signupSeries, periodComparisons, periodHistorical, dailyActivity,
       retention, engagement, forumBreakdown, timeToFirstPost,
       peakHours, taperTracker, newVsReturning, churnRisk,
       topMembers, threadFunnel, pageViews, plausible,
@@ -56,6 +57,7 @@ export async function GET() {
       topLine,
       signupSeries,
       periodComparisons,
+      periodHistorical,
       dailyActivity,
       retention,
       engagement,
@@ -235,6 +237,104 @@ async function fetchPeriodComparisons(supabase) {
       posts: { current: thisYearPosts, previous: lastYearPosts, change: pctChange(thisYearPosts, lastYearPosts) },
       comments: { current: thisYearComments, previous: lastYearComments, change: pctChange(thisYearComments, lastYearComments) },
     },
+  };
+}
+
+// ── Section 3b: Historical Period Series (for drill-down charts) ──
+async function fetchPeriodHistoricalSeries(supabase) {
+  const now = new Date();
+
+  // Helper: get start of week (Monday)
+  function weekStart(date) {
+    const d = new Date(date);
+    const day = d.getDay();
+    const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+    return new Date(d.getFullYear(), d.getMonth(), diff);
+  }
+
+  // ── Build buckets ──
+
+  // Daily: last 14 days
+  const days = [];
+  for (let i = 13; i >= 0; i--) {
+    const start = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i);
+    const end = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i + 1);
+    const label = start.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    days.push({ start, end, label });
+  }
+
+  // Weekly: last 12 weeks
+  const weeks = [];
+  const ws = weekStart(now);
+  for (let i = 11; i >= 0; i--) {
+    const start = new Date(ws.getTime() - i * 7 * 86400000);
+    const end = new Date(start.getTime() + 7 * 86400000);
+    const label = start.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    weeks.push({ start, end, label });
+  }
+
+  // Monthly: last 12 months
+  const months = [];
+  for (let i = 11; i >= 0; i--) {
+    const start = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const end = new Date(now.getFullYear(), now.getMonth() - i + 1, 1);
+    const label = start.toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
+    months.push({ start, end, label });
+  }
+
+  // Quarterly: last 8 quarters
+  const quarters = [];
+  const curQ = Math.floor(now.getMonth() / 3);
+  for (let i = 7; i >= 0; i--) {
+    const qMonth = curQ * 3 - i * 3;
+    const start = new Date(now.getFullYear(), now.getMonth() - (now.getMonth() % 3) - i * 3, 1);
+    const end = new Date(start.getFullYear(), start.getMonth() + 3, 1);
+    const qNum = Math.floor(start.getMonth() / 3) + 1;
+    const label = `Q${qNum} ${start.getFullYear().toString().slice(2)}`;
+    quarters.push({ start, end, label });
+  }
+
+  // Yearly: last 3 years
+  const years = [];
+  for (let i = 2; i >= 0; i--) {
+    const start = new Date(now.getFullYear() - i, 0, 1);
+    const end = new Date(now.getFullYear() - i + 1, 0, 1);
+    const label = start.getFullYear().toString();
+    years.push({ start, end, label });
+  }
+
+  // Fetch all raw data for the full range (covers yearly = 3 years back)
+  const rangeStart = years[0].start.toISOString();
+  const [allThreads, allReplies, allProfiles] = await Promise.all([
+    supabase.from('threads').select('user_id, created_at').gte('created_at', rangeStart),
+    supabase.from('replies').select('user_id, created_at').gte('created_at', rangeStart),
+    supabase.from('profiles').select('id, joined_at').gte('joined_at', rangeStart),
+  ]);
+
+  function bucketize(buckets, threads, replies, profiles) {
+    return buckets.map(b => {
+      const s = b.start.getTime();
+      const e = b.end.getTime();
+      const bThreads = (threads.data || []).filter(t => { const ts = new Date(t.created_at).getTime(); return ts >= s && ts < e; });
+      const bReplies = (replies.data || []).filter(r => { const ts = new Date(r.created_at).getTime(); return ts >= s && ts < e; });
+      const bSignups = (profiles.data || []).filter(p => { const ts = new Date(p.joined_at).getTime(); return ts >= s && ts < e; });
+      const activeSet = new Set([...bThreads.map(t => t.user_id), ...bReplies.map(r => r.user_id)]);
+      return {
+        label: b.label,
+        signups: bSignups.length,
+        posts: bThreads.length,
+        comments: bReplies.length,
+        active: activeSet.size,
+      };
+    });
+  }
+
+  return {
+    daily: bucketize(days, allThreads, allReplies, allProfiles),
+    weekly: bucketize(weeks, allThreads, allReplies, allProfiles),
+    monthly: bucketize(months, allThreads, allReplies, allProfiles),
+    quarterly: bucketize(quarters, allThreads, allReplies, allProfiles),
+    yearly: bucketize(years, allThreads, allReplies, allProfiles),
   };
 }
 
