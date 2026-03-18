@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import Avatar from '@/components/shared/Avatar';
-import { PeerAdvisorBadge } from '@/components/shared/Badge';
+import { PeerAdvisorBadge, StaffBadge } from '@/components/shared/Badge';
 import { useAuthStore } from '@/stores/authStore';
 import { useBlogStore } from '@/stores/blogStore';
 import { isMod } from '@/lib/blog';
@@ -58,6 +58,7 @@ function CommentCard({ comment, blogPostId }) {
         <Link href={`/profile/${comment.user_id}`} className="font-semibold text-foreground no-underline hover:text-accent-blue">
           {displayName}
         </Link>
+        {isMod(comment.user_id) && <StaffBadge />}
         {comment.profiles?.is_peer_advisor && <PeerAdvisorBadge />}
         <span className="text-xs text-text-subtle">{timeAgo(comment.created_at)}</span>
       </div>

@@ -2,7 +2,8 @@
 
 import { memo } from 'react';
 import Link from 'next/link';
-import Badge, { PeerAdvisorBadge } from '@/components/shared/Badge';
+import Badge, { PeerAdvisorBadge, StaffBadge } from '@/components/shared/Badge';
+import { isMod } from '@/lib/blog';
 import Avatar from '@/components/shared/Avatar';
 import VoteButton from '@/components/shared/VoteButton';
 import FollowButton from '@/components/shared/FollowButton';
@@ -60,6 +61,7 @@ function ThreadCard({ thread }) {
           <Link href={`/profile/${user_id}`} className="font-medium no-underline transition hover:text-purple" style={{ color: 'var(--text-muted)' }}>
             {displayName}
           </Link>
+          {isMod(user_id) && <StaffBadge />}
           {profiles?.is_peer_advisor && <PeerAdvisorBadge />}
           <FollowButton targetUserId={user_id} />
         </div>

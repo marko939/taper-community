@@ -8,7 +8,7 @@ import { useProfileStore } from '@/stores/profileStore';
 import { useJournalStore } from '@/stores/journalStore';
 import { useFollowStore } from '@/stores/followStore';
 import Avatar from '@/components/shared/Avatar';
-import { PeerAdvisorBadge } from '@/components/shared/Badge';
+import { PeerAdvisorBadge, StaffBadge } from '@/components/shared/Badge';
 import DrugSignature from '@/components/shared/DrugSignature';
 import JournalEntryCard from '@/components/journal/JournalEntryCard';
 import { PageLoading } from '@/components/shared/LoadingSpinner';
@@ -118,6 +118,7 @@ export default function ProfilePage() {
           <div className="flex-1">
             <div className="flex items-center gap-2">
               <h1 className="text-2xl font-semibold text-foreground">{profile.display_name}</h1>
+              {isMod(userId) && <StaffBadge />}
               {profile.is_peer_advisor && <PeerAdvisorBadge />}
             </div>
             {profile.location && (
