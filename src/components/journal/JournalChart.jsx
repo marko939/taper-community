@@ -104,6 +104,7 @@ export default function JournalChart({ entries = [], assessments = [] }) {
 
     const data = [...entries]
       .sort((a, b) => new Date(a.date) - new Date(b.date))
+      .slice(-10) // Show only last 10 data points on chart
       .map((entry) => ({
         date: new Date(entry.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
         rawDate: entry.date,
@@ -150,7 +151,7 @@ export default function JournalChart({ entries = [], assessments = [] }) {
 
   return (
     <div>
-      <div className="mb-3 flex items-center gap-4">
+      <div className="mb-3 flex items-center gap-4 px-4 sm:px-0">
         <div className="flex items-center gap-1.5">
           <span className="inline-block h-2 w-2 rounded-full" style={{ background: '#5B2E91' }} />
           <span className="text-[11px] text-text-subtle">Dose (mg)</span>
@@ -160,28 +161,28 @@ export default function JournalChart({ entries = [], assessments = [] }) {
           <span className="text-[11px] text-text-subtle">Mood (/10)</span>
         </div>
       </div>
-      <ResponsiveContainer width="100%" height={300}>
-        <ComposedChart data={chartData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
+      <ResponsiveContainer width="100%" height={typeof window !== 'undefined' && window.innerWidth < 640 ? 220 : 300}>
+        <ComposedChart data={chartData} margin={typeof window !== 'undefined' && window.innerWidth < 640 ? { top: 5, right: -25, left: -25, bottom: 0 } : { top: 5, right: 10, left: 0, bottom: 5 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="#E8E5F0" />
           <XAxis
             dataKey="date"
-            tick={{ fill: '#7C7591', fontSize: 12 }}
+            tick={{ fill: '#7C7591', fontSize: typeof window !== 'undefined' && window.innerWidth < 640 ? 10 : 12 }}
             axisLine={{ stroke: '#E8E5F0' }}
           />
           <YAxis
             yAxisId="dose"
             orientation="left"
-            tick={{ fill: '#7C7591', fontSize: 12 }}
+            tick={{ fill: '#7C7591', fontSize: typeof window !== 'undefined' && window.innerWidth < 640 ? 10 : 12 }}
             axisLine={{ stroke: '#E8E5F0' }}
-            label={{ value: 'Dose (mg)', angle: -90, position: 'insideLeft', fill: '#7C7591', fontSize: 11 }}
+            label={typeof window !== 'undefined' && window.innerWidth < 640 ? undefined : { value: 'Dose (mg)', angle: -90, position: 'insideLeft', fill: '#7C7591', fontSize: 11 }}
           />
           <YAxis
             yAxisId="mood"
             orientation="right"
             domain={[1, 10]}
-            tick={{ fill: '#7C7591', fontSize: 12 }}
+            tick={{ fill: '#7C7591', fontSize: typeof window !== 'undefined' && window.innerWidth < 640 ? 10 : 12 }}
             axisLine={{ stroke: '#E8E5F0' }}
-            label={{ value: 'Mood', angle: 90, position: 'insideRight', fill: '#7C7591', fontSize: 11 }}
+            label={typeof window !== 'undefined' && window.innerWidth < 640 ? undefined : { value: 'Mood', angle: 90, position: 'insideRight', fill: '#7C7591', fontSize: 11 }}
           />
           <Tooltip content={<CustomTooltip />} />
           <Line
@@ -191,7 +192,7 @@ export default function JournalChart({ entries = [], assessments = [] }) {
             name="Dose"
             stroke="#5B2E91"
             strokeWidth={2}
-            dot={{ fill: '#5B2E91', r: 4 }}
+            dot={{ fill: '#5B2E91', r: typeof window !== 'undefined' && window.innerWidth < 640 ? 3 : 4 }}
             connectNulls
           />
           <Area

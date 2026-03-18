@@ -57,10 +57,10 @@ export default function DrugProfileCard({ drug }) {
       <div className="glass-panel overflow-hidden">
         <div className="h-1.5 w-full" style={{ background: `linear-gradient(90deg, var(--purple), var(--purple-light))` }} />
 
-        <div className="p-6 sm:p-8">
+        <div className="p-4 sm:p-6 lg:p-8">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div>
-              <h1 className="font-serif text-3xl font-semibold text-foreground sm:text-4xl">
+              <h1 className="font-serif text-2xl font-semibold text-foreground sm:text-3xl lg:text-4xl">
                 {drug.name} Tapering Guide
               </h1>
               <p className="mt-1 text-lg text-text-muted">{drug.generic}</p>

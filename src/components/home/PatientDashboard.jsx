@@ -34,7 +34,7 @@ export default function PatientDashboard({ user, profile }) {
     <div className="space-y-6">
       {/* Welcome + Status Card */}
       <div
-        className="relative overflow-hidden rounded-[24px] p-6"
+        className="relative overflow-hidden rounded-2xl p-4 sm:rounded-[24px] sm:p-6"
         style={{
           boxShadow: '0 12px 48px rgba(91, 46, 145, 0.25), 0 4px 16px rgba(0,0,0,0.1)',
         }}
@@ -53,22 +53,22 @@ export default function PatientDashboard({ user, profile }) {
             <div className="mt-6 h-20 animate-pulse rounded-xl bg-white/10" />
           ) : lastEntry ? (
             <>
-              <div className="mt-6 flex gap-3">
+              <div className="mt-4 grid grid-cols-2 gap-2 sm:mt-6 sm:flex sm:gap-3">
                 {lastEntry.drug && (
-                  <div className="flex-1 rounded-xl p-4" style={{ background: 'rgba(255,255,255,0.12)', backdropFilter: 'blur(12px)' }}>
+                  <div className="rounded-xl p-3 sm:flex-1 sm:p-4" style={{ background: 'rgba(255,255,255,0.12)', backdropFilter: 'blur(12px)' }}>
                     <p className="text-[10px] font-bold uppercase tracking-wider text-white/50">Current Dose</p>
-                    <p className="mt-1 text-lg font-bold text-white">{lastEntry.current_dose || '—'}</p>
-                    <p className="text-xs text-white/70">{lastEntry.drug}</p>
+                    <p className="mt-1 text-base font-bold text-white sm:text-lg">{lastEntry.current_dose || '—'}</p>
+                    <p className="text-[11px] text-white/70">{lastEntry.drug}</p>
                   </div>
                 )}
-                <div className="flex-1 rounded-xl p-4" style={{ background: 'rgba(255,255,255,0.12)', backdropFilter: 'blur(12px)' }}>
+                <div className="rounded-xl p-3 sm:flex-1 sm:p-4" style={{ background: 'rgba(255,255,255,0.12)', backdropFilter: 'blur(12px)' }}>
                   <p className="text-[10px] font-bold uppercase tracking-wider text-white/50">Mood</p>
-                  <div className="mt-1 flex items-baseline gap-2">
-                    <span className="text-lg font-bold" style={{ color: moodColor }}>{lastEntry.mood_score}/10</span>
-                    <span className="text-xs text-white/70">{MOOD_LABELS[lastEntry.mood_score]}</span>
+                  <div className="mt-1 flex items-baseline gap-1.5">
+                    <span className="text-base font-bold sm:text-lg" style={{ color: moodColor }}>{lastEntry.mood_score}/10</span>
+                    <span className="text-[11px] text-white/70">{MOOD_LABELS[lastEntry.mood_score]}</span>
                   </div>
                 </div>
-                <div className="flex-1 rounded-xl p-4" style={{ background: 'rgba(255,255,255,0.12)', backdropFilter: 'blur(12px)' }}>
+                <div className="col-span-2 rounded-xl p-3 sm:col-span-1 sm:flex-1 sm:p-4" style={{ background: 'rgba(255,255,255,0.12)', backdropFilter: 'blur(12px)' }}>
                   <p className="text-[10px] font-bold uppercase tracking-wider text-white/50">Symptoms</p>
                   {lastEntry.symptoms && lastEntry.symptoms.length > 0 ? (
                     <div className="mt-1.5 flex flex-wrap gap-1">
@@ -86,19 +86,19 @@ export default function PatientDashboard({ user, profile }) {
                   )}
                 </div>
               </div>
-              <div className="mt-4 flex items-center justify-between rounded-xl px-5 py-3" style={{ background: 'rgba(255,255,255,0.1)' }}>
-                <p className="text-sm text-white/80">
+              <div className="mt-3 flex items-center justify-between gap-2 rounded-xl px-3 py-2.5 sm:mt-4 sm:px-5 sm:py-3" style={{ background: 'rgba(255,255,255,0.1)' }}>
+                <p className="min-w-0 text-xs text-white/80 sm:text-sm">
                   {daysAgo === 0
                     ? 'You checked in today'
-                    : `Your last check-in was ${daysAgo} day${daysAgo !== 1 ? 's' : ''} ago`}
+                    : `Last check-in ${daysAgo}d ago`}
                 </p>
                 {daysAgo > 0 && (
                   <Link
                     href="/journal"
-                    className="rounded-lg px-4 py-2 text-xs font-bold text-purple no-underline transition hover:opacity-90"
+                    className="shrink-0 rounded-lg px-3 py-1.5 text-[11px] font-bold text-purple no-underline transition active:scale-95 sm:px-4 sm:py-2 sm:text-xs"
                     style={{ background: 'white' }}
                   >
-                    Check in now
+                    Check in
                   </Link>
                 )}
               </div>

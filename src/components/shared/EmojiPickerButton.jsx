@@ -50,7 +50,7 @@ export default function EmojiPickerButton({ textareaRef, value, onChange }) {
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className="rounded-lg p-2 text-lg transition hover:bg-purple-ghost/50"
+        className="rounded-lg p-2.5 text-lg transition active:bg-purple-ghost/50 sm:p-2 sm:hover:bg-purple-ghost/50"
         style={{ color: 'var(--text-subtle)' }}
         aria-label="Insert emoji"
       >

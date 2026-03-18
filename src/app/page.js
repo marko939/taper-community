@@ -10,8 +10,10 @@ import PatientDashboard from '@/components/home/PatientDashboard';
 import InvitePrompt from '@/components/journal/InvitePrompt';
 import ExitIntentPopup from '@/components/shared/ExitIntentPopup';
 import TestimonialCarousel from '@/components/home/TestimonialCarousel';
+import { useRouteCleanup } from '@/hooks/useRouteCleanup';
 
 export default function HomePage() {
+  useRouteCleanup();
   const { user, profile, loading } = useAuth();
 
   if (loading) {
@@ -38,45 +40,45 @@ export default function HomePage() {
 
   // Signed-out: welcome text + marketing/landing page
   return (
-    <div className="space-y-12">
+    <div className="space-y-8 sm:space-y-12">
       <section
-        className="relative overflow-hidden rounded-[24px]"
+        className="relative overflow-hidden rounded-2xl sm:rounded-[24px]"
         style={{ boxShadow: '0 12px 48px rgba(91, 46, 145, 0.25), 0 4px 16px rgba(0,0,0,0.1)' }}
       >
         <div className="absolute inset-0">
           <Image src="/images/hero-banner.png" alt="TaperCommunity peer support for medication tapering" fill className="object-cover" />
         </div>
         <div className="pointer-events-none absolute inset-0" style={{ background: 'rgba(42,18,80,0.55)' }} />
-        <div className="relative z-10 px-6 py-16 sm:px-12 sm:py-20">
+        <div className="relative z-10 px-5 py-10 sm:px-12 sm:py-20">
           <div className="mx-auto max-w-2xl text-center">
-            <p className="mb-4 text-[11px] font-bold uppercase tracking-[0.1em] text-white/50">
+            <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.12em] text-white/50 sm:text-[11px]">
               Peer Support Community
             </p>
-            <h1 className="font-serif text-[30px] font-semibold leading-tight text-white sm:text-[36px]">
+            <h1 className="font-serif text-[24px] font-semibold leading-tight text-white sm:text-[36px]">
               You&apos;re not alone in your{' '}
               <span style={{ color: '#2EC4B6' }}>taper journey</span>
             </h1>
-            <p className="mx-auto mt-4 max-w-xl text-[15px] font-semibold leading-relaxed text-white/80">
+            <p className="mx-auto mt-3 max-w-xl text-[13px] font-semibold leading-relaxed text-white/80 sm:mt-4 sm:text-[15px]">
               A peer support community for safely tapering psychiatric medications.
               Evidence-based guidance, shared experiences, and taper journals.
             </p>
-            <div className="mt-8 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
+            <div className="mt-6 flex items-center justify-center gap-3 sm:mt-8 sm:gap-4">
               <Link
                 href="/auth/signup"
-                className="inline-flex items-center gap-2 rounded-xl px-8 py-3 text-[14px] font-semibold text-white no-underline transition hover:opacity-90"
+                className="inline-flex items-center gap-2 rounded-xl px-6 py-2.5 text-[13px] font-semibold text-white no-underline transition active:scale-95 sm:px-8 sm:py-3 sm:text-[14px]"
                 style={{ background: '#1FA89B' }}
               >
                 Join Free
               </Link>
               <Link
                 href="/auth/signin"
-                className="inline-flex items-center gap-2 rounded-xl border border-white/15 px-8 py-3 text-[14px] font-semibold text-white/80 no-underline transition hover:border-white/30 hover:text-white"
+                className="inline-flex items-center gap-2 rounded-xl border border-white/15 px-6 py-2.5 text-[13px] font-semibold text-white/80 no-underline transition active:scale-95 sm:px-8 sm:py-3 sm:text-[14px]"
                 style={{ background: 'rgba(255,255,255,0.08)', backdropFilter: 'blur(12px)' }}
               >
                 Sign In
               </Link>
             </div>
-            <p className="mt-5 text-[12px] font-medium tracking-wide text-white/40">
+            <p className="mt-4 text-[11px] font-medium tracking-wide text-white/40 sm:mt-5 sm:text-[12px]">
               Free forever. No credit card required. Join 100+ members tapering safely together.
             </p>
           </div>
@@ -84,16 +86,16 @@ export default function HomePage() {
       </section>
 
       {/* Why TaperCommunity — competitor-aware positioning */}
-      <section className="space-y-8">
+      <section className="space-y-6 sm:space-y-8">
         <div className="text-center">
-          <p className="text-[11px] font-bold uppercase tracking-[0.1em]" style={{ color: 'var(--purple)' }}>
+          <p className="text-[10px] font-bold uppercase tracking-[0.12em] sm:text-[11px]" style={{ color: 'var(--purple)' }}>
             Why TaperCommunity
           </p>
-          <h2 className="mt-2 font-serif text-2xl font-semibold text-foreground sm:text-3xl">
+          <h2 className="mt-2 font-serif text-xl font-semibold text-foreground sm:text-3xl">
             Built for the tapering community,{' '}
             <span style={{ color: 'var(--purple)' }}>by the tapering community</span>
           </h2>
-          <p className="mx-auto mt-3 max-w-2xl text-sm text-text-muted">
+          <p className="mx-auto mt-2 max-w-2xl text-xs text-text-muted sm:mt-3 sm:text-sm">
             Built from the ground up with modern tools, evidence-based resources, and a mission to help people taper safely.
           </p>
         </div>
@@ -147,35 +149,28 @@ export default function HomePage() {
               ),
             },
           ];
-          const topRow = allCards.slice(0, 3);
-          const bottomRow = allCards.slice(3);
           const Card = ({ item }) => (
             <div
-              className="rounded-2xl border p-6 transition hover:border-purple hover:shadow-elevated"
+              className="rounded-xl border p-4 transition sm:rounded-2xl sm:p-6"
               style={{ borderColor: 'var(--border-subtle)', background: 'var(--surface-strong)' }}
             >
               <div
-                className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl"
+                className="mb-2 flex h-8 w-8 items-center justify-center rounded-lg sm:mb-3 sm:h-10 sm:w-10 sm:rounded-xl"
                 style={{ background: 'var(--purple-pale)', color: 'var(--purple)' }}
               >
                 {item.icon}
               </div>
-              <h3 className="text-sm font-bold text-foreground">{item.title}</h3>
-              <p className="mt-1.5 text-xs leading-relaxed text-text-muted">{item.desc}</p>
+              <h3 className="text-xs font-bold text-foreground sm:text-sm">{item.title}</h3>
+              <p className="mt-1 text-[11px] leading-relaxed text-text-muted sm:mt-1.5 sm:text-xs">{item.desc}</p>
             </div>
           );
           return (
-            <div className="space-y-4">
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {topRow.map((item, i) => <Card key={i} item={item} />)}
-              </div>
-              <div className="flex justify-center gap-4">
-                {bottomRow.map((item, i) => (
-                  <div key={i} className="w-full sm:w-[calc(50%-0.5rem)] lg:w-[calc(33.333%-0.5rem)]">
-                    <Card item={item} />
-                  </div>
-                ))}
-              </div>
+            <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3">
+              {allCards.map((item, i) => (
+                <div key={i} className={allCards.length % 2 !== 0 && i === allCards.length - 1 ? 'col-span-2 lg:col-span-1' : ''}>
+                  <Card item={item} />
+                </div>
+              ))}
             </div>
           );
         })()}
@@ -195,13 +190,13 @@ export default function HomePage() {
       </section>
 
       {/* Strong copy blockquote */}
-      <section className="py-4 text-center">
+      <section className="py-2 text-center sm:py-4">
         <div
-          className="mx-auto max-w-3xl rounded-2xl border p-8 sm:p-10"
+          className="mx-auto max-w-3xl rounded-xl border p-5 sm:rounded-2xl sm:p-10"
           style={{ borderColor: 'var(--border-subtle)', background: '#fff', boxShadow: '0 4px 24px rgba(0,0,0,0.06)' }}
         >
           <blockquote>
-            <p className="font-serif text-xl font-semibold leading-relaxed text-foreground sm:text-2xl">
+            <p className="font-serif text-lg font-semibold leading-relaxed text-foreground sm:text-2xl">
               &ldquo;Most clinicians were trained to prescribe psychiatric medications.{' '}
               <span style={{ color: 'var(--purple)' }}>Almost none were trained to stop them.</span>&rdquo;
             </p>
@@ -215,18 +210,18 @@ export default function HomePage() {
       <CommunityPulse large />
 
       {/* How TaperCommunity compares */}
-      <section className="space-y-6">
+      <section className="space-y-4 sm:space-y-6">
         <div className="text-center">
-          <p className="text-[11px] font-bold uppercase tracking-[0.1em]" style={{ color: 'var(--purple)' }}>
+          <p className="text-[10px] font-bold uppercase tracking-[0.12em] sm:text-[11px]" style={{ color: 'var(--purple)' }}>
             Compare
           </p>
-          <h2 className="mt-2 font-serif text-2xl font-semibold text-foreground sm:text-3xl">
+          <h2 className="mt-2 font-serif text-xl font-semibold text-foreground sm:text-3xl">
             How TaperCommunity{' '}
             <span style={{ color: 'var(--purple)' }}>compares</span>
           </h2>
         </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm" style={{ borderCollapse: 'separate', borderSpacing: 0 }}>
+        <div className="-mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
+          <table className="w-full min-w-[520px] text-xs sm:min-w-0 sm:text-sm" style={{ borderCollapse: 'separate', borderSpacing: 0 }}>
             <thead>
               <tr>
                 <th className="border px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-text-subtle" style={{ borderColor: 'var(--border-subtle)' }} />
@@ -297,10 +292,10 @@ export default function HomePage() {
       {/* Floating "Join for Free" button — bottom-left, signed-out only */}
       <Link
         href="/auth/signup"
-        className="fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-full px-5 py-3 text-sm font-bold text-white shadow-lg no-underline transition hover:scale-105 hover:shadow-xl"
+        className="fixed bottom-20 right-4 z-40 flex items-center gap-2 rounded-full px-4 py-2.5 text-xs font-bold text-white shadow-lg no-underline transition active:scale-95 sm:bottom-6 sm:right-6 sm:px-5 sm:py-3 sm:text-sm lg:bottom-6"
         style={{ background: '#1FA89B', boxShadow: '0 6px 24px rgba(31,168,155,0.35)' }}
       >
-        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
+        <svg className="h-3.5 w-3.5 sm:h-4 sm:w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
         </svg>
         Join for Free

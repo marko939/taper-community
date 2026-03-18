@@ -8,7 +8,7 @@ import { DRUGS } from '@/lib/drugs';
 export const FORUM_CATEGORY_ORDER = [
   { key: 'admin', label: 'Admin' },
   { key: 'community', label: 'Community' },
-  { key: 'tapering', label: 'Hyperbolic Tapering: How To, Tips & Tricks' },
+  { key: 'tapering', label: 'Hyperbolic Tapering' },
   { key: 'research', label: 'Research & News' },
   { key: 'lifestyle', label: 'Relationships & Lifestyle' },
   { key: 'drug', label: 'Drug-Specific Forums' },

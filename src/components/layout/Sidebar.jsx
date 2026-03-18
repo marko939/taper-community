@@ -124,7 +124,7 @@ export default function Sidebar() {
         </Link>
         <button
           onClick={() => setMobileOpen(!mobileOpen)}
-          className="rounded-lg p-2 transition hover:bg-purple-ghost"
+          className="rounded-lg p-2.5 transition active:bg-purple-ghost sm:p-2 sm:hover:bg-purple-ghost"
           style={{ color: 'var(--text-muted)' }}
         >
           {mobileOpen ? (

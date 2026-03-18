@@ -8,6 +8,7 @@ import { useFollowStore } from '@/stores/followStore';
 import { useBlogStore } from '@/stores/blogStore';
 import { GENERAL_FORUMS } from '@/lib/forumCategories';
 import FollowButton from '@/components/shared/FollowButton';
+import { usePullToRefresh, PullIndicator } from '@/hooks/usePullToRefresh';
 
 function timeAgo(dateStr) {
   const seconds = Math.floor((new Date() - new Date(dateStr)) / 1000);
@@ -241,23 +242,6 @@ export default function FeedTabs({ activeTab: controlledTab, onTabChange, useUrl
     currentLoading = followedThreads.loading;
   }
 
-  useEffect(() => {
-    if (!currentLoading) return;
-    const safety = setTimeout(() => {
-      // Force-reset loading state for the stuck tab
-      const tab = activeTabRef.current;
-      if (tab === 'hot') {
-        useForumStore.setState({ recentThreads: { items: useForumStore.getState().recentThreads.items || [], loading: false }, hotThreadsLoaded: true });
-      } else if (tab === 'new') {
-        useForumStore.setState({ newThreads: { items: useForumStore.getState().newThreads.items || [], loading: false }, newThreadsLoaded: true });
-      } else {
-        useFollowStore.setState({ followedThreads: { items: useFollowStore.getState().followedThreads.items || [], loading: false }, followedThreadsLoaded: true });
-      }
-      console.warn('[tab-switcher] safety timeout triggered — force reset loading for tab:', tab);
-    }, 10000);
-    return () => clearTimeout(safety);
-  }, [currentLoading]);
-
   // Cleanup debounce on unmount
   useEffect(() => {
     return () => {
@@ -274,6 +258,13 @@ export default function FeedTabs({ activeTab: controlledTab, onTabChange, useUrl
     setTimeout(() => setShowingMore(false), 300);
   }, [showingMore]);
 
+  // Pull-to-refresh
+  const handleRefresh = useCallback(async () => {
+    fetchForTab(activeTab, { force: true });
+  }, [fetchForTab, activeTab]);
+
+  const { containerRef: pullRef, isPulling, pullDistance, isRefreshing } = usePullToRefresh(handleRefresh);
+
   const visibleItems = expanded ? currentItems.slice(0, 10) : currentItems.slice(0, 5);
   const canExpand = currentItems.length > 5 && !expanded;
 
@@ -284,7 +275,8 @@ export default function FeedTabs({ activeTab: controlledTab, onTabChange, useUrl
   ];
 
   return (
-    <section className="glass-panel overflow-hidden">
+    <section ref={pullRef} className="glass-panel overflow-hidden">
+      <PullIndicator isPulling={isPulling} pullDistance={pullDistance} isRefreshing={isRefreshing} />
       <div
         className="flex items-center gap-1 border-b px-6 py-3"
         style={{ borderColor: 'var(--border-subtle)', background: 'var(--purple-ghost)' }}

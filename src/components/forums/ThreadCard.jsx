@@ -1,5 +1,6 @@
 'use client';
 
+import { memo } from 'react';
 import Link from 'next/link';
 import Badge, { PeerAdvisorBadge } from '@/components/shared/Badge';
 import Avatar from '@/components/shared/Avatar';
@@ -18,7 +19,7 @@ function timeAgo(dateStr) {
   return `${Math.floor(days / 30)}mo ago`;
 }
 
-export default function ThreadCard({ thread }) {
+function ThreadCard({ thread }) {
   const { id, title, body, tags = [], reply_count, view_count, vote_score, pinned, created_at, user_id, profiles } = thread;
   const displayName = profiles?.display_name || 'Anonymous';
   const bodyPreview = body?.length > 150 ? body.slice(0, 150) + '...' : body;
@@ -74,3 +75,5 @@ export default function ThreadCard({ thread }) {
     </div>
   );
 }
+
+export default memo(ThreadCard);

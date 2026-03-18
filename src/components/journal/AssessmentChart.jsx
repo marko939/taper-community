@@ -88,7 +88,7 @@ export default function AssessmentChart({ assessments = [], entries = [] }) {
 
   return (
     <div>
-      <div className="mb-3 flex items-center gap-4">
+      <div className="mb-3 flex items-center gap-4 px-4 sm:px-0">
         <div className="flex items-center gap-1.5">
           <span className="inline-block h-2 w-2 rounded-full" style={{ background: '#5B2E91' }} />
           <span className="text-[11px] text-text-subtle">PHQ-9 (Depression)</span>
@@ -104,8 +104,8 @@ export default function AssessmentChart({ assessments = [], entries = [] }) {
           </div>
         )}
       </div>
-      <ResponsiveContainer width="100%" height={300}>
-        <ComposedChart data={chartData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
+      <ResponsiveContainer width="100%" height={typeof window !== 'undefined' && window.innerWidth < 640 ? 220 : 300}>
+        <ComposedChart data={chartData} margin={typeof window !== 'undefined' && window.innerWidth < 640 ? { top: 5, right: -25, left: -25, bottom: 0 } : { top: 5, right: 10, left: 0, bottom: 5 }}>
           {/* Severity zone bands */}
           <ReferenceArea yAxisId="score" y1={0} y2={4} fill="#22c55e" fillOpacity={0.08} />
           <ReferenceArea yAxisId="score" y1={4} y2={9} fill="#eab308" fillOpacity={0.08} />
@@ -115,24 +115,24 @@ export default function AssessmentChart({ assessments = [], entries = [] }) {
           <CartesianGrid strokeDasharray="3 3" stroke="#E8E5F0" />
           <XAxis
             dataKey="date"
-            tick={{ fill: '#7C7591', fontSize: 12 }}
+            tick={{ fill: '#7C7591', fontSize: typeof window !== 'undefined' && window.innerWidth < 640 ? 10 : 12 }}
             axisLine={{ stroke: '#E8E5F0' }}
           />
           <YAxis
             yAxisId="score"
             domain={[0, 27]}
             reversed
-            tick={{ fill: '#7C7591', fontSize: 12 }}
+            tick={{ fill: '#7C7591', fontSize: typeof window !== 'undefined' && window.innerWidth < 640 ? 10 : 12 }}
             axisLine={{ stroke: '#E8E5F0' }}
-            label={{ value: 'Score', angle: -90, position: 'insideLeft', fill: '#7C7591', fontSize: 11 }}
+            label={typeof window !== 'undefined' && window.innerWidth < 640 ? undefined : { value: 'Score', angle: -90, position: 'insideLeft', fill: '#7C7591', fontSize: 11 }}
           />
           {hasDoseData && (
             <YAxis
               yAxisId="dose"
               orientation="right"
-              tick={{ fill: '#7C7591', fontSize: 12 }}
+              tick={{ fill: '#7C7591', fontSize: typeof window !== 'undefined' && window.innerWidth < 640 ? 10 : 12 }}
               axisLine={{ stroke: '#E8E5F0' }}
-              label={{ value: 'Dose (mg)', angle: 90, position: 'insideRight', fill: '#7C7591', fontSize: 11 }}
+              label={typeof window !== 'undefined' && window.innerWidth < 640 ? undefined : { value: 'Dose (mg)', angle: 90, position: 'insideRight', fill: '#7C7591', fontSize: 11 }}
             />
           )}
           <Tooltip content={<AssessmentTooltip />} />

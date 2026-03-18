@@ -75,7 +75,7 @@ export default function NotificationFab() {
   if (!user) return null;
 
   return (
-    <div className="fixed bottom-6 right-6 z-50" ref={panelRef}>
+    <div className="fixed bottom-6 right-6 z-50 hidden lg:block" ref={panelRef}>
       {/* Expanded panel */}
       {open && (
         <div

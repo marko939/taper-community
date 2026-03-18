@@ -10,6 +10,7 @@ export const useNotificationStore = create((set, get) => ({
   loading: false,
   fetchError: false,
   _realtimeChannel: null,
+  _refetchTimer: null,
 
   fetchNotifications: async () => {
     const userId = useAuthStore.getState().user?.id;
@@ -130,11 +131,15 @@ export const useNotificationStore = create((set, get) => ({
             unreadCount: state.unreadCount + 1,
           }));
 
-          // Realtime payloads lack joined actor/thread data, so re-fetch
-          // the full list to get proper display names and thread titles.
-          // Only re-fetch if we already have notifications loaded (panel was opened before).
+          // Debounce the full list re-fetch — collapses rapid INSERT bursts
+          // into a single fetch 2s after the last event
           if (get().notifications.length > 0) {
-            get().fetchNotifications();
+            const prevTimer = get()._refetchTimer;
+            if (prevTimer) clearTimeout(prevTimer);
+            const timer = setTimeout(() => {
+              get().fetchNotifications();
+            }, 2000);
+            set({ _refetchTimer: timer });
           }
         }
       )
@@ -177,11 +182,14 @@ export const useNotificationStore = create((set, get) => ({
   },
 
   unsubscribeRealtime: () => {
+    const timer = get()._refetchTimer;
+    if (timer) clearTimeout(timer);
+
     const channel = get()._realtimeChannel;
     if (channel) {
       const supabase = createClient();
       supabase.removeChannel(channel);
-      set({ _realtimeChannel: null });
+      set({ _realtimeChannel: null, _refetchTimer: null });
     }
   },
 }));

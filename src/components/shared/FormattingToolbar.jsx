@@ -154,7 +154,7 @@ export default function FormattingToolbar({ textareaRef, value, onChange }) {
       <button
         type="button"
         onClick={() => wrapSelection('**')}
-        className="rounded px-2 py-0.5 text-sm font-bold transition hover:bg-purple-ghost/50"
+        className="rounded px-2.5 py-1.5 text-sm font-bold transition active:bg-purple-ghost/50 sm:px-2 sm:py-0.5 sm:hover:bg-purple-ghost/50"
         style={{ color: 'var(--text-muted)' }}
         title="Bold"
       >
@@ -165,7 +165,7 @@ export default function FormattingToolbar({ textareaRef, value, onChange }) {
       <button
         type="button"
         onClick={() => wrapSelection('*')}
-        className="rounded px-2 py-0.5 text-sm italic transition hover:bg-purple-ghost/50"
+        className="rounded px-2.5 py-1.5 text-sm italic transition active:bg-purple-ghost/50 sm:px-2 sm:py-0.5 sm:hover:bg-purple-ghost/50"
         style={{ color: 'var(--text-muted)' }}
         title="Italic"
       >
@@ -176,7 +176,7 @@ export default function FormattingToolbar({ textareaRef, value, onChange }) {
       <button
         type="button"
         onClick={handleBulletList}
-        className="rounded px-2 py-0.5 text-sm transition hover:bg-purple-ghost/50"
+        className="rounded px-2.5 py-1.5 text-sm transition active:bg-purple-ghost/50 sm:px-2 sm:py-0.5 sm:hover:bg-purple-ghost/50"
         style={{ color: 'var(--text-muted)' }}
         title="Bullet list"
       >
@@ -185,7 +185,7 @@ export default function FormattingToolbar({ textareaRef, value, onChange }) {
 
       {/* Image upload */}
       <label
-        className="cursor-pointer rounded px-2 py-0.5 text-sm transition hover:bg-purple-ghost/50"
+        className="cursor-pointer rounded px-2.5 py-1.5 text-sm transition active:bg-purple-ghost/50 sm:px-2 sm:py-0.5 sm:hover:bg-purple-ghost/50"
         style={{ color: 'var(--text-muted)' }}
         title="Add image"
       >

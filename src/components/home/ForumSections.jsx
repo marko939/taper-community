@@ -37,62 +37,32 @@ export default function ForumSections() {
 
   return (
     <div className="space-y-6">
-      <h2 className="font-serif text-2xl font-semibold" style={{ color: 'var(--foreground)' }}>Forums</h2>
+      <h2 className="font-serif text-xl font-semibold sm:text-2xl" style={{ color: 'var(--foreground)' }}>Forums</h2>
 
-      {/* General sections — pyramid: 3 on top, 2 on bottom centered */}
-      <div className="space-y-3">
-        {/* Top row: first 3 */}
-        <div className="grid grid-cols-3 gap-3">
-          {sectionTiles.slice(0, 3).map((tile) => (
-            <Link
-              key={tile.key}
-              href={tile.href}
-              className="group flex flex-col items-center gap-2 rounded-2xl border p-4 no-underline transition hover:border-purple hover:shadow-elevated"
-              style={{ borderColor: 'var(--border-subtle)', background: 'var(--surface-strong)' }}
+      {/* General sections — responsive grid */}
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-3">
+        {sectionTiles.map((tile, i) => (
+          <Link
+            key={tile.key}
+            href={tile.href}
+            className={`group flex flex-col items-center gap-1.5 rounded-xl border p-3 no-underline transition active:scale-95 sm:gap-2 sm:rounded-2xl sm:p-4 ${sectionTiles.length % 2 !== 0 && i === sectionTiles.length - 1 ? 'col-span-2 sm:col-span-1' : ''}`}
+            style={{ borderColor: 'var(--border-subtle)', background: 'var(--surface-strong)' }}
+          >
+            <div
+              className="flex h-8 w-8 items-center justify-center rounded-lg sm:h-10 sm:w-10 sm:rounded-xl"
+              style={{ background: 'var(--purple-ghost)', color: 'var(--purple)' }}
             >
-              <div
-                className="flex h-10 w-10 items-center justify-center rounded-xl"
-                style={{ background: 'var(--purple-ghost)', color: 'var(--purple)' }}
-              >
-                {tile.icon}
-              </div>
-              <p className="text-center text-sm font-bold text-foreground">{tile.label}</p>
-              <span
-                className="rounded-full px-2.5 py-0.5 text-[11px] font-bold"
-                style={{ background: 'var(--purple-pale)', color: 'var(--purple)' }}
-              >
-                {tile.postCount} posts
-              </span>
-            </Link>
-          ))}
-        </div>
-        {/* Bottom row: remaining tiles centered */}
-        {sectionTiles.length > 3 && (
-          <div className="flex justify-center gap-3">
-            {sectionTiles.slice(3).map((tile) => (
-              <Link
-                key={tile.key}
-                href={tile.href}
-                className="group flex w-1/3 flex-col items-center gap-2 rounded-2xl border p-4 no-underline transition hover:border-purple hover:shadow-elevated"
-                style={{ borderColor: 'var(--border-subtle)', background: 'var(--surface-strong)' }}
-              >
-                <div
-                  className="flex h-10 w-10 items-center justify-center rounded-xl"
-                  style={{ background: 'var(--purple-ghost)', color: 'var(--purple)' }}
-                >
-                  {tile.icon}
-                </div>
-                <p className="text-center text-sm font-bold text-foreground">{tile.label}</p>
-                <span
-                  className="rounded-full px-2.5 py-0.5 text-[11px] font-bold"
-                  style={{ background: 'var(--purple-pale)', color: 'var(--purple)' }}
-                >
-                  {tile.postCount} posts
-                </span>
-              </Link>
-            ))}
-          </div>
-        )}
+              {tile.icon}
+            </div>
+            <p className="text-center text-xs font-bold text-foreground sm:text-sm">{tile.label}</p>
+            <span
+              className="rounded-full px-2 py-0.5 text-[10px] font-bold sm:px-2.5 sm:text-[11px]"
+              style={{ background: 'var(--purple-pale)', color: 'var(--purple)' }}
+            >
+              {tile.postCount} posts
+            </span>
+          </Link>
+        ))}
       </div>
 
       {/* Drug-Specific Forums — 3 + 3 grid */}
@@ -103,28 +73,26 @@ export default function ForumSections() {
             Drug-Specific Forums
           </h3>
         </div>
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-3 gap-2 sm:gap-3">
           {drugGroups.map((group) => (
             <Link
               key={group.key}
               href="/drugs"
-              className="group flex flex-col items-center gap-2 rounded-2xl border p-4 no-underline transition hover:border-purple hover:shadow-elevated"
+              className="group flex flex-col items-center gap-1.5 rounded-xl border p-3 no-underline transition active:scale-95 sm:gap-2 sm:rounded-2xl sm:p-4"
               style={{ borderColor: 'var(--border-subtle)', background: 'var(--surface-strong)' }}
             >
               <div
-                className="flex h-10 w-10 items-center justify-center rounded-xl transition group-hover:scale-110"
+                className="flex h-8 w-8 items-center justify-center rounded-lg transition group-hover:scale-110 sm:h-10 sm:w-10 sm:rounded-xl"
                 style={{ background: 'var(--purple-ghost)', color: 'var(--purple)' }}
               >
                 {DRUG_CLASS_ICONS[group.key]}
               </div>
-              <div className="text-center">
-                <p className="text-sm font-bold text-foreground">{group.label}</p>
-              </div>
+              <p className="text-center text-xs font-bold text-foreground sm:text-sm">{group.label}</p>
               <span
-                className="rounded-full px-2.5 py-0.5 text-[11px] font-bold"
+                className="rounded-full px-2 py-0.5 text-[10px] font-bold sm:px-2.5 sm:text-[11px]"
                 style={{ background: 'var(--purple-pale)', color: 'var(--purple)' }}
               >
-                {group.forums.length} {group.forums.length === 1 ? 'forum' : 'forums'}
+                {group.forums.reduce((sum, f) => sum + (f.post_count ?? 0), 0)} posts
               </span>
             </Link>
           ))}

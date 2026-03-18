@@ -99,7 +99,7 @@ export default function TestimonialCarousel() {
           <button
             onClick={() => scroll('left')}
             disabled={!canScrollLeft}
-            className="flex h-9 w-9 items-center justify-center rounded-full border transition hover:bg-white/60 disabled:opacity-30 disabled:cursor-default"
+            className="flex h-10 w-10 items-center justify-center rounded-full border transition active:bg-white/60 disabled:opacity-30 disabled:cursor-default sm:h-9 sm:w-9 sm:hover:bg-white/60"
             style={{ borderColor: 'var(--border-subtle)' }}
             aria-label="Previous testimonial"
           >
@@ -110,7 +110,7 @@ export default function TestimonialCarousel() {
           <button
             onClick={() => scroll('right')}
             disabled={!canScrollRight}
-            className="flex h-9 w-9 items-center justify-center rounded-full border transition hover:bg-white/60 disabled:opacity-30 disabled:cursor-default"
+            className="flex h-10 w-10 items-center justify-center rounded-full border transition active:bg-white/60 disabled:opacity-30 disabled:cursor-default sm:h-9 sm:w-9 sm:hover:bg-white/60"
             style={{ borderColor: 'var(--border-subtle)' }}
             aria-label="Next testimonial"
           >
@@ -133,7 +133,7 @@ export default function TestimonialCarousel() {
             <div
               key={t.name}
               data-card
-              className="flex w-[calc(50%-8px)] min-w-[280px] flex-shrink-0 snap-start flex-col rounded-2xl border p-6"
+              className="flex w-[85%] min-w-0 flex-shrink-0 snap-start flex-col rounded-2xl border p-5 sm:w-[calc(50%-8px)] sm:min-w-[280px] sm:p-6"
               style={{ borderColor: 'var(--border-subtle)', background: 'var(--surface-strong)' }}
             >
               {QUOTE_ICON}

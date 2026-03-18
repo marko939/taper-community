@@ -5,7 +5,7 @@ import Image from 'next/image';
 export default function Hero() {
   return (
     <div
-      className="relative h-[280px] w-full overflow-hidden rounded-[24px] md:h-[380px]"
+      className="relative h-[160px] w-full overflow-hidden rounded-2xl sm:h-[220px] md:h-[380px]"
       style={{
         boxShadow: '0 12px 48px rgba(91, 46, 145, 0.25), 0 4px 16px rgba(0,0,0,0.1)',
       }}
@@ -22,15 +22,17 @@ export default function Hero() {
         className="pointer-events-none absolute inset-0"
         style={{ background: 'rgba(42,18,80,0.35)' }}
       />
-      {/* Logo overlay */}
-      <div className="absolute inset-0 z-10">
-        <Image
-          src="/images/hero-logo.png"
-          alt="TaperCommunity"
-          fill
-          className="object-contain"
-          priority
-        />
+      {/* Logo overlay — scale up on mobile to crop out bottom decoration */}
+      <div className="absolute inset-0 z-10 flex items-center justify-center">
+        <div className="relative h-[110%] w-[110%] sm:h-full sm:w-full">
+          <Image
+            src="/images/hero-logo.png"
+            alt="TaperCommunity"
+            fill
+            className="object-contain"
+            priority
+          />
+        </div>
       </div>
       {/* Bottom fade for smoother transition to content below */}
       <div

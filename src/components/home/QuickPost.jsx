@@ -273,7 +273,7 @@ export default function QuickPost({ user, profile }) {
                 <button
                   type="button"
                   onClick={() => setDrugDropdownOpen(!drugDropdownOpen)}
-                  className="flex w-full items-center justify-between rounded-xl border px-3 py-2 text-xs transition hover:border-purple-pale"
+                  className="flex w-full items-center justify-between rounded-xl border px-3 py-2.5 text-xs transition active:border-purple-pale sm:py-2 sm:hover:border-purple-pale"
                   style={{ borderColor: 'var(--border-subtle)', color: 'var(--text-muted)' }}
                 >
                   <span>Select a medication...</span>

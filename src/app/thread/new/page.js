@@ -155,7 +155,7 @@ function NewThreadContent() {
         <Link href="/forums" className="text-sm text-text-subtle hover:text-foreground">
           &larr; Back to Forums
         </Link>
-        <h1 className="mt-4 font-serif text-3xl font-semibold text-foreground">Start a New Thread</h1>
+        <h1 className="mt-4 font-serif text-xl font-semibold text-foreground sm:text-3xl">Start a New Thread</h1>
         <p className="mt-1 text-sm text-text-muted">
           Select one or more communities to post in.
         </p>

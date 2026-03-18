@@ -14,9 +14,33 @@ export const useThreadStore = create((set, get) => ({
   replies: {},       // keyed by threadId: { items, hasMore, totalCount, page }
   voteState: {},     // keyed by `${type}_${targetId}`: { userVote, score }
   helpfulState: {},  // keyed by replyId: { hasVoted, count }
+  _abortControllers: {},  // keyed by operation name
+  _pendingReply: {},      // keyed by threadId — dedup guard
   pendingQuote: null,
   setQuote: (quote) => set({ pendingQuote: quote }),
   clearQuote: () => set({ pendingQuote: null }),
+
+  // Cancel a specific pending fetch
+  cancelPending: (opName) => {
+    const ctrl = get()._abortControllers[opName];
+    if (ctrl) {
+      ctrl.abort();
+      set((state) => {
+        const controllers = { ...state._abortControllers };
+        delete controllers[opName];
+        return { _abortControllers: controllers };
+      });
+    }
+  },
+
+  // Cancel all pending fetches (called on route cleanup)
+  cancelAll: () => {
+    const controllers = get()._abortControllers;
+    for (const ctrl of Object.values(controllers)) {
+      ctrl.abort();
+    }
+    set({ _abortControllers: {} });
+  },
 
   // Prevent unbounded memory growth — prune old cached threads/replies
   pruneCache: (keepThreadId) => {
@@ -55,6 +79,13 @@ export const useThreadStore = create((set, get) => ({
   },
 
   fetchThread: async (threadId) => {
+    // Cancel any previous fetchThread in flight
+    get().cancelPending('fetchThread');
+    const controller = new AbortController();
+    set((state) => ({
+      _abortControllers: { ...state._abortControllers, fetchThread: controller },
+    }));
+
     try {
       const supabase = createClient();
 
@@ -62,6 +93,7 @@ export const useThreadStore = create((set, get) => ({
         .from('threads')
         .select('*, profiles:user_id(display_name, is_peer_advisor, drug, taper_stage, post_count, drug_signature, location, avatar_url, is_founding_member), thread_forums(forum_id, forums:forum_id(name, slug, drug_slug))')
         .eq('id', threadId)
+        .abortSignal(controller.signal)
         .single();
 
       if (threadData) {
@@ -83,12 +115,19 @@ export const useThreadStore = create((set, get) => ({
 
       return threadData;
     } catch (err) {
+      if (err.name === 'AbortError') return null;
       console.error('[threadStore] fetchThread error:', err);
       return null;
     }
   },
 
   fetchReplies: async (threadId) => {
+    get().cancelPending('fetchReplies');
+    const controller = new AbortController();
+    set((state) => ({
+      _abortControllers: { ...state._abortControllers, fetchReplies: controller },
+    }));
+
     try {
       const supabase = createClient();
       const from = 0;
@@ -99,6 +138,7 @@ export const useThreadStore = create((set, get) => ({
         .select('*, profiles:user_id(display_name, is_peer_advisor, drug, taper_stage, post_count, drug_signature, location, avatar_url, is_founding_member)', { count: 'exact' })
         .eq('thread_id', threadId)
         .order('created_at')
+        .abortSignal(controller.signal)
         .range(from, to);
 
       const rows = data || [];
@@ -116,6 +156,7 @@ export const useThreadStore = create((set, get) => ({
         },
       }));
     } catch (err) {
+      if (err.name === 'AbortError') return;
       console.error('[threadStore] fetchReplies error:', err);
       set((state) => ({
         replies: {
@@ -127,6 +168,12 @@ export const useThreadStore = create((set, get) => ({
   },
 
   loadMoreReplies: async (threadId) => {
+    get().cancelPending('loadMoreReplies');
+    const controller = new AbortController();
+    set((state) => ({
+      _abortControllers: { ...state._abortControllers, loadMoreReplies: controller },
+    }));
+
     const supabase = createClient();
     const current = get().replies[threadId];
     if (!current) return;
@@ -135,30 +182,96 @@ export const useThreadStore = create((set, get) => ({
     const from = nextPage * REPLIES_PER_PAGE;
     const to = from + REPLIES_PER_PAGE - 1;
 
-    const { data, count } = await supabase
-      .from('replies')
-      .select('*, profiles:user_id(display_name, is_peer_advisor, drug, taper_stage, post_count, drug_signature, location, avatar_url, is_founding_member)', { count: 'exact' })
-      .eq('thread_id', threadId)
-      .order('created_at')
-      .range(from, to);
+    try {
+      const { data, count } = await supabase
+        .from('replies')
+        .select('*, profiles:user_id(display_name, is_peer_advisor, drug, taper_stage, post_count, drug_signature, location, avatar_url, is_founding_member)', { count: 'exact' })
+        .eq('thread_id', threadId)
+        .order('created_at')
+        .abortSignal(controller.signal)
+        .range(from, to);
 
-    const rows = data || [];
-    const total = count ?? (current.totalCount);
+      const rows = data || [];
+      const total = count ?? (current.totalCount);
 
-    set((state) => ({
-      replies: {
-        ...state.replies,
-        [threadId]: {
-          items: [...current.items, ...rows],
-          hasMore: from + rows.length < total,
-          totalCount: total,
-          page: nextPage,
+      set((state) => ({
+        replies: {
+          ...state.replies,
+          [threadId]: {
+            items: [...current.items, ...rows],
+            hasMore: from + rows.length < total,
+            totalCount: total,
+            page: nextPage,
+          },
         },
-      },
-    }));
+      }));
+    } catch (err) {
+      if (err.name === 'AbortError') return;
+      console.error('[threadStore] loadMoreReplies error:', err);
+    }
+  },
+
+  // Fetch replies up to the page containing a specific reply (for notification deep-links)
+  fetchReplyPage: async (threadId, replyId) => {
+    try {
+      const supabase = createClient();
+
+      // Find how many replies exist before this one (to determine its page)
+      const { data: targetReply } = await supabase
+        .from('replies')
+        .select('created_at')
+        .eq('id', replyId)
+        .single();
+
+      if (!targetReply) return;
+
+      // Count replies before this one
+      const { count: beforeCount } = await supabase
+        .from('replies')
+        .select('id', { count: 'exact', head: true })
+        .eq('thread_id', threadId)
+        .lt('created_at', targetReply.created_at);
+
+      const targetPage = Math.floor((beforeCount || 0) / REPLIES_PER_PAGE);
+
+      // Fetch all replies from page 0 through the target page
+      const totalToFetch = (targetPage + 1) * REPLIES_PER_PAGE;
+      const { data, count } = await supabase
+        .from('replies')
+        .select('*, profiles:user_id(display_name, is_peer_advisor, drug, taper_stage, post_count, drug_signature, location, avatar_url, is_founding_member)', { count: 'exact' })
+        .eq('thread_id', threadId)
+        .order('created_at')
+        .range(0, totalToFetch - 1);
+
+      const rows = data || [];
+      const total = count ?? rows.length;
+
+      set((state) => ({
+        replies: {
+          ...state.replies,
+          [threadId]: {
+            items: rows,
+            hasMore: rows.length < total,
+            totalCount: total,
+            page: targetPage,
+          },
+        },
+      }));
+    } catch (err) {
+      console.error('[threadStore] fetchReplyPage error:', err);
+    }
   },
 
   addReply: async (threadId, body) => {
+    // Dedup guard — prevent concurrent submissions for same thread
+    if (get()._pendingReply[threadId]) {
+      throw new Error('Reply is already being submitted.');
+    }
+    set((state) => ({
+      _pendingReply: { ...state._pendingReply, [threadId]: true },
+    }));
+
+    try {
     const supabase = createClient();
     const userId = useAuthStore.getState().user?.id;
     if (!userId) throw new Error('Please sign in to reply.');
@@ -240,6 +353,13 @@ export const useThreadStore = create((set, get) => ({
     }
 
     return data;
+    } finally {
+      set((state) => {
+        const pending = { ...state._pendingReply };
+        delete pending[threadId];
+        return { _pendingReply: pending };
+      });
+    }
   },
 
   editReply: async (threadId, replyId, newBody) => {

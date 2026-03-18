@@ -11,8 +11,10 @@ import ThreadList from '@/components/forums/ThreadList';
 import SearchBar from '@/components/shared/SearchBar';
 import { PageLoading } from '@/components/shared/LoadingSpinner';
 import ForumFollowButton from '@/components/shared/ForumFollowButton';
+import { useRouteCleanup } from '@/hooks/useRouteCleanup';
 
 export default function ForumPage() {
+  useRouteCleanup();
   const { drugSlug } = useParams();
   const [forum, setForum] = useState(null);
   const [forumLoading, setForumLoading] = useState(true);

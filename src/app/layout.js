@@ -4,8 +4,10 @@ import Sidebar from '@/components/layout/Sidebar';
 import Footer from '@/components/layout/Footer';
 import StoreInitializer from '@/components/layout/StoreInitializer';
 import NotificationFab from '@/components/layout/NotificationFab';
+import BottomNav from '@/components/layout/BottomNav';
 import PageViewTracker from '@/components/layout/PageViewTracker';
 import ErrorBoundary from '@/components/layout/ErrorBoundary';
+import SwipeBackWrapper from '@/components/layout/SwipeBackWrapper';
 import { FontSizeProvider } from '@/lib/fontSizeContext';
 import './globals.css';
 
@@ -88,16 +90,17 @@ export default function RootLayout({ children }) {
           <StoreInitializer />
           <div className="lg:flex">
             <Sidebar />
-            <div className="min-w-0 flex-1">
+            <SwipeBackWrapper>
               <ErrorBoundary>
-                <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+                <main className="mx-auto max-w-7xl px-4 pb-20 pt-6 sm:px-6 lg:px-8 lg:pb-6">
                   {children}
                 </main>
               </ErrorBoundary>
               <Footer />
-            </div>
+            </SwipeBackWrapper>
           </div>
           <NotificationFab />
+          <BottomNav />
           <PageViewTracker />
           <Analytics />
         </FontSizeProvider>

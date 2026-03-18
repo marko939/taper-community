@@ -137,41 +137,11 @@ export default function JournalPage() {
   return (
     <div className="space-y-8">
       {/* Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="font-serif text-3xl text-foreground">Taper Journal</h1>
-          <p className="mt-1 text-text-muted">
-            Track your doses, symptoms, and mood over time.
-          </p>
-        </div>
-        <div className="flex items-center gap-3">
-          <ProviderPDFButton entries={entries} profile={profile || {}} assessments={assessments} />
-          {shareUrl ? (
-            <div className="flex items-center gap-2">
-              <input
-                type="text"
-                value={shareUrl}
-                readOnly
-                className="input w-64 text-xs"
-                onClick={(e) => e.target.select()}
-              />
-              <button
-                onClick={() => navigator.clipboard.writeText(shareUrl)}
-                className="btn-secondary text-sm"
-              >
-                Copy
-              </button>
-            </div>
-          ) : (
-            <button
-              onClick={handleShare}
-              disabled={sharing}
-              className="btn-secondary text-sm"
-            >
-              {sharing ? 'Generating...' : 'Share Journal'}
-            </button>
-          )}
-        </div>
+      <div>
+        <h1 className="font-serif text-xl text-foreground sm:text-3xl">Taper Journal</h1>
+        <p className="mt-1 text-sm text-text-muted">
+          Track your doses, symptoms, and mood over time.
+        </p>
       </div>
 
       {/* Tab Switcher */}
@@ -204,7 +174,7 @@ export default function JournalPage() {
           {entries.length === 0 ? (
             /* Empty state — hero style */
             <div
-              className="relative overflow-hidden rounded-[24px] px-8 py-16 text-center"
+              className="relative overflow-hidden rounded-2xl px-5 py-10 text-center sm:rounded-[24px] sm:px-8 sm:py-16"
               style={{ boxShadow: '0 12px 48px rgba(91, 46, 145, 0.25), 0 4px 16px rgba(0,0,0,0.1)' }}
             >
               <div className="absolute inset-0">
@@ -212,7 +182,7 @@ export default function JournalPage() {
               </div>
               <div className="pointer-events-none absolute inset-0" style={{ background: 'rgba(42,18,80,0.35)' }} />
               <div className="relative z-10">
-                <h2 className="text-2xl font-bold text-white">Start tracking your taper</h2>
+                <h2 className="text-xl font-bold text-white sm:text-2xl">Start tracking your taper</h2>
                 <p className="mx-auto mt-2 max-w-md text-sm text-white/70">
                   Log your first entry to see dose and mood charts, symptom heatmaps, and progress insights.
                 </p>
@@ -227,30 +197,60 @@ export default function JournalPage() {
             </div>
           ) : (
             <>
-              {/* Chart */}
-              <div className="card" data-chart="mood">
-                <h2 className="mb-4 text-lg font-semibold text-foreground">Your Taper Progress</h2>
+              {/* Chart — bleeds to viewport edges on mobile, card on desktop */}
+              <div className="-mx-4 -mt-2 sm:mx-0 sm:mt-0 sm:card" data-chart="mood">
+                <h2 className="mb-1 px-4 text-sm font-semibold text-foreground sm:mb-4 sm:px-0 sm:text-lg">Your Taper Progress</h2>
                 <JournalChart entries={entries} assessments={assessments} />
               </div>
 
-              {/* Dose Progress + How Others Felt */}
+              {/* Log an Entry */}
+              <div className="card" id="entry-form">
+                <h2 className="mb-4 text-lg font-semibold text-foreground">Log an Entry</h2>
+                <JournalEntryForm onSubmit={handleSubmit} entryCount={entries.length} />
+              </div>
+
+              {/* Share / Export actions */}
+              <div className="flex items-center gap-3">
+                <ProviderPDFButton entries={entries} profile={profile || {}} assessments={assessments} />
+                {shareUrl ? (
+                  <div className="flex flex-1 items-center gap-2">
+                    <input
+                      type="text"
+                      value={shareUrl}
+                      readOnly
+                      className="input w-full text-xs"
+                      onClick={(e) => e.target.select()}
+                    />
+                    <button
+                      onClick={() => navigator.clipboard.writeText(shareUrl)}
+                      className="btn-secondary shrink-0 text-sm"
+                    >
+                      Copy
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={handleShare}
+                    disabled={sharing}
+                    className="btn-secondary text-sm"
+                  >
+                    {sharing ? 'Generating...' : 'Share Journal'}
+                  </button>
+                )}
+              </div>
+
+              {/* How Others Felt + Dose Progress */}
               {entries.length >= 2 && (
-                <div className="grid gap-4 lg:grid-cols-2">
-                  <DosePercentage entries={entries} />
+                <>
                   <HowOthersFelt entries={entries} />
-                </div>
+                  <DosePercentage entries={entries} />
+                </>
               )}
 
               {/* Symptom Heatmap — disabled, keep for future use */}
               {/* <SymptomHeatmap entries={entries} /> */}
             </>
           )}
-
-          {/* Entry Form */}
-          <div className="card" id="entry-form">
-            <h2 className="mb-4 text-lg font-semibold text-foreground">Log an Entry</h2>
-            <JournalEntryForm onSubmit={handleSubmit} entryCount={entries.length} />
-          </div>
 
           {/* Invite prompt */}
           {inviteTrigger && <InvitePrompt trigger={inviteTrigger} userId={user.id} />}
@@ -297,9 +297,9 @@ export default function JournalPage() {
               </div>
             </div>
           ) : (
-            /* Assessment Chart */
-            <div className="card" data-chart="assessment">
-              <h2 className="mb-4 text-lg font-semibold text-foreground">Assessment Scores</h2>
+            /* Assessment Chart — full width on mobile, card on desktop */
+            <div className="-mx-4 sm:mx-0 sm:card" data-chart="assessment">
+              <h2 className="mb-1 px-4 text-sm font-semibold text-foreground sm:mb-4 sm:px-0 sm:text-lg">Assessment Scores</h2>
               <AssessmentChart assessments={assessments} entries={entries} />
             </div>
           )}

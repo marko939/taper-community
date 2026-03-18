@@ -26,13 +26,15 @@ export default function AssessmentCard({ assessments }) {
       <div className="grid grid-cols-2 gap-3">
         <button
           onClick={() => setActiveForm('phq9')}
-          className="btn btn-primary w-full py-3 text-sm"
+          className="w-full rounded-xl py-3 text-sm font-semibold transition active:scale-95"
+          style={{ background: 'var(--purple-pale)', color: 'var(--purple)' }}
         >
           Take Standardized Depression Test
         </button>
         <button
           onClick={() => setActiveForm('gad7')}
-          className="btn btn-primary w-full py-3 text-sm"
+          className="w-full rounded-xl py-3 text-sm font-semibold transition active:scale-95"
+          style={{ background: 'var(--purple-pale)', color: 'var(--purple)' }}
         >
           Take Standardized Anxiety Test
         </button>

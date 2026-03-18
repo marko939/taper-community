@@ -3,6 +3,7 @@
 import { create } from 'zustand';
 import { createClient } from '@/lib/supabase/client';
 import { ensureSession } from '@/lib/ensureSession';
+import { fireAndForget } from '@/lib/fireAndForget';
 import { useAuthStore } from './authStore';
 
 const DB_TIMEOUT_MS = 15_000;
@@ -203,11 +204,13 @@ export const useBlogStore = create((set, get) => ({
       });
 
       // Update comment_count on blog_posts (best-effort)
-      supabase
-        .from('blog_posts')
-        .update({ comment_count: (get().comments[blogPostId]?.totalCount || 1) })
-        .eq('id', blogPostId)
-        .then(() => set({ postsLoaded: false }));
+      fireAndForget('blog-comment-count-sync', async () => {
+        await supabase
+          .from('blog_posts')
+          .update({ comment_count: (get().comments[blogPostId]?.totalCount || 1) })
+          .eq('id', blogPostId);
+        set({ postsLoaded: false });
+      });
     }
 
     return data;

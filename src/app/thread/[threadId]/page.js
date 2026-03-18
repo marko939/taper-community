@@ -14,14 +14,17 @@ import DeprescriberCTA from '@/components/layout/DeprescriberCTA';
 import QuoteToolbar from '@/components/thread/QuoteToolbar';
 import ImageLightbox from '@/components/shared/ImageLightbox';
 import { PageLoading } from '@/components/shared/LoadingSpinner';
+import { useRouteCleanup } from '@/hooks/useRouteCleanup';
 
 export default function ThreadPage() {
+  useRouteCleanup();
   const { threadId } = useParams();
   const thread = useThreadStore((s) => s.threads[threadId]);
   const replyData = useThreadStore((s) => s.replies[threadId]);
   const fetchThread = useThreadStore((s) => s.fetchThread);
   const fetchReplies = useThreadStore((s) => s.fetchReplies);
   const loadMoreReplies = useThreadStore((s) => s.loadMoreReplies);
+  const fetchReplyPage = useThreadStore((s) => s.fetchReplyPage);
   const user = useAuthStore((s) => s.user);
   const fetchThreadFollows = useFollowStore((s) => s.fetchThreadFollows);
 
@@ -31,28 +34,24 @@ export default function ThreadPage() {
   const loading = !thread && !replyData;
 
   useEffect(() => {
-    if (threadId) {
-      fetchThread(threadId);
+    if (!threadId) return;
+    fetchThread(threadId);
+
+    // If URL has a reply hash anchor, fetch the page containing that reply
+    const hash = typeof window !== 'undefined' ? window.location.hash : '';
+    const replyId = hash.startsWith('#reply-') ? hash.replace('#reply-', '') : null;
+
+    if (replyId) {
+      // Fetch all pages up to the one containing the target reply
+      fetchReplyPage(threadId, replyId);
+    } else {
       fetchReplies(threadId);
     }
-  }, [threadId, fetchThread, fetchReplies]);
+  }, [threadId, fetchThread, fetchReplies, fetchReplyPage]);
 
   useEffect(() => {
     if (user?.id) fetchThreadFollows(user.id);
   }, [user?.id, fetchThreadFollows]);
-
-  // Scroll to specific reply when URL has a hash (e.g. from notification click)
-  useEffect(() => {
-    if (!replies.length) return;
-    if (window.location.hash) {
-      const el = document.querySelector(window.location.hash);
-      if (el) {
-        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        el.classList.add('highlight-flash');
-        setTimeout(() => el.classList.remove('highlight-flash'), 2000);
-      }
-    }
-  }, [replies.length]);
 
   if (loading) return <PageLoading />;
 

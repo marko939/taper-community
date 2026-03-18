@@ -186,9 +186,9 @@ export default function ThreadView({ thread }) {
               ) : (
                 /* View mode */
                 <>
-                  <div className="flex items-start justify-between gap-3">
-                    <h1 className="text-2xl font-semibold text-foreground">{editTitle}</h1>
-                    <div className="flex shrink-0 gap-1.5">
+                  <div className="flex items-start justify-between gap-2">
+                    <h1 className="text-xl font-semibold text-foreground sm:text-2xl">{editTitle}</h1>
+                    <div className="flex shrink-0 flex-wrap gap-1.5">
                       <FollowThreadButton threadId={id} />
                       {(isAdmin || canModify) && (<>
 

@@ -380,3 +380,28 @@ label {
   0% { background-color: rgba(107, 70, 193, 0.2); }
   100% { background-color: transparent; }
 }
+
+/* ── Mobile touch states ── */
+/* Suppress hover effects on touch devices */
+@media (hover: none) {
+  .hover\:shadow-elevated:hover { box-shadow: none !important; }
+  .hover\:bg-purple-ghost:hover { background-color: inherit !important; }
+  .hover\:bg-purple-ghost\/50:hover { background-color: inherit !important; }
+  .hover\:text-purple:hover { color: inherit !important; }
+  .hover\:text-accent-blue:hover { color: inherit !important; }
+  .hover\:underline:hover { text-decoration: inherit !important; }
+  .hover\:bg-red-50:hover { background-color: inherit !important; }
+  .hover\:bg-red-600:hover { background-color: inherit !important; }
+  .hover\:text-red-500:hover { color: inherit !important; }
+
+  /* Active/press states for touch */
+  .card:active { transform: scale(0.99); }
+  .btn:active, .btn-primary:active, .btn-secondary:active { transform: scale(0.97); }
+}
+
+/* Safe area support for bottom nav */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}

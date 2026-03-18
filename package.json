@@ -27,6 +27,8 @@
     "react-dom": "^19.0.0",
     "react-leaflet": "^5.0.0",
     "react-markdown": "^10.1.0",
+    "react-window": "^2.2.7",
+    "react-window-infinite-loader": "^2.0.1",
     "recharts": "^2.15.0",
     "remark-gfm": "^4.0.1",
     "resend": "^6.9.2",

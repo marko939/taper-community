@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useCallback, useEffect, memo } from 'react';
+import { List, useListRef, useDynamicRowHeight } from 'react-window';
 import Link from 'next/link';
 import Avatar from '@/components/shared/Avatar';
 import { PeerAdvisorBadge } from '@/components/shared/Badge';
@@ -171,20 +172,85 @@ function ReplyCard({ reply, threadId }) {
   );
 }
 
+const MemoReplyCard = memo(ReplyCard);
+
+const DEFAULT_REPLY_HEIGHT = 180;
+const LOAD_THRESHOLD = 5;
+
 export default function ReplyList({ replies = [], threadId, hasMore = false, totalCount, onLoadMore }) {
+  const listRef = useListRef();
+  const loadingMore = useRef(false);
+
+  // Scroll to hash anchor (for notification deep-links)
+  useEffect(() => {
+    if (!replies.length || typeof window === 'undefined') return;
+    if (!window.location.hash) return;
+
+    const replyId = window.location.hash.replace('#reply-', '');
+    const replyIndex = replies.findIndex((r) => r.id === replyId);
+
+    if (replyIndex >= 0 && listRef.current) {
+      listRef.current.scrollToIndex(replyIndex, { align: 'center' });
+
+      requestAnimationFrame(() => {
+        const el = document.getElementById(`reply-${replyId}`);
+        if (el) {
+          el.classList.add('highlight-flash');
+          setTimeout(() => el.classList.remove('highlight-flash'), 2000);
+        }
+      });
+    }
+  }, [replies.length, listRef]);
+
   if (replies.length === 0) return null;
 
+  const itemCount = replies.length;
+
+  // List height — fill available viewport
+  const listHeight = typeof window !== 'undefined'
+    ? Math.min(window.innerHeight - 300, Math.max(400, itemCount * DEFAULT_REPLY_HEIGHT))
+    : 600;
+
   return (
-    <div className="space-y-4">
-      {replies.map((reply) => (
-        <ReplyCard key={reply.id} reply={reply} threadId={threadId} />
-      ))}
+    <div>
+      <List
+        ref={listRef}
+        height={listHeight}
+        itemCount={itemCount}
+        itemSize={DEFAULT_REPLY_HEIGHT}
+        overscanCount={5}
+        width="100%"
+      >
+        {({ index, style }) => {
+          const reply = replies[index];
+
+          // Trigger load more when nearing the end
+          if (hasMore && onLoadMore && index >= itemCount - LOAD_THRESHOLD && !loadingMore.current) {
+            loadingMore.current = true;
+            Promise.resolve(onLoadMore()).finally(() => { loadingMore.current = false; });
+          }
+
+          if (!reply) {
+            return (
+              <div style={style} className="flex items-center justify-center py-4">
+                <span className="text-sm text-text-muted">Loading...</span>
+              </div>
+            );
+          }
+
+          return (
+            <div style={{ ...style, paddingBottom: 16 }}>
+              <MemoReplyCard reply={reply} threadId={threadId} />
+            </div>
+          );
+        }}
+      </List>
 
       {hasMore && onLoadMore && (
         <div className="flex items-center justify-center pt-2">
           <button
             onClick={onLoadMore}
-            className="rounded-xl px-6 py-2.5 text-sm font-medium transition hover:bg-purple-ghost"
+            className="rounded-xl px-6 py-2.5 text-sm font-medium transition active:scale-95"
             style={{ color: 'var(--purple)', border: '1px solid var(--border-subtle)' }}
           >
             Load more replies

@@ -19,6 +19,29 @@ export const useForumStore = create((set, get) => ({
   hotThreadsLoaded: false,
   newThreads: { items: [], loading: true },
   newThreadsLoaded: false,
+  _abortControllers: {},
+
+  // Cancel a specific pending fetch
+  cancelPending: (opName) => {
+    const ctrl = get()._abortControllers[opName];
+    if (ctrl) {
+      ctrl.abort();
+      set((state) => {
+        const controllers = { ...state._abortControllers };
+        delete controllers[opName];
+        return { _abortControllers: controllers };
+      });
+    }
+  },
+
+  // Cancel all pending fetches (called on route cleanup)
+  cancelAll: () => {
+    const controllers = get()._abortControllers;
+    for (const ctrl of Object.values(controllers)) {
+      ctrl.abort();
+    }
+    set({ _abortControllers: {} });
+  },
 
   // Reset cached flags so next fetch actually hits the DB
   invalidate: () => {
@@ -56,9 +79,10 @@ export const useForumStore = create((set, get) => ({
   fetchThreads: async (forumId) => {
     if (!forumId) return;
 
-    const supabase = createClient();
-
+    get().cancelPending('fetchThreads');
+    const controller = new AbortController();
     set((state) => ({
+      _abortControllers: { ...state._abortControllers, fetchThreads: controller },
       threadPages: {
         ...state.threadPages,
         [forumId]: { ...(state.threadPages[forumId] || {}), loading: true },
@@ -66,6 +90,7 @@ export const useForumStore = create((set, get) => ({
     }));
 
     try {
+      const supabase = createClient();
       // Query threads through junction table (one thread, many forums)
       const { data, count } = await supabase
         .from('threads')
@@ -73,6 +98,7 @@ export const useForumStore = create((set, get) => ({
         .eq('thread_forums.forum_id', forumId)
         .order('pinned', { ascending: false })
         .order('created_at', { ascending: false })
+        .abortSignal(controller.signal)
         .range(0, THREADS_PER_PAGE - 1);
 
       const rows = data || [];
@@ -91,6 +117,7 @@ export const useForumStore = create((set, get) => ({
         },
       }));
     } catch (err) {
+      if (err.name === 'AbortError') return;
       console.error('[forumStore] fetchThreads error:', err);
       set((state) => ({
         threadPages: {
@@ -139,6 +166,11 @@ export const useForumStore = create((set, get) => ({
 
   fetchHotThreads: async (limit = 10, { force = false } = {}) => {
     if (!force && get().hotThreadsLoaded) return;
+    get().cancelPending('fetchHotThreads');
+    const controller = new AbortController();
+    set((state) => ({
+      _abortControllers: { ...state._abortControllers, fetchHotThreads: controller },
+    }));
     const requestId = ++_hotRequestId;
     set({ recentThreads: { items: get().recentThreads.items, loading: true } });
     try {
@@ -153,6 +185,7 @@ export const useForumStore = create((set, get) => ({
         .select(selectFields)
         .gte('created_at', thirtyDaysAgo)
         .order('created_at', { ascending: false })
+        .abortSignal(controller.signal)
         .limit(50);
 
       if (error) console.error('[forumStore] fetchHotThreads query error:', error);
@@ -172,6 +205,7 @@ export const useForumStore = create((set, get) => ({
           .from('threads')
           .select(selectFields)
           .order('created_at', { ascending: false })
+          .abortSignal(controller.signal)
           .limit(limit * 3);
 
         if (backfillError) console.error('[forumStore] fetchHotThreads backfill error:', backfillError);
@@ -194,7 +228,8 @@ export const useForumStore = create((set, get) => ({
         const { data: replyData } = await supabase
           .from('replies')
           .select('thread_id, vote_score, helpful_count')
-          .in('thread_id', threadIds);
+          .in('thread_id', threadIds)
+          .abortSignal(controller.signal);
 
         if (requestId !== _hotRequestId) {
           set({ recentThreads: { items: get().recentThreads.items, loading: false } });
@@ -219,6 +254,7 @@ export const useForumStore = create((set, get) => ({
 
       set({ recentThreads: { items: threads, loading: false }, hotThreadsLoaded: true });
     } catch (err) {
+      if (err.name === 'AbortError') return;
       if (requestId !== _hotRequestId) {
         set({ recentThreads: { items: get().recentThreads.items, loading: false } });
         return;
@@ -231,6 +267,11 @@ export const useForumStore = create((set, get) => ({
 
   fetchNewThreads: async (limit = 10, { force = false } = {}) => {
     if (!force && get().newThreadsLoaded) return;
+    get().cancelPending('fetchNewThreads');
+    const controller = new AbortController();
+    set((state) => ({
+      _abortControllers: { ...state._abortControllers, fetchNewThreads: controller },
+    }));
     const requestId = ++_newRequestId;
     set({ newThreads: { items: get().newThreads.items, loading: true } });
     try {
@@ -239,6 +280,7 @@ export const useForumStore = create((set, get) => ({
         .from('threads')
         .select('*, profiles:user_id(display_name, is_peer_advisor, avatar_url, is_founding_member), thread_forums(forum_id, forums:forum_id(name, slug, drug_slug))')
         .order('created_at', { ascending: false })
+        .abortSignal(controller.signal)
         .limit(limit);
 
       if (error) console.error('[forumStore] fetchNewThreads query error:', error);
@@ -251,6 +293,7 @@ export const useForumStore = create((set, get) => ({
 
       set({ newThreads: { items: data || [], loading: false }, newThreadsLoaded: true });
     } catch (err) {
+      if (err.name === 'AbortError') return;
       if (requestId !== _newRequestId) {
         set({ newThreads: { items: get().newThreads.items, loading: false } });
         return;
@@ -270,7 +313,10 @@ export const useForumStore = create((set, get) => ({
       return;
     }
 
+    get().cancelPending('search');
+    const controller = new AbortController();
     set((state) => ({
+      _abortControllers: { ...state._abortControllers, search: controller },
       searchState: { ...state.searchState, [key]: { results: [], loading: true, query } },
     }));
 
@@ -285,6 +331,7 @@ export const useForumStore = create((set, get) => ({
         .select(selectFields)
         .textSearch('title', query)
         .order('created_at', { ascending: false })
+        .abortSignal(controller.signal)
         .limit(20);
 
       if (forumId) {
@@ -297,6 +344,7 @@ export const useForumStore = create((set, get) => ({
         searchState: { ...state.searchState, [key]: { results: data || [], loading: false, query } },
       }));
     } catch (err) {
+      if (err.name === 'AbortError') return;
       console.error('[forumStore] search error:', err);
       set((state) => ({
         searchState: { ...state.searchState, [key]: { results: [], loading: false, query } },

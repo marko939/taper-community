@@ -141,7 +141,7 @@ export default function MentionAutocomplete({ textareaRef, value, onChange }) {
   return (
     <div
       ref={containerRef}
-      className="absolute z-50 mt-1 w-64 overflow-hidden rounded-xl border bg-white shadow-lg"
+      className="absolute z-50 mt-1 w-full max-w-[16rem] overflow-hidden rounded-xl border bg-white shadow-lg"
       style={{ borderColor: 'var(--border-subtle)' }}
     >
       {results.map((user, idx) => (
@@ -153,7 +153,7 @@ export default function MentionAutocomplete({ textareaRef, value, onChange }) {
             selectUser(user);
           }}
           onMouseEnter={() => setActiveIndex(idx)}
-          className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-sm transition"
+          className="flex w-full items-center gap-2.5 px-3 py-2.5 text-left text-sm transition"
           style={{
             background: idx === activeIndex ? 'var(--purple-ghost)' : 'transparent',
             color: 'var(--foreground)',
