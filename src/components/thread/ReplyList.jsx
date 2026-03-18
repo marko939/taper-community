@@ -3,7 +3,7 @@
 import { useState, useRef, useCallback, useEffect, memo } from 'react';
 import Link from 'next/link';
 import Avatar from '@/components/shared/Avatar';
-import { PeerAdvisorBadge } from '@/components/shared/Badge';
+import { PeerAdvisorBadge, StaffBadge } from '@/components/shared/Badge';
 import VoteButton from '@/components/shared/VoteButton';
 import DrugSignature from '@/components/shared/DrugSignature';
 import { useAuthStore } from '@/stores/authStore';
@@ -63,6 +63,7 @@ function ReplyCard({ reply, threadId }) {
           <Link href={`/profile/${reply.user_id}`} className="font-semibold text-foreground no-underline hover:text-accent-blue">
             {displayName}
           </Link>
+          {isMod(reply.user_id) && <StaffBadge />}
           {reply.profiles?.is_peer_advisor && <PeerAdvisorBadge />}
           <FollowButton targetUserId={reply.user_id} />
           {currentUser && currentUser.id !== reply.user_id && reply.user_id === ADMIN_USER_ID && (

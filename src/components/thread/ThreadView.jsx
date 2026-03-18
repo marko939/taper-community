@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Avatar from '@/components/shared/Avatar';
-import Badge, { PeerAdvisorBadge } from '@/components/shared/Badge';
+import Badge, { PeerAdvisorBadge, StaffBadge } from '@/components/shared/Badge';
 import DrugSignature from '@/components/shared/DrugSignature';
 import VoteButton from '@/components/shared/VoteButton';
 import { useAuthStore } from '@/stores/authStore';
@@ -121,6 +121,7 @@ export default function ThreadView({ thread }) {
                     <Link href={`/profile/${user_id}`} className="font-semibold text-foreground no-underline hover:text-accent-blue">
                       {displayName}
                     </Link>
+                    {isMod(user_id) && <StaffBadge />}
                     {profiles?.is_peer_advisor && <PeerAdvisorBadge />}
                     <FollowButton targetUserId={user_id} />
                     {currentUser && currentUser.id !== user_id && user_id === ADMIN_USER_ID && (
