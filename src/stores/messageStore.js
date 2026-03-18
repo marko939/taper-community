@@ -19,6 +19,7 @@ export const useMessageStore = create((set, get) => ({
   loading: false,
   conversationsLoaded: false,
   _realtimeChannel: null,
+  _refetchTimer: null,
 
   fetchConversations: async () => {
     const userId = useAuthStore.getState().user?.id;
@@ -240,8 +241,13 @@ export const useMessageStore = create((set, get) => ({
             unreadTotal: state.unreadTotal + 1,
             messages: [...state.messages, payload.new],
           }));
-          // Refresh conversations to update the list
-          get().fetchConversations();
+          // Debounce conversation refetch — collapses rapid DM bursts into 1 fetch
+          const prevTimer = get()._refetchTimer;
+          if (prevTimer) clearTimeout(prevTimer);
+          const timer = setTimeout(() => {
+            get().fetchConversations();
+          }, 2000);
+          set({ _refetchTimer: timer });
         }
       )
       .subscribe();
@@ -250,11 +256,14 @@ export const useMessageStore = create((set, get) => ({
   },
 
   unsubscribeRealtime: () => {
+    const timer = get()._refetchTimer;
+    if (timer) clearTimeout(timer);
+
     const channel = get()._realtimeChannel;
     if (channel) {
       const supabase = createClient();
       supabase.removeChannel(channel);
-      set({ _realtimeChannel: null });
+      set({ _realtimeChannel: null, _refetchTimer: null });
     }
   },
 }));

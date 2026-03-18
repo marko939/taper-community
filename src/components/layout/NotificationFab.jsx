@@ -22,34 +22,25 @@ export default function NotificationFab() {
   const [open, setOpen] = useState(false);
   const panelRef = useRef(null);
 
-  const {
-    notifications,
-    unreadCount,
-    loading,
-    fetchError,
-    fetchNotifications,
-    fetchUnreadCount,
-    subscribeRealtime,
-    unsubscribeRealtime,
-    markAsRead,
-    markAllAsRead,
-  } = useNotificationStore();
+  const notifications = useNotificationStore((s) => s.notifications);
+  const unreadCount = useNotificationStore((s) => s.unreadCount);
+  const loading = useNotificationStore((s) => s.loading);
+  const fetchError = useNotificationStore((s) => s.fetchError);
 
-  // Initialize on auth
+  // Initialize on auth — use getState() to avoid unstable function refs in deps
   useEffect(() => {
-    if (user) {
-      fetchUnreadCount();
-      subscribeRealtime();
-      return () => unsubscribeRealtime();
-    }
-  }, [user, fetchUnreadCount, subscribeRealtime, unsubscribeRealtime]);
+    if (!user) return;
+    useNotificationStore.getState().fetchUnreadCount();
+    useNotificationStore.getState().subscribeRealtime();
+    return () => useNotificationStore.getState().unsubscribeRealtime();
+  }, [user]);
 
   // Fetch full list every time the panel opens (cheap, 50 rows max)
   useEffect(() => {
     if (open) {
-      fetchNotifications();
+      useNotificationStore.getState().fetchNotifications();
     }
-  }, [open, fetchNotifications]);
+  }, [open]);
 
   // Close on click outside
   useEffect(() => {
@@ -64,13 +55,13 @@ export default function NotificationFab() {
   }, [open]);
 
   const handleNotifClick = useCallback((n) => {
-    if (!n.read) markAsRead(n.id);
+    if (!n.read) useNotificationStore.getState().markAsRead(n.id);
     if (n.thread_id) {
       setOpen(false);
       const hash = n.reply_id ? `#reply-${n.reply_id}` : '';
       router.push(`/thread/${n.thread_id}${hash}`);
     }
-  }, [markAsRead, router]);
+  }, [router]);
 
   if (!user) return null;
 
@@ -92,7 +83,7 @@ export default function NotificationFab() {
             </span>
             {unreadCount > 0 && (
               <button
-                onClick={markAllAsRead}
+                onClick={() => useNotificationStore.getState().markAllAsRead()}
                 className="text-xs font-medium transition hover:opacity-80"
                 style={{ color: 'var(--purple)' }}
               >
@@ -111,7 +102,7 @@ export default function NotificationFab() {
               <div className="px-4 py-10 text-center">
                 <p className="text-sm" style={{ color: 'var(--text-subtle)' }}>Could not load notifications.</p>
                 <button
-                  onClick={fetchNotifications}
+                  onClick={() => useNotificationStore.getState().fetchNotifications()}
                   className="mt-2 text-xs font-medium transition hover:opacity-80"
                   style={{ color: 'var(--purple)' }}
                 >
@@ -134,7 +125,7 @@ export default function NotificationFab() {
                 return (
                   <button
                     key={n.id}
-                    onClick={() => isBadge ? (!n.read && markAsRead(n.id)) : handleNotifClick(n)}
+                    onClick={() => isBadge ? (!n.read && useNotificationStore.getState().markAsRead(n.id)) : handleNotifClick(n)}
                     className={`flex w-full items-start gap-3 px-4 py-3 text-left transition ${isBadge ? '' : 'hover:bg-purple-ghost'}`}
                     style={{
                       background: n.read ? 'transparent' : 'var(--purple-ghost)',

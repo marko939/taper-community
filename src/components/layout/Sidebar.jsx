@@ -85,17 +85,14 @@ export default function Sidebar() {
   const pathname = usePathname();
   const { user, profile, loading, signOut } = useAuth();
   const dmUnread = useMessageStore((s) => s.unreadTotal);
-  const fetchDmUnread = useMessageStore((s) => s.fetchUnreadTotal);
-  const subscribeDm = useMessageStore((s) => s.subscribeRealtime);
-  const unsubscribeDm = useMessageStore((s) => s.unsubscribeRealtime);
 
+  // Use getState() to avoid unstable Zustand method refs in dep array
   useEffect(() => {
-    if (user) {
-      fetchDmUnread();
-      subscribeDm();
-      return () => unsubscribeDm();
-    }
-  }, [user, fetchDmUnread, subscribeDm, unsubscribeDm]);
+    if (!user) return;
+    useMessageStore.getState().fetchUnreadTotal();
+    useMessageStore.getState().subscribeRealtime();
+    return () => useMessageStore.getState().unsubscribeRealtime();
+  }, [user]);
 
   // Close mobile menu on route change to prevent stale overlay
   useEffect(() => {

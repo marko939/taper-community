@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState, useEffect, useCallback } from 'react';
+import { useRef, useState, useEffect } from 'react';
 
 const THRESHOLD = 60; // px needed to trigger refresh
 
@@ -8,66 +8,81 @@ const THRESHOLD = 60; // px needed to trigger refresh
  * Pull-to-refresh hook using native touch events.
  * Returns { containerRef, isPulling, pullDistance, isRefreshing }
  * Attach containerRef to the scrollable container element.
+ *
+ * All touch state lives in refs — listeners attach once on mount
+ * and never re-attach, preventing the listener-stacking memory leak.
  */
 export function usePullToRefresh(onRefresh) {
   const containerRef = useRef(null);
   const touchStartY = useRef(0);
+  const distanceRef = useRef(0);
+  const pulling = useRef(false);
+  const refreshingRef = useRef(false);
+  const onRefreshRef = useRef(onRefresh);
+
   const [pullDistance, setPullDistance] = useState(0);
   const [isPulling, setIsPulling] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const pulling = useRef(false);
 
-  const handleTouchStart = useCallback((e) => {
-    const el = containerRef.current;
-    if (!el || el.scrollTop > 0) return; // Only activate at top
-    touchStartY.current = e.touches[0].clientY;
-    pulling.current = false;
-  }, []);
-
-  const handleTouchMove = useCallback((e) => {
-    const el = containerRef.current;
-    if (!el || el.scrollTop > 0) return;
-
-    const dy = e.touches[0].clientY - touchStartY.current;
-    if (dy > 10) {
-      pulling.current = true;
-      setIsPulling(true);
-      // Dampen the pull distance (rubber band effect)
-      setPullDistance(Math.min(dy * 0.5, 120));
-    }
-  }, []);
-
-  const handleTouchEnd = useCallback(async () => {
-    if (!pulling.current) return;
-
-    if (pullDistance >= THRESHOLD && onRefresh) {
-      setIsRefreshing(true);
-      try {
-        await onRefresh();
-      } finally {
-        setIsRefreshing(false);
-      }
-    }
-
-    setIsPulling(false);
-    setPullDistance(0);
-    pulling.current = false;
-  }, [pullDistance, onRefresh]);
+  // Keep onRefresh callback current without re-attaching listeners
+  useEffect(() => { onRefreshRef.current = onRefresh; }, [onRefresh]);
 
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
 
-    el.addEventListener('touchstart', handleTouchStart, { passive: true });
-    el.addEventListener('touchmove', handleTouchMove, { passive: true });
-    el.addEventListener('touchend', handleTouchEnd, { passive: true });
+    function onTouchStart(e) {
+      if (refreshingRef.current) return;
+      if (el.scrollTop > 0) return;
+      touchStartY.current = e.touches[0].clientY;
+      pulling.current = false;
+    }
+
+    function onTouchMove(e) {
+      if (refreshingRef.current) return;
+      if (el.scrollTop > 0) return;
+
+      const dy = e.touches[0].clientY - touchStartY.current;
+      if (dy > 10) {
+        pulling.current = true;
+        const d = Math.min(dy * 0.5, 120);
+        distanceRef.current = d;
+        setIsPulling(true);
+        setPullDistance(d);
+      }
+    }
+
+    async function onTouchEnd() {
+      if (!pulling.current) return;
+
+      if (distanceRef.current >= THRESHOLD && onRefreshRef.current) {
+        refreshingRef.current = true;
+        setIsRefreshing(true);
+        try {
+          await onRefreshRef.current();
+        } finally {
+          refreshingRef.current = false;
+          setIsRefreshing(false);
+        }
+      }
+
+      distanceRef.current = 0;
+      pulling.current = false;
+      setIsPulling(false);
+      setPullDistance(0);
+    }
+
+    el.addEventListener('touchstart', onTouchStart, { passive: true });
+    el.addEventListener('touchmove', onTouchMove, { passive: true });
+    el.addEventListener('touchend', onTouchEnd, { passive: true });
 
     return () => {
-      el.removeEventListener('touchstart', handleTouchStart);
-      el.removeEventListener('touchmove', handleTouchMove);
-      el.removeEventListener('touchend', handleTouchEnd);
+      el.removeEventListener('touchstart', onTouchStart, { passive: true });
+      el.removeEventListener('touchmove', onTouchMove, { passive: true });
+      el.removeEventListener('touchend', onTouchEnd, { passive: true });
     };
-  }, [handleTouchStart, handleTouchMove, handleTouchEnd]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Mount once
 
   return { containerRef, isPulling, pullDistance, isRefreshing };
 }

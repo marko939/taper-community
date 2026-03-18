@@ -146,16 +146,10 @@ export default function FeedTabs({ activeTab: controlledTab, onTabChange, useUrl
   const user = useAuthStore((s) => s.user);
   const recentThreads = useForumStore((s) => s.recentThreads);
   const newThreads = useForumStore((s) => s.newThreads);
-  const fetchHotThreads = useForumStore((s) => s.fetchHotThreads);
-  const fetchNewThreads = useForumStore((s) => s.fetchNewThreads);
   const followedThreads = useFollowStore((s) => s.followedThreads);
   const following = useFollowStore((s) => s.following);
   const followingLoaded = useFollowStore((s) => s.followingLoaded);
-  const fetchFollowing = useFollowStore((s) => s.fetchFollowing);
-  const fetchFollowedThreads = useFollowStore((s) => s.fetchFollowedThreads);
-
   const blogPosts = useBlogStore((s) => s.posts);
-  const fetchBlogPosts = useBlogStore((s) => s.fetchPosts);
 
   const [localTab, setLocalTab] = useState('new');
   const activeTab = controlledTab ?? localTab;
@@ -167,33 +161,33 @@ export default function FeedTabs({ activeTab: controlledTab, onTabChange, useUrl
   const activeTabRef = useRef(activeTab);
   activeTabRef.current = activeTab;
 
-  // Fetch the active tab's data — called on mount and debounced on tab switch
+  // Fetch the active tab's data — uses getState() to avoid unstable method refs
   const fetchForTab = useCallback((tab, { force = false } = {}) => {
     if (tab === 'hot') {
-      fetchHotThreads(10, { force });
+      useForumStore.getState().fetchHotThreads(10, { force });
     } else if (tab === 'new') {
-      fetchNewThreads(10, { force });
+      useForumStore.getState().fetchNewThreads(10, { force });
     } else if (tab === 'following' && followingLoaded) {
-      fetchFollowedThreads({ force });
+      useFollowStore.getState().fetchFollowedThreads({ force });
     }
-  }, [fetchHotThreads, fetchNewThreads, fetchFollowedThreads, followingLoaded]);
+  }, [followingLoaded]);
 
-  // Initial fetch for active tab on mount
+  // Initial fetch on mount — getState() keeps dep array empty
   useEffect(() => {
-    fetchHotThreads(10);
-    fetchNewThreads(10);
-    fetchBlogPosts();
-  }, [fetchHotThreads, fetchNewThreads, fetchBlogPosts]);
+    useForumStore.getState().fetchHotThreads(10);
+    useForumStore.getState().fetchNewThreads(10);
+    useBlogStore.getState().fetchPosts();
+  }, []);
 
   useEffect(() => {
-    if (user?.id) fetchFollowing(user.id);
-  }, [user?.id, fetchFollowing]);
+    if (user?.id) useFollowStore.getState().fetchFollowing(user.id);
+  }, [user?.id]);
 
   useEffect(() => {
     if (followingLoaded) {
-      fetchFollowedThreads();
+      useFollowStore.getState().fetchFollowedThreads();
     }
-  }, [followingLoaded, fetchFollowedThreads]);
+  }, [followingLoaded]);
 
   // Debounced tab switch — UI updates immediately, fetch fires after 150ms settle
   const switchTab = useCallback((tab) => {
