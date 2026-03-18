@@ -28,7 +28,14 @@ export default function NewThreadForm({ forumId, onSubmit, disabled = false }) {
     setLoading(true);
     setError(null);
     try {
-      await onSubmit({ title: title.trim(), body: body.trim(), tags: selectedTags });
+      // 8-second hard timeout — prevents infinite "Posting..." spinner
+      const timeout = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Request timed out. Please try again.')), 8000)
+      );
+      await Promise.race([
+        onSubmit({ title: title.trim(), body: body.trim(), tags: selectedTags }),
+        timeout,
+      ]);
     } catch (err) {
       console.error('[NewThreadForm] submit error:', err);
       setError(err.message || 'Failed to create thread. Please try again.');

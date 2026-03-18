@@ -86,30 +86,39 @@ export default function ComposeSheet({ onClose }) {
     setError(null);
 
     try {
-      await ensureSession();
-      const supabase = createClient();
-
-      const { data: thread, error: insertErr } = await supabase
-        .from('threads')
-        .insert({
-          title: title.trim(),
-          body: body.trim(),
-          tags: selectedTags,
-          user_id: user.id,
-        })
-        .select()
-        .single();
-
-      if (insertErr) throw insertErr;
-
-      // Link thread to forum
-      fireAndForget('compose-link-forum', () =>
-        supabase.from('thread_forums').insert({ thread_id: thread.id, forum_id: selectedForum })
+      // 8-second hard timeout — prevents infinite "Posting..." spinner
+      const timeout = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Request timed out. Please try again.')), 8000)
       );
 
-      useForumStore.getState().invalidate();
-      onClose();
-      router.push(`/thread/${thread.id}`);
+      const doSubmit = async () => {
+        await ensureSession();
+        const supabase = createClient();
+
+        const { data: thread, error: insertErr } = await supabase
+          .from('threads')
+          .insert({
+            title: title.trim(),
+            body: body.trim(),
+            tags: selectedTags,
+            user_id: user.id,
+          })
+          .select()
+          .single();
+
+        if (insertErr) throw insertErr;
+
+        // Link thread to forum
+        fireAndForget('compose-link-forum', () =>
+          supabase.from('thread_forums').insert({ thread_id: thread.id, forum_id: selectedForum })
+        );
+
+        useForumStore.getState().invalidate();
+        onClose();
+        router.push(`/thread/${thread.id}`);
+      };
+
+      await Promise.race([doSubmit(), timeout]);
     } catch (err) {
       console.error('[ComposeSheet] submit error:', err);
       setError(err.message || 'Failed to create thread.');

@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/client';
 
-const ENSURE_SESSION_TIMEOUT_MS = 45_000; // 45 seconds
+const ENSURE_SESSION_TIMEOUT_MS = 6_000; // 6 seconds — fail fast, let form-level timeout handle UX
 
 /**
  * Ensures a valid Supabase session exists before performing a mutation.
