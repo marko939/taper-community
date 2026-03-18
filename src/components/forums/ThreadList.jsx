@@ -1,7 +1,7 @@
 'use client';
 
-import { useRef, useCallback, memo, useEffect, useMemo, useState } from 'react';
-import { FixedSizeList as List } from 'react-window';
+import { useRef, useCallback, memo, useEffect, useState } from 'react';
+import { List } from 'react-window';
 import ThreadCard from './ThreadCard';
 import LoadingSpinner from '@/components/shared/LoadingSpinner';
 
@@ -20,6 +20,28 @@ export default function ThreadList({ threads = [], loading = false, hasMore = fa
   const onLoadMoreRef = useRef(onLoadMore);
   useEffect(() => { onLoadMoreRef.current = onLoadMore; }, [onLoadMore]);
 
+  // Fire load-more in an effect — safe, outside render cycle
+  const itemCount = threads.length;
+  useEffect(() => {
+    if (
+      hasMore &&
+      onLoadMoreRef.current &&
+      itemCount > 0 &&
+      visibleStop >= itemCount - LOAD_THRESHOLD &&
+      !loadingMore.current
+    ) {
+      loadingMore.current = true;
+      Promise.resolve(onLoadMoreRef.current()).finally(() => {
+        loadingMore.current = false;
+      });
+    }
+  }, [visibleStop, itemCount, hasMore]);
+
+  // Handle load-more via onItemsRendered callback (not during render)
+  const handleItemsRendered = useCallback(({ visibleStopIndex }) => {
+    setVisibleStop(visibleStopIndex);
+  }, []);
+
   if (loading && threads.length === 0) return <LoadingSpinner className="py-16" />;
 
   if (threads.length === 0) {
@@ -30,33 +52,10 @@ export default function ThreadList({ threads = [], loading = false, hasMore = fa
     );
   }
 
-  const itemCount = threads.length;
-
-  // Memoize list height
+  // Calculate list height — fill viewport minus approximate header offset
   const listHeight = typeof window !== 'undefined'
     ? Math.min(window.innerHeight - 200, itemCount * ITEM_HEIGHT)
     : 600;
-
-  // Handle load-more via onItemsRendered callback (not during render)
-  const handleItemsRendered = useCallback(({ visibleStopIndex }) => {
-    setVisibleStop(visibleStopIndex);
-  }, []);
-
-  // Fire load-more in an effect — safe, outside render cycle
-  // eslint-disable-next-line react-hooks/rules-of-hooks
-  useEffect(() => {
-    if (
-      hasMore &&
-      onLoadMoreRef.current &&
-      visibleStop >= itemCount - LOAD_THRESHOLD &&
-      !loadingMore.current
-    ) {
-      loadingMore.current = true;
-      Promise.resolve(onLoadMoreRef.current()).finally(() => {
-        loadingMore.current = false;
-      });
-    }
-  }, [visibleStop, itemCount, hasMore]);
 
   return (
     <div>

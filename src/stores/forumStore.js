@@ -254,7 +254,11 @@ export const useForumStore = create((set, get) => ({
 
       set({ recentThreads: { items: threads, loading: false }, hotThreadsLoaded: true });
     } catch (err) {
-      if (err.name === 'AbortError') return;
+      if (err.name === 'AbortError') {
+        // Clear loading so a subsequent fetch isn't blocked by stale loading state
+        set({ recentThreads: { items: get().recentThreads.items, loading: false } });
+        return;
+      }
       if (requestId !== _hotRequestId) {
         set({ recentThreads: { items: get().recentThreads.items, loading: false } });
         return;
@@ -293,7 +297,10 @@ export const useForumStore = create((set, get) => ({
 
       set({ newThreads: { items: data || [], loading: false }, newThreadsLoaded: true });
     } catch (err) {
-      if (err.name === 'AbortError') return;
+      if (err.name === 'AbortError') {
+        set({ newThreads: { items: get().newThreads.items, loading: false } });
+        return;
+      }
       if (requestId !== _newRequestId) {
         set({ newThreads: { items: get().newThreads.items, loading: false } });
         return;

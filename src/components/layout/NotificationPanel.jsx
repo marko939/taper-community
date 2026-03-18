@@ -61,22 +61,17 @@ export default function NotificationPanel({ onClose }) {
   const router = useRouter();
   const sheetRef = useRef(null);
 
-  const {
-    notifications,
-    unreadCount,
-    loading,
-    fetchNotifications,
-    markAsRead,
-    markAllAsRead,
-  } = useNotificationStore();
+  const notifications = useNotificationStore((s) => s.notifications);
+  const unreadCount = useNotificationStore((s) => s.unreadCount);
+  const loading = useNotificationStore((s) => s.loading);
 
   // Swipe-to-dismiss state
   const touchStartY = useRef(0);
   const translateY = useRef(0);
 
   useEffect(() => {
-    fetchNotifications();
-  }, [fetchNotifications]);
+    useNotificationStore.getState().fetchNotifications();
+  }, []);
 
   // Prevent body scroll
   useEffect(() => {
@@ -114,13 +109,13 @@ export default function NotificationPanel({ onClose }) {
   }, [onClose]);
 
   const handleNotifClick = useCallback((n) => {
-    if (!n.read) markAsRead(n.id);
+    if (!n.read) useNotificationStore.getState().markAsRead(n.id);
     if (n.thread_id) {
       onClose();
       const hash = n.reply_id ? `#reply-${n.reply_id}` : '';
       router.push(`/thread/${n.thread_id}${hash}`);
     }
-  }, [markAsRead, router, onClose]);
+  }, [router, onClose]);
 
   return (
     <div className="fixed inset-0 z-[60]">
@@ -151,7 +146,7 @@ export default function NotificationPanel({ onClose }) {
           <h3 className="text-base font-semibold text-foreground">Notifications</h3>
           {unreadCount > 0 && (
             <button
-              onClick={markAllAsRead}
+              onClick={() => useNotificationStore.getState().markAllAsRead()}
               className="text-xs font-medium active:opacity-70"
               style={{ color: 'var(--purple)' }}
             >
