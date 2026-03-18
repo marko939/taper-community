@@ -7,6 +7,7 @@ export const ADMIN_IDS = [
   '8572637a-2109-4471-bcb4-3163d04094d0',
   'cf5e37af-df59-44e3-a446-3f97e5e4c558',
   '63556920-4a64-496a-bf7f-2df871865da1',
+  '2cf08926-2d7e-461f-b28b-3c83f1dfd850',
 ];
 export const isAdmin = (uid) => ADMIN_IDS.includes(uid);
 
@@ -14,6 +15,7 @@ export const isAdmin = (uid) => ADMIN_IDS.includes(uid);
 export const MOD_IDS = [
   '8572637a-2109-4471-bcb4-3163d04094d0',
   'b2fb8e00-bbd0-489b-a762-945fa811861f',
+  '2cf08926-2d7e-461f-b28b-3c83f1dfd850',
 ];
 export const isMod = (uid) => MOD_IDS.includes(uid);
 
