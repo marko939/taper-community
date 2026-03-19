@@ -78,9 +78,10 @@ export default function ShareJourneyModal({ mode, entries, profile, assessments,
 
   const [linkError, setLinkError] = useState(false);
 
-  // Create shareable link with timeout
+  // Create shareable link with timeout — returns URL or null
   const handleCreateLink = async () => {
-    if (shareUrl || creating) return;
+    if (shareUrl) return shareUrl;
+    if (creating) return null;
     setCreating(true);
     setLinkError(false);
 
@@ -92,12 +93,13 @@ export default function ShareJourneyModal({ mode, entries, profile, assessments,
     try {
       const id = await timeout(
         createSharedJourney(mode === 'clinical' ? 'clinical' : 'personal'),
-        5000
+        8000
       );
       if (id) {
-        setShareUrl(`${window.location.origin}/share/${id}`);
+        const url = `${window.location.origin}/share/${id}`;
+        setShareUrl(url);
         setCreating(false);
-        return;
+        return url;
       }
     } catch (err) {
       console.warn('[ShareJourney] shared_journeys failed:', err.message);
@@ -106,9 +108,10 @@ export default function ShareJourneyModal({ mode, entries, profile, assessments,
     try {
       const token = await timeout(getShareLink(), 5000);
       if (token) {
-        setShareUrl(`${window.location.origin}/journal/${token}`);
+        const url = `${window.location.origin}/journal/${token}`;
+        setShareUrl(url);
         setCreating(false);
-        return;
+        return url;
       }
     } catch (err) {
       console.warn('[ShareJourney] fallback failed:', err.message);
@@ -116,6 +119,7 @@ export default function ShareJourneyModal({ mode, entries, profile, assessments,
 
     setLinkError(true);
     setCreating(false);
+    return null;
   };
 
   // Try to create link on mount
@@ -124,8 +128,12 @@ export default function ShareJourneyModal({ mode, entries, profile, assessments,
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleCopyLink = async () => {
-    if (!shareUrl) return;
-    await navigator.clipboard.writeText(shareUrl);
+    let url = shareUrl;
+    if (!url && !creating && !linkError) {
+      url = await handleCreateLink();
+    }
+    if (!url) return;
+    await navigator.clipboard.writeText(url);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -169,9 +177,14 @@ export default function ShareJourneyModal({ mode, entries, profile, assessments,
     window.open(mailto, '_self');
   };
 
-  const handleWhatsApp = () => {
+  const handleWhatsApp = async () => {
+    // Ensure we have a link before sharing
+    if (!shareUrl && !creating && !linkError) {
+      await handleCreateLink();
+    }
+    const url = shareUrl || linkText;
     const text = encodeURIComponent(
-      `Hey — I've been tapering off ${drug} and I wanted to show you where I'm at. This is what it looks like: ${linkText}`
+      `Hey — I've been tapering off ${drug} and I wanted to show you where I'm at. This is what it looks like: ${url}`
     );
     window.open(`https://wa.me/?text=${text}`, '_blank');
   };

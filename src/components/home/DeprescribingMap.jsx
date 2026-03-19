@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { useClinicianStore } from '@/stores/clinicianStore';
 import { useAuthStore } from '@/stores/authStore';
@@ -266,12 +267,13 @@ export default function DeprescribingMap({ compact = false }) {
         </div>
       </div>
 
-      {/* Match Request Modal */}
-      {selectedClinician && (
+      {/* Match Request Modal — portal to escape map stacking context */}
+      {selectedClinician && createPortal(
         <MatchRequestModal
           clinician={selectedClinician}
           onClose={() => setSelectedClinician(null)}
-        />
+        />,
+        document.body
       )}
     </section>
   );
