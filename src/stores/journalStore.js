@@ -162,7 +162,7 @@ export const useJournalStore = create((set, get) => ({
 
   fetchSharedEntries: async (shareToken) => {
     if (!shareToken) return;
-    if (get().sharedEntries[shareToken]) return;
+    if (get().sharedEntries[shareToken]?.entries?.length > 0) return;
 
     set((state) => ({
       sharedEntries: { ...state.sharedEntries, [shareToken]: { entries: [], loading: true } },
@@ -273,7 +273,7 @@ export const useJournalStore = create((set, get) => ({
 
   fetchPublicEntries: async (userId) => {
     if (!userId) return;
-    if (get().publicEntries[userId]) return;
+    if (get().publicEntries[userId] && !get().publicEntries[userId].loading) return;
 
     set((state) => ({
       publicEntries: { ...state.publicEntries, [userId]: { entries: [], loading: true } },

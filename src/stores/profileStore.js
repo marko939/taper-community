@@ -9,7 +9,8 @@ export const useProfileStore = create((set, get) => ({
 
   fetchProfile: async (userId) => {
     if (!userId) return;
-    if (get().profiles[userId]) return;
+    const existing = get().profiles[userId];
+    if (existing && !existing.loading) return; // skip only if fully loaded
 
     set((state) => ({
       profiles: { ...state.profiles, [userId]: { data: null, threads: [], replies: [], loading: true } },
