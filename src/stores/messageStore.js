@@ -162,6 +162,18 @@ export const useMessageStore = create((set, get) => ({
 
       // Append to current messages
       set((state) => ({ messages: [...state.messages, data] }));
+
+      // Fire-and-forget email notification to recipient
+      fetch('/api/dm-notification', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          recipientId: toUserId,
+          senderId: userId,
+          messageBody: body.trim(),
+        }),
+      }).catch(() => {}); // silent — don't block message delivery
+
       return data;
     } catch (err) {
       console.error('[messageStore] sendMessage error:', err);
