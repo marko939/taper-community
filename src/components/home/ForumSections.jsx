@@ -13,7 +13,7 @@ export default function ForumSections() {
 
   useEffect(() => {
     fetchForums();
-  }, [fetchForums]);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (loading) {
     return (

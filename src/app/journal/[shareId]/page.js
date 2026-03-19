@@ -14,7 +14,7 @@ export default function SharedJournalPage() {
 
   useEffect(() => {
     fetchSharedEntries(shareId);
-  }, [shareId, fetchSharedEntries]);
+  }, [shareId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const entries = sharedData?.entries || [];
   const loading = sharedData?.loading ?? true;

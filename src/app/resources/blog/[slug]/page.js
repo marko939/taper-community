@@ -41,7 +41,7 @@ export default function BlogPostPage() {
 
   useEffect(() => {
     if (slug) fetchPost(slug);
-  }, [slug, fetchPost]);
+  }, [slug]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Listen for text selection within the article body
   const handleMouseUp = useCallback(() => {

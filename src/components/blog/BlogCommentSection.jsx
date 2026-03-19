@@ -15,7 +15,7 @@ export default function BlogCommentSection({ blogPostId }) {
 
   useEffect(() => {
     if (blogPostId) fetchComments(blogPostId);
-  }, [blogPostId, fetchComments]);
+  }, [blogPostId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div className="space-y-4">

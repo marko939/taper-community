@@ -186,7 +186,7 @@ function BlogAdminContent() {
     if (isPrimaryAdmin(user?.id)) {
       fetchPosts(true);
     }
-  }, [user, fetchPosts]);
+  }, [user]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Handle ?edit= or ?new=1 query params
   useEffect(() => {

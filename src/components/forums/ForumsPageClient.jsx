@@ -37,11 +37,11 @@ function ForumsContent() {
 
   useEffect(() => {
     fetchForums();
-  }, [fetchForums]);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (user?.id) fetchFollowedForums(user.id);
-  }, [user?.id, fetchFollowedForums]);
+  }, [user?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (forumsLoading) return <PageLoading />;
 

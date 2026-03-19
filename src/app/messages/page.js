@@ -91,7 +91,7 @@ function MessagesContent() {
   // Load conversations on mount
   useEffect(() => {
     if (user) fetchConversations();
-  }, [user, fetchConversations]);
+  }, [user]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Handle ?to= param (deep link from profile or other pages)
   useEffect(() => {
@@ -116,7 +116,7 @@ function MessagesContent() {
     setMobileShowThread(true);
     fetchMessages(partnerId);
     markConversationRead(partnerId);
-  }, [conversations, fetchMessages, markConversationRead]);
+  }, [conversations]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const selectConversation = (conv) => {
     setSelectedPartner(conv.partner);

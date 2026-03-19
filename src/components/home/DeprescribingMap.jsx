@@ -40,7 +40,7 @@ export default function DeprescribingMap({ compact = false }) {
   // Fetch clinicians from Supabase
   useEffect(() => {
     fetchClinicians();
-  }, [fetchClinicians]);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (mapInstanceRef.current) return;

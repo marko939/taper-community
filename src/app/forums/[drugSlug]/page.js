@@ -18,7 +18,6 @@ export default function ForumPage() {
   const { drugSlug } = useParams();
   const [forum, setForum] = useState(null);
   const [forumLoading, setForumLoading] = useState(true);
-  const supabase = createClient();
   const drug = getDrug(drugSlug);
 
   const threadData = useForumStore((s) => s.threadPages[forum?.id]);
@@ -28,8 +27,9 @@ export default function ForumPage() {
   const searchFn = useForumStore((s) => s.search);
 
   useEffect(() => {
-    let cancelled = false;
+    setForumLoading(true);
     const fetchForum = async () => {
+      const supabase = createClient();
       let { data } = await supabase
         .from('forums')
         .select('*')
@@ -45,20 +45,17 @@ export default function ForumPage() {
         data = result.data;
       }
 
-      if (!cancelled) {
-        setForum(data);
-        setForumLoading(false);
-      }
+      setForum(data);
+      setForumLoading(false);
     };
     fetchForum();
-    return () => { cancelled = true; };
   }, [drugSlug]);
 
   useEffect(() => {
     if (forum?.id) {
       fetchThreads(forum.id);
     }
-  }, [forum?.id, fetchThreads]);
+  }, [forum?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (forumLoading) return <PageLoading />;
 

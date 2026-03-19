@@ -27,7 +27,7 @@ export default function RecentActivity() {
 
   useEffect(() => {
     fetchHotThreads(3);
-  }, [fetchHotThreads]);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const threads = recentThreads.items;
   const loading = recentThreads.loading;

@@ -55,7 +55,7 @@ export default function ProfilePage() {
     if (currentUser?.id) {
       fetchFollowing(currentUser.id);
     }
-  }, [userId, isOwnProfile, fetchProfile, fetchPublicEntries, fetchFollowCounts, fetchFollowing, currentUser?.id]);
+  }, [userId, isOwnProfile, currentUser?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const loading = profileData?.loading ?? true;
 

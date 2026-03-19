@@ -53,7 +53,7 @@ export default function ResourcesPage() {
 
   useEffect(() => {
     fetchPosts();
-  }, [fetchPosts]);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div className="space-y-8">

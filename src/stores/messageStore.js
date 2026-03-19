@@ -17,6 +17,7 @@ export const useMessageStore = create((set, get) => ({
   messages: [],
   unreadTotal: 0,
   loading: false,
+  messagesLoading: false,
   conversationsLoaded: false,
   _realtimeChannel: null,
   _refetchTimer: null,
@@ -126,7 +127,7 @@ export const useMessageStore = create((set, get) => ({
     const userId = useAuthStore.getState().user?.id;
     if (!userId || !otherUserId) return;
 
-    set({ loading: true });
+    set({ messagesLoading: true });
     try {
       const supabase = createClient();
 
@@ -138,10 +139,10 @@ export const useMessageStore = create((set, get) => ({
         )
         .order('created_at', { ascending: true });
 
-      set({ messages: data || [], loading: false });
+      set({ messages: data || [], messagesLoading: false });
     } catch (err) {
       console.error('[messageStore] fetchMessages error:', err);
-      set({ loading: false });
+      set({ messagesLoading: false });
     }
   },
 

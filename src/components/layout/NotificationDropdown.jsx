@@ -22,7 +22,7 @@ export default function NotificationDropdown({ onClose }) {
     useNotificationStore();
   useEffect(() => {
     fetchNotifications();
-  }, [fetchNotifications]);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Close on click outside
   useEffect(() => {

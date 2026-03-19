@@ -47,7 +47,7 @@ export default function JournalPage() {
       fetchEntries();
       fetchAssessments();
     }
-  }, [user, fetchEntries, fetchAssessments]);
+  }, [user]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (authLoading) return <PageLoading />;
 

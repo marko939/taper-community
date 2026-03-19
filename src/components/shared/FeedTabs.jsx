@@ -208,7 +208,7 @@ export default function FeedTabs({ activeTab: controlledTab, onTabChange, useUrl
     debounceRef.current = setTimeout(() => {
       fetchForTab(tab);
     }, 150);
-  }, [onTabChange, fetchForTab]);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Safety timeout — if loading is stuck for 10 seconds, force reset
   let currentItems, currentLoading;
@@ -255,7 +255,7 @@ export default function FeedTabs({ activeTab: controlledTab, onTabChange, useUrl
   // Pull-to-refresh
   const handleRefresh = useCallback(async () => {
     fetchForTab(activeTab, { force: true });
-  }, [fetchForTab, activeTab]);
+  }, [activeTab]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const { containerRef: pullRef, isPulling, pullDistance, isRefreshing } = usePullToRefresh(handleRefresh);
 

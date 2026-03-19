@@ -35,7 +35,7 @@ export default function ComposeSheet({ onClose }) {
 
   useEffect(() => {
     fetchForums();
-  }, [fetchForums]);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Prevent body scroll when sheet is open
   useEffect(() => {

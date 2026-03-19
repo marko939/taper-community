@@ -47,11 +47,11 @@ export default function ThreadPage() {
     } else {
       fetchReplies(threadId);
     }
-  }, [threadId, fetchThread, fetchReplies, fetchReplyPage]);
+  }, [threadId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (user?.id) fetchThreadFollows(user.id);
-  }, [user?.id, fetchThreadFollows]);
+  }, [user?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (loading) return <PageLoading />;
 

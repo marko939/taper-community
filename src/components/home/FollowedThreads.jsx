@@ -28,13 +28,13 @@ export default function FollowedThreads() {
 
   useEffect(() => {
     if (user?.id) fetchFollowing(user.id);
-  }, [user?.id, fetchFollowing]);
+  }, [user?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (followingLoaded && following.size > 0) {
       fetchFollowedThreads();
     }
-  }, [followingLoaded, following.size, fetchFollowedThreads]);
+  }, [followingLoaded, following.size]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!user || !followingLoaded) return null;
   if (following.size === 0) return null;

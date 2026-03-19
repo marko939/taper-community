@@ -22,7 +22,7 @@ export default function PatientDashboard({ user, profile }) {
 
   useEffect(() => {
     fetchEntries();
-  }, [fetchEntries]);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const loading = journalLoading;
 
