@@ -201,6 +201,76 @@ export const useJournalStore = create((set, get) => ({
     }
   },
 
+  // -- Shared Journeys (new share feature) --
+  sharedJourneys: [],
+  sharedJourneysLoaded: false,
+
+  createSharedJourney: async (context) => {
+    const supabase = createClient();
+    const userId = useAuthStore.getState().user?.id;
+    const profile = useAuthStore.getState().profile;
+    if (!userId) return null;
+
+    await ensureSession();
+
+    const entries = get().entries;
+    const snapshot = {
+      profile: { display_name: profile?.display_name, drug: profile?.drug, taper_stage: profile?.taper_stage },
+      entries: entries.map((e) => ({
+        date: e.date,
+        drug: e.drug,
+        current_dose: e.current_dose,
+        dose_numeric: e.dose_numeric,
+        mood_score: e.mood_score,
+        symptoms: e.symptoms,
+      })),
+    };
+
+    const { data, error } = await supabase
+      .from('shared_journeys')
+      .insert({ user_id: userId, journey_snapshot: snapshot, share_context: context })
+      .select('id')
+      .single();
+
+    if (error) {
+      console.error('[journalStore] createSharedJourney error:', error);
+      return null;
+    }
+    return data?.id || null;
+  },
+
+  fetchUserShares: async () => {
+    if (get().sharedJourneysLoaded) return;
+    const userId = useAuthStore.getState().user?.id;
+    if (!userId) return;
+
+    const supabase = createClient();
+    const { data } = await supabase
+      .from('shared_journeys')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('is_active', true)
+      .order('created_at', { ascending: false });
+
+    set({ sharedJourneys: data || [], sharedJourneysLoaded: true });
+  },
+
+  revokeShare: async (id) => {
+    const supabase = createClient();
+    await ensureSession();
+
+    const { error } = await supabase
+      .from('shared_journeys')
+      .update({ is_active: false })
+      .eq('id', id);
+
+    if (!error) {
+      set((state) => ({
+        sharedJourneys: state.sharedJourneys.filter((s) => s.id !== id),
+      }));
+    }
+  },
+
   fetchPublicEntries: async (userId) => {
     if (!userId) return;
     if (get().publicEntries[userId]) return;

@@ -89,8 +89,8 @@ export default function AboutPage() {
               },
               {
                 step: '4',
-                title: 'Track Your Progress',
-                text: 'Use the Taper Journal to log daily symptoms, mood, and dose changes.',
+                title: 'Share Your Progress',
+                text: 'Use the Taper Journal to document daily symptoms, mood, and dose changes — and share with your care team.',
               },
             ].map((item) => (
               <div key={item.step} className="rounded-2xl border border-border-subtle p-4">

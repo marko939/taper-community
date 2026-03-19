@@ -64,7 +64,7 @@ export default function ExitIntentPopup() {
 
         <h3 className="font-serif text-xl font-semibold text-foreground">Before you go...</h3>
         <p className="mx-auto mt-3 max-w-sm text-sm text-text-muted">
-          Join 100+ members who are safely tapering with peer support, taper tracking, and access to 57+ deprescribing providers.
+          Join 100+ members who are safely tapering with peer support, shared taper journals, and access to 57+ deprescribing providers.
         </p>
 
         {/* CTA buttons */}

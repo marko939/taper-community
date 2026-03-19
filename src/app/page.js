@@ -55,12 +55,13 @@ export default function HomePage() {
               Peer Support Community
             </p>
             <h1 className="font-serif text-[24px] font-semibold leading-tight text-white sm:text-[36px]">
-              You&apos;re not alone in your{' '}
-              <span style={{ color: '#2EC4B6' }}>taper journey</span>
+              Share your{' '}
+              <span style={{ color: '#2EC4B6' }}>taper journey</span>.{' '}
+              You&apos;re not alone.
             </h1>
             <p className="mx-auto mt-3 max-w-xl text-[13px] font-semibold leading-relaxed text-white/80 sm:mt-4 sm:text-[15px]">
-              A peer support community for safely tapering psychiatric medications.
-              Evidence-based guidance, shared experiences, and taper journals.
+              Thousands of people are tapering psychiatric medications.
+              Share what you&apos;ve learned, see what others have done, and build the knowledge together.
             </p>
             <div className="mt-6 flex items-center justify-center gap-3 sm:mt-8 sm:gap-4">
               <Link
@@ -103,20 +104,20 @@ export default function HomePage() {
         {(() => {
           const allCards = [
             {
-              title: 'Hyperbolic Taper Tracker',
-              desc: 'Log doses, symptoms, and mood daily. Track your taper with tools built around the Maudsley Guidelines — not generic health apps.',
-              icon: (
-                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
-                </svg>
-              ),
-            },
-            {
               title: 'Drug-Specific Forums',
               desc: 'Dedicated forums for SSRIs, SNRIs, benzos, antipsychotics, and more. Find people tapering the same medication as you.',
               icon: (
                 <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M20.25 8.511c.884.284 1.5 1.128 1.5 2.097v4.286c0 1.136-.847 2.1-1.98 2.193-.34.027-.68.052-1.02.072v3.091l-3-3c-1.354 0-2.694-.055-4.02-.163a2.115 2.115 0 01-.825-.242m9.345-8.334a2.126 2.126 0 00-.476-.095 48.64 48.64 0 00-8.048 0c-1.131.094-1.976 1.057-1.976 2.192v4.286c0 .837.46 1.58 1.155 1.951m9.345-8.334V6.637c0-1.621-1.152-3.026-2.76-3.235A48.455 48.455 0 0011.25 3c-2.115 0-4.198.137-6.24.402-1.608.209-2.76 1.614-2.76 3.235v6.226c0 1.621 1.152 3.026 2.76 3.235.577.075 1.157.14 1.74.194V21l4.155-4.155" />
+                </svg>
+              ),
+            },
+            {
+              title: 'Shareable Taper Journal',
+              desc: 'Document your doses, symptoms, and mood — then share your progress with your prescriber or the people who support you.',
+              icon: (
+                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
                 </svg>
               ),
             },
@@ -238,7 +239,7 @@ export default function HomePage() {
             </thead>
             <tbody>
               {[
-                ['Daily Symptom Tracking', true, false, false, false],
+                ['Shareable Taper Journal', true, false, false, false],
                 ['Drug-Specific Forums', true, 'partial', true, 'partial'],
                 ['Find a Deprescriber', true, false, false, false],
                 ['Evidence-Based Education', true, false, 'partial', false],

@@ -30,13 +30,13 @@ const TESTIMONIALS = [
     avatar: { type: 'letter', letter: 'J', bg: '#E07A5F' },
   },
   {
-    quote: "Being able to track my taper is helping me in ways I never realized. I\u2019m proud to call Taper Community my new home.",
+    quote: "Being able to share my taper journey is helping me in ways I never realized. I\u2019m proud to call Taper Community my new home.",
     name: 'Catina',
     role: 'Community Support Member',
     avatar: { type: 'letter', letter: 'C', bg: 'var(--purple)' },
   },
   {
-    quote: "Being able to track my symptoms and share daily check-ins has made all the difference. The community keeps me accountable and reminds me I\u2019m not doing this alone. For the first time, I feel in control of my taper.",
+    quote: "Being able to document my symptoms and share daily check-ins has made all the difference. The community keeps me accountable and reminds me I\u2019m not doing this alone. For the first time, I feel in control of my taper.",
     name: 'STVE',
     role: 'Member',
     avatar: { type: 'letter', letter: 'S', bg: '#2EC4B6' },

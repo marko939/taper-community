@@ -3,13 +3,13 @@ import Link from 'next/link';
 export const metadata = {
   title: 'TaperCommunity vs SurvivingAntidepressants.org — SA.org Alternative',
   description:
-    'Looking for a SurvivingAntidepressants.org alternative? TaperCommunity offers active forums, taper tracking, and 57+ deprescribing providers.',
+    'Looking for a SurvivingAntidepressants.org alternative? TaperCommunity offers active forums, shareable taper journals, and 57+ deprescribing providers.',
   alternates: { canonical: '/compare/survivingantidepressants' },
 };
 
 const FEATURES = [
   { feature: 'Active forums', tc: true, competitor: true, note: 'SA.org forums have had extended downtime' },
-  { feature: 'Taper journal tracking', tc: true, competitor: false, note: 'Log doses, symptoms, and milestones' },
+  { feature: 'Shareable taper journal', tc: true, competitor: false, note: 'Document doses, symptoms, and milestones — share with your prescriber' },
   { feature: 'Deprescriber directory', tc: true, competitor: false, note: '57+ verified providers' },
   { feature: 'Drug education portal', tc: true, competitor: false, note: '31 drug profiles with evidence-based content' },
   { feature: 'Tapering protocols', tc: true, competitor: true, note: 'TC provides phased reduction schedules' },
@@ -86,7 +86,7 @@ export default function CompareSAPage() {
         {[
           {
             title: 'Taper Journal',
-            desc: 'Track every dose change, symptom, and pattern. Export your taper history to share with your prescriber.',
+            desc: 'Document every dose change, symptom, and pattern. Share your progress directly with your prescriber.',
             icon: (
               <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
@@ -136,8 +136,8 @@ export default function CompareSAPage() {
           that were absent from clinical literature at the time.
         </p>
         <p className="mt-3 text-sm leading-relaxed text-text-muted">
-          TaperCommunity carries that mission forward with modern tools: structured taper journals
-          for tracking dose changes and symptoms, 31 comprehensive drug profiles with evidence-based
+          TaperCommunity carries that mission forward with modern tools: shareable taper journals
+          for documenting dose changes and symptoms, 31 comprehensive drug profiles with evidence-based
           tapering protocols, a directory of deprescribing-aware providers, and active community forums
           covering all psychiatric drug classes.
         </p>
@@ -147,7 +147,7 @@ export default function CompareSAPage() {
       <section className="rounded-2xl p-8 text-center" style={{ background: 'linear-gradient(135deg, var(--purple-ghost), var(--surface-strong))' }}>
         <h2 className="font-serif text-2xl font-semibold text-foreground">Ready to start your taper journey?</h2>
         <p className="mx-auto mt-3 max-w-lg text-sm text-text-muted">
-          Join 100+ members who are safely tapering with peer support, taper tracking, and access to deprescribing providers.
+          Join 100+ members who are safely tapering with peer support, shared taper journals, and access to deprescribing providers.
         </p>
         <div className="mt-6 flex flex-wrap items-center justify-center gap-4">
           <Link

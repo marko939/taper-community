@@ -260,7 +260,7 @@ export default function BlogPostPage() {
             </p>
             <div className="mt-4 rounded-xl p-3" style={{ background: 'var(--purple-ghost)' }}>
               <p className="text-xs leading-relaxed text-text-muted" style={{ fontStyle: 'italic' }}>
-                &ldquo;TaperCommunity is the first place that actually felt like home. The taper tracker changed everything about how I approach my taper.&rdquo;
+                &ldquo;TaperCommunity is the first place that actually felt like home. The taper journal changed everything about how I approach my taper.&rdquo;
               </p>
               <p className="mt-1.5 text-[11px] font-semibold text-text-subtle">&mdash; Catina, Community Support Member</p>
             </div>

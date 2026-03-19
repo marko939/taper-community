@@ -2,7 +2,7 @@ export const MILESTONES = [
   {
     id: 'days_30',
     emoji: '📅',
-    label: '30 Days of Tracking',
+    label: '30 Days of Journaling',
     check: (entries) => {
       if (entries.length < 2) return false;
       const sorted = [...entries].sort((a, b) => new Date(a.date) - new Date(b.date));
@@ -14,7 +14,7 @@ export const MILESTONES = [
   {
     id: 'days_60',
     emoji: '🗓️',
-    label: '60 Days of Tracking',
+    label: '60 Days of Journaling',
     check: (entries) => {
       if (entries.length < 2) return false;
       const sorted = [...entries].sort((a, b) => new Date(a.date) - new Date(b.date));
@@ -26,7 +26,7 @@ export const MILESTONES = [
   {
     id: 'days_90',
     emoji: '🏆',
-    label: '90 Days of Tracking',
+    label: '90 Days of Journaling',
     check: (entries) => {
       if (entries.length < 2) return false;
       const sorted = [...entries].sort((a, b) => new Date(a.date) - new Date(b.date));
@@ -38,7 +38,7 @@ export const MILESTONES = [
   {
     id: 'days_180',
     emoji: '⭐',
-    label: '180 Days of Tracking',
+    label: '180 Days of Journaling',
     check: (entries) => {
       if (entries.length < 2) return false;
       const sorted = [...entries].sort((a, b) => new Date(a.date) - new Date(b.date));
@@ -50,7 +50,7 @@ export const MILESTONES = [
   {
     id: 'days_365',
     emoji: '🎉',
-    label: '1 Year of Tracking',
+    label: '1 Year of Journaling',
     check: (entries) => {
       if (entries.length < 2) return false;
       const sorted = [...entries].sort((a, b) => new Date(a.date) - new Date(b.date));

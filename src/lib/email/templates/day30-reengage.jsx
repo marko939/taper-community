@@ -26,8 +26,8 @@ export function Day30ReengageEmail({ userName }) {
             stories from others on a similar path and see what resonates.
           </li>
           <li>
-            <strong style={{ color: "#374151" }}>Start a taper journal</strong> — a
-            private space to track your progress, doses, and how you're feeling.
+            <strong style={{ color: "#374151" }}>Start a taper journal</strong> — document
+            your experience, doses, and how you're feeling — and share it with your support network.
           </li>
         </ul>
         <div style={{ textAlign: "center", margin: "32px 0" }}>

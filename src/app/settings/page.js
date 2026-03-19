@@ -372,7 +372,7 @@ export default function SettingsPage() {
             >
               <div>
                 <p className="text-sm" style={{ color: 'var(--foreground)' }}>
-                  Taper tracker reminders
+                  Taper journal reminders
                 </p>
                 <p className="text-xs" style={{ color: 'var(--text-subtle)' }}>
                   Gentle reminders to log your taper check-in if you haven't in a few days

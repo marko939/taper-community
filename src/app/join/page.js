@@ -22,8 +22,8 @@ function JoinContent() {
       ),
     },
     {
-      title: 'Hyperbolic Taper Tracker',
-      desc: 'Log doses, symptoms, and mood daily. Track your taper with tools built around the Maudsley Guidelines.',
+      title: 'Shareable Taper Journal',
+      desc: 'Document your doses, symptoms, and mood — then share your progress with your prescriber or support network.',
       icon: (
         <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
@@ -134,7 +134,7 @@ function JoinContent() {
               <path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10H14.017zM0 21v-7.391c0-5.704 3.731-9.57 8.983-10.609L9.983 5.151c-2.432.917-3.995 3.638-3.995 5.849h4v10H0z" />
             </svg>
             <p className="text-sm leading-relaxed text-text-muted">
-              After years on Surviving Antidepressants and BenzoBuddies, TaperCommunity is the first place that actually felt like home. The taper tracker and symptom logging are tools I didn&apos;t know I needed — they changed everything about how I approach my taper. I believed in it so much that I joined as a community support member to help it grow.
+              After years on Surviving Antidepressants and BenzoBuddies, TaperCommunity is the first place that actually felt like home. The taper journal and being able to share my progress are tools I didn&apos;t know I needed — they changed everything about how I approach my taper. I believed in it so much that I joined as a community support member to help it grow.
             </p>
             <div className="mt-4 flex items-center gap-3">
               <div

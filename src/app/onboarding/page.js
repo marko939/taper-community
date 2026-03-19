@@ -402,7 +402,7 @@ export default function OnboardingPage() {
               Start your Taper Journal
             </h2>
             <p className="text-sm text-text-muted">
-              Your journal is the best way to track your taper and connect with the community.
+              Your journal is the best way to document and share your taper experience with the community.
               Add notes about your journey &mdash; you can mark entries as public on your profile
               and even post them to community forums.
             </p>

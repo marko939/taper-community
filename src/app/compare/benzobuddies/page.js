@@ -3,13 +3,13 @@ import Link from 'next/link';
 export const metadata = {
   title: 'TaperCommunity vs BenzoBuddies — Compare Tapering Communities',
   description:
-    'Compare TaperCommunity and BenzoBuddies. TC covers all drug classes with taper tracking, education, and a deprescriber directory.',
+    'Compare TaperCommunity and BenzoBuddies. TC covers all drug classes with shareable taper journals, education, and a deprescriber directory.',
   alternates: { canonical: '/compare/benzobuddies' },
 };
 
 const FEATURES = [
   { feature: 'Active forums', tc: true, competitor: true, note: 'Both have active peer support forums' },
-  { feature: 'Taper journal tracking', tc: true, competitor: false, note: 'Log doses, symptoms, and milestones' },
+  { feature: 'Shareable taper journal', tc: true, competitor: false, note: 'Document doses, symptoms, and milestones — share with your prescriber' },
   { feature: 'Deprescriber directory', tc: true, competitor: false, note: '57+ verified providers' },
   { feature: 'Drug education portal', tc: true, competitor: false, note: '31 drug profiles + deprescribing curriculum' },
   { feature: 'Tapering protocols', tc: true, competitor: true, note: 'TC provides phased reduction schedules per drug' },
@@ -46,7 +46,7 @@ export default function CompareBenzoBuddiesPage() {
         </h1>
         <p className="mx-auto mt-4 max-w-2xl text-sm leading-relaxed text-text-muted">
           BenzoBuddies is a well-known community focused on benzodiazepine withdrawal support.
-          TaperCommunity covers all psychiatric drug classes with modern taper tracking tools,
+          TaperCommunity covers all psychiatric drug classes with shareable taper journals,
           a deprescribing provider directory, and comprehensive drug education.
         </p>
       </section>
@@ -95,8 +95,8 @@ export default function CompareBenzoBuddiesPage() {
             ),
           },
           {
-            title: 'Structured Taper Tracking',
-            desc: 'Log every dose change with timestamps and symptom tracking. Spot patterns, identify holds, and share your taper history with your prescriber.',
+            title: 'Shareable Taper Journal',
+            desc: 'Document every dose change with timestamps and symptoms. Spot patterns, identify holds, and share your progress with your prescriber.',
             icon: (
               <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
@@ -137,7 +137,7 @@ export default function CompareBenzoBuddiesPage() {
           evidence-based tapering protocols, withdrawal timelines, and community-sourced practical tips.
         </p>
         <p className="mt-3 text-sm leading-relaxed text-text-muted">
-          The taper journal lets you track benzodiazepine-specific concerns like interdose withdrawal,
+          The taper journal lets you document benzodiazepine-specific concerns like interdose withdrawal,
           tolerance withdrawal, and the protracted symptoms that can persist well beyond acute withdrawal.
           Members in our benzo forums share strategies for liquid titration, compounding pharmacies,
           and working with prescribers who understand slow tapers.
@@ -148,7 +148,7 @@ export default function CompareBenzoBuddiesPage() {
       <section className="rounded-2xl p-8 text-center" style={{ background: 'linear-gradient(135deg, var(--purple-ghost), var(--surface-strong))' }}>
         <h2 className="font-serif text-2xl font-semibold text-foreground">Ready to start your taper journey?</h2>
         <p className="mx-auto mt-3 max-w-lg text-sm text-text-muted">
-          Join 100+ members who are safely tapering with peer support, taper tracking, and access to deprescribing providers.
+          Join 100+ members who are safely tapering with peer support, shared taper journals, and access to deprescribing providers.
         </p>
         <div className="mt-6 flex flex-wrap items-center justify-center gap-4">
           <Link

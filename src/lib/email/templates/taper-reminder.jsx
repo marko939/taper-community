@@ -12,7 +12,7 @@ export function TaperReminderEmail({ userName, medicationName, daysSinceCheckin 
         <p style={{ fontSize: "16px", color: "#374151" }}>Hi {userName},</p>
         <p style={{ color: "#6B7280", lineHeight: "1.6" }}>
           It looks like you haven't logged a check-in for your <strong>{medicationName}</strong> taper
-          in {daysSinceCheckin} days. Keeping your tracker updated helps you spot patterns and
+          in {daysSinceCheckin} days. Keeping your journal updated helps you spot patterns and
           gives you a clearer picture of how your taper is going.
         </p>
         <p style={{ color: "#6B7280", lineHeight: "1.6" }}>

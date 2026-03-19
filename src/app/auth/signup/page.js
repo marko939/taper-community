@@ -138,7 +138,7 @@ function SignUpForm() {
             {/* Testimonial */}
             <div className="rounded-xl p-4" style={{ background: 'rgba(255,255,255,0.08)', backdropFilter: 'blur(12px)' }}>
               <p className="text-xs leading-relaxed text-white/70">
-                {'"'}After years on Surviving Antidepressants and BenzoBuddies, TaperCommunity is the first place that actually felt like home. The taper tracker changed everything about how I approach my taper.{'"'}
+                {'"'}After years on Surviving Antidepressants and BenzoBuddies, TaperCommunity is the first place that actually felt like home. The taper journal changed everything about how I approach my taper.{'"'}
               </p>
               <p className="mt-2 text-xs font-semibold text-white/50">{'— Catina, Community Support Member'}</p>
             </div>

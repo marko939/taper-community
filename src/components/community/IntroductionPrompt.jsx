@@ -9,7 +9,7 @@ export default function IntroductionPrompt() {
         <div className="flex-1">
           <h3 className="font-semibold text-foreground">Start Your Taper Journal</h3>
           <p className="mt-1 text-sm text-text-muted">
-            Track your taper journey in your journal. Mark entries as public to share on your
+            Document your taper journey in your journal. Mark entries as public to share on your
             profile, and post them to community forums to connect with others.
           </p>
         </div>

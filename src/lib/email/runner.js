@@ -110,7 +110,7 @@ async function runDay3Journal(sentToday) {
 
     const result = await sendEmail({
       to: user.email,
-      subject: 'Set up your taper journal — track your progress',
+      subject: 'Set up your taper journal — document and share your progress',
       react: React.createElement(Day3JournalEmail, {
         userName: user.display_name || 'there',
       }),

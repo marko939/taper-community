@@ -2,8 +2,12 @@
 
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import { DEPRESCRIBERS } from '@/lib/deprescribers';
+import { useClinicianStore } from '@/stores/clinicianStore';
 import { useAuthStore } from '@/stores/authStore';
+import MatchRequestModal from '@/components/map/MatchRequestModal';
+
+// Fallback to hardcoded data if Supabase fetch fails
+import { DEPRESCRIBERS } from '@/lib/deprescribers';
 
 function loadCSS(href) {
   if (document.querySelector(`link[href="${href}"]`)) return Promise.resolve();
@@ -23,9 +27,19 @@ export default function DeprescribingMap({ compact = false }) {
   const timersRef = useRef([]);
   const [loaded, setLoaded] = useState(false);
   const user = useAuthStore((s) => s.user);
-  const [providerCount] = useState(
-    new Set(DEPRESCRIBERS.map((d) => d.name)).size
-  );
+  const clinicians = useClinicianStore((s) => s.clinicians);
+  const cliniciansLoaded = useClinicianStore((s) => s.cliniciansLoaded);
+  const fetchClinicians = useClinicianStore((s) => s.fetchClinicians);
+  const [selectedClinician, setSelectedClinician] = useState(null);
+
+  // Use Supabase clinicians if loaded, fallback to hardcoded
+  const providers = cliniciansLoaded && clinicians.length > 0 ? clinicians : DEPRESCRIBERS;
+  const providerCount = new Set(providers.map((d) => d.name)).size;
+
+  // Fetch clinicians from Supabase
+  useEffect(() => {
+    fetchClinicians();
+  }, [fetchClinicians]);
 
   useEffect(() => {
     if (mapInstanceRef.current) return;
@@ -83,15 +97,26 @@ export default function DeprescribingMap({ compact = false }) {
         popupAnchor: [0, -14],
       });
 
-      for (const item of DEPRESCRIBERS) {
+      for (const item of providers) {
         const marker = L.marker([item.latitude, item.longitude], { icon: purpleIcon });
+        const escapedName = (item.name || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
         marker.bindPopup(`
           <div style="font-family: 'DM Sans', system-ui, sans-serif; max-width: 280px;">
             <p style="margin: 0 0 2px; font-size: 14px; font-weight: 700; color: #1E1B2E;">${item.name}</p>
             <p style="margin: 0 0 8px; font-size: 12px; color: #6B6580;">${item.role}</p>
             <p style="margin: 0 0 4px; font-size: 12px;"><strong style="color: #5B2E91;">Clinic:</strong> <span style="color: #1E1B2E;">${item.clinic}</span></p>
             <p style="margin: 0 0 8px; font-size: 12px;"><strong style="color: #5B2E91;">Location:</strong> <span style="color: #1E1B2E;">${item.location}</span></p>
-            <p style="margin: 0; font-size: 11px; line-height: 1.5; color: #6B6580;">${item.description}</p>
+            <p style="margin: 0 0 10px; font-size: 11px; line-height: 1.5; color: #6B6580;">${item.description}</p>
+            <button
+              data-clinician-id="${item.id || ''}"
+              data-clinician-name="${escapedName}"
+              style="
+                display: block; width: 100%; padding: 8px 0;
+                background: #5B2E91; color: white; border: none; border-radius: 8px;
+                font-size: 13px; font-weight: 600; font-family: 'DM Sans', sans-serif;
+                cursor: pointer;
+              "
+            >Contact ${item.name.split(' ')[0]}</button>
           </div>
         `, { maxWidth: 300 });
         markers.addLayer(marker);
@@ -100,6 +125,28 @@ export default function DeprescribingMap({ compact = false }) {
       map.addLayer(markers);
       mapInstanceRef.current = map;
       setLoaded(true);
+
+      // Delegated click handler for Contact buttons in Leaflet popups
+      map.getContainer().addEventListener('click', (e) => {
+        const btn = e.target.closest('[data-clinician-id]');
+        if (!btn) return;
+        const clinicianId = btn.getAttribute('data-clinician-id');
+        let match = null;
+        if (clinicianId) {
+          match = providers.find((c) => c.id === clinicianId);
+        } else {
+          // Fallback for hardcoded data (no id) — match by name
+          const name = btn.getAttribute('data-clinician-name')?.replace(/&quot;/g, '"')?.replace(/\\'/g, "'");
+          match = providers.find((c) => c.name === name);
+        }
+        if (match) {
+          // Close the Leaflet popup so it doesn't cover the modal
+          map.closePopup();
+          setSelectedClinician(match);
+          // Scroll to top so modal is fully visible
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+      });
 
       // Invalidate size multiple times to ensure tiles render after visibility change
       const t1 = setTimeout(() => map.invalidateSize(), 100);
@@ -121,7 +168,7 @@ export default function DeprescribingMap({ compact = false }) {
         mapInstanceRef.current = null;
       }
     };
-  }, [compact]);
+  }, [compact, providers]);
 
   const mapHeight = compact ? 'h-[420px]' : 'h-[600px] lg:h-[700px]';
 
@@ -218,6 +265,14 @@ export default function DeprescribingMap({ compact = false }) {
           <p className="text-xs text-text-subtle">US States</p>
         </div>
       </div>
+
+      {/* Match Request Modal */}
+      {selectedClinician && (
+        <MatchRequestModal
+          clinician={selectedClinician}
+          onClose={() => setSelectedClinician(null)}
+        />
+      )}
     </section>
   );
 }
