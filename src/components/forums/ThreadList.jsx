@@ -57,6 +57,31 @@ export default function ThreadList({ threads = [], loading = false, hasMore = fa
     ? Math.min(window.innerHeight - 200, itemCount * ITEM_HEIGHT)
     : 600;
 
+  // Skip react-window if very few items — avoids strict mode crash
+  if (itemCount <= 20) {
+    return (
+      <div>
+        {threads.map((thread) => (
+          <div key={thread.id} style={{ marginBottom: 12 }}>
+            <MemoThreadCard thread={thread} />
+          </div>
+        ))}
+        {loading && <LoadingSpinner className="py-4" />}
+        {hasMore && onLoadMore && (
+          <div className="flex items-center justify-center pt-2">
+            <button
+              onClick={onLoadMore}
+              className="rounded-xl px-6 py-2.5 text-sm font-medium transition active:scale-95"
+              style={{ color: 'var(--purple)', border: '1px solid var(--border-subtle)' }}
+            >
+              Show more
+            </button>
+          </div>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div>
       <List

@@ -71,8 +71,8 @@ export default function ForumPage() {
     );
   }
 
-  const threads = threadData?.items || [];
-  const threadsLoading = threadData?.loading ?? true;
+  const threads = threadData?.items ?? [];
+  const threadsLoading = !threadData || threadData?.loading;
   const hasMore = threadData?.hasMore || false;
   const totalCount = threadData?.totalCount || 0;
 
