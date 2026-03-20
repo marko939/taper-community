@@ -1,12 +1,12 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useAuthStore } from '@/stores/authStore';
 import { useThreadStore } from '@/stores/threadStore';
 import EmojiPickerButton from '@/components/shared/EmojiPickerButton';
 import MentionAutocomplete from '@/components/shared/MentionAutocomplete';
-import FormattingToolbar, { makeBulletKeyHandler } from '@/components/shared/FormattingToolbar';
+import FormattingToolbar, { makeBulletKeyHandler, makeImagePasteHandler, makeImageDropHandler, preventDefaultDrag } from '@/components/shared/FormattingToolbar';
 
 export default function ReplyForm({ threadId }) {
   const [body, setBody] = useState('');
@@ -14,7 +14,12 @@ export default function ReplyForm({ threadId }) {
   const [error, setError] = useState('');
   const [mobileExpanded, setMobileExpanded] = useState(false);
   const textareaRef = useRef(null);
+  const [imgUploading, setImgUploading] = useState(false);
   const bulletKeyHandler = makeBulletKeyHandler(textareaRef, setBody);
+  const bodyRef = useRef(body);
+  bodyRef.current = body;
+  const handlePaste = useCallback(makeImagePasteHandler(textareaRef, () => bodyRef.current, setBody, setImgUploading), []);
+  const handleDrop = useCallback(makeImageDropHandler(textareaRef, () => bodyRef.current, setBody, setImgUploading), []);
   const user = useAuthStore((s) => s.user);
   const authLoading = useAuthStore((s) => s.loading);
   const addReply = useThreadStore((s) => s.addReply);
@@ -100,6 +105,9 @@ export default function ReplyForm({ threadId }) {
             value={body}
             onChange={(e) => setBody(e.target.value)}
             onKeyDown={bulletKeyHandler}
+            onPaste={handlePaste}
+            onDrop={handleDrop}
+            onDragOver={preventDefaultDrag}
             placeholder="Share your thoughts or experience..."
             rows={4}
             className="textarea rounded-t-none"
@@ -171,6 +179,9 @@ export default function ReplyForm({ threadId }) {
                 value={body}
                 onChange={(e) => setBody(e.target.value)}
                 onKeyDown={bulletKeyHandler}
+                onPaste={handlePaste}
+                onDrop={handleDrop}
+                onDragOver={preventDefaultDrag}
                 placeholder="Share your thoughts or experience..."
                 rows={3}
                 className="textarea text-sm"

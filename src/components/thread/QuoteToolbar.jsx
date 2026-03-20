@@ -9,43 +9,51 @@ export default function QuoteToolbar() {
   const toolbarRef = useRef(null);
   const timerRef = useRef(null);
 
-  const handleMouseUp = useCallback(() => {
-    // Delay to let selection finalize
-    if (timerRef.current) clearTimeout(timerRef.current);
-    timerRef.current = setTimeout(() => {
-      const selection = window.getSelection();
-      if (!selection || selection.isCollapsed || !selection.toString().trim()) {
-        return;
+  const checkSelection = useCallback(() => {
+    const selection = window.getSelection();
+    if (!selection || selection.isCollapsed || !selection.toString().trim()) {
+      return;
+    }
+
+    const text = selection.toString().trim();
+    if (!text) return;
+
+    // Check if selection is within a [data-quotable] element
+    let node = selection.anchorNode;
+    let quotableEl = null;
+    while (node) {
+      if (node.nodeType === 1 && node.hasAttribute?.('data-quotable')) {
+        quotableEl = node;
+        break;
       }
+      node = node.parentElement;
+    }
 
-      const text = selection.toString().trim();
-      if (!text) return;
+    if (!quotableEl) return;
 
-      // Check if selection is within a [data-quotable] element
-      let node = selection.anchorNode;
-      let quotableEl = null;
-      while (node) {
-        if (node.nodeType === 1 && node.hasAttribute?.('data-quotable')) {
-          quotableEl = node;
-          break;
-        }
-        node = node.parentElement;
-      }
+    const author = quotableEl.getAttribute('data-author') || 'Anonymous';
+    const range = selection.getRangeAt(0);
+    const rect = range.getBoundingClientRect();
 
-      if (!quotableEl) return;
+    // Clamp position to viewport bounds
+    const x = Math.max(60, Math.min(rect.left + rect.width / 2, window.innerWidth - 60));
+    const y = Math.max(40, rect.top - 8);
 
-      const author = quotableEl.getAttribute('data-author') || 'Anonymous';
-      const range = selection.getRangeAt(0);
-      const rect = range.getBoundingClientRect();
-
-      setToolbar({
-        text,
-        author,
-        x: rect.left + rect.width / 2,
-        y: rect.top - 8,
-      });
-    }, 10);
+    setToolbar({ text, author, x, y });
   }, []);
+
+  const handleMouseUp = useCallback(() => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(checkSelection, 10);
+  }, [checkSelection]);
+
+  // Mobile: selectionchange fires after long-press text selection
+  const handleSelectionChange = useCallback(() => {
+    // Only use selectionchange on touch devices to avoid double-firing on desktop
+    if (!('ontouchstart' in window)) return;
+    if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(checkSelection, 300);
+  }, [checkSelection]);
 
   const handleKeyDown = useCallback((e) => {
     if (e.key === 'Escape') setToolbar(null);
@@ -60,15 +68,17 @@ export default function QuoteToolbar() {
 
   useEffect(() => {
     document.addEventListener('mouseup', handleMouseUp);
+    document.addEventListener('selectionchange', handleSelectionChange);
     document.addEventListener('keydown', handleKeyDown);
     document.addEventListener('mousedown', handleMouseDown);
     return () => {
       document.removeEventListener('mouseup', handleMouseUp);
+      document.removeEventListener('selectionchange', handleSelectionChange);
       document.removeEventListener('keydown', handleKeyDown);
       document.removeEventListener('mousedown', handleMouseDown);
       if (timerRef.current) clearTimeout(timerRef.current);
     };
-  }, [handleMouseUp, handleKeyDown, handleMouseDown]);
+  }, [handleMouseUp, handleSelectionChange, handleKeyDown, handleMouseDown]);
 
   if (!toolbar) return null;
 
@@ -92,6 +102,7 @@ export default function QuoteToolbar() {
     >
       <button
         onMouseDown={(e) => e.preventDefault()}
+        onTouchStart={(e) => e.preventDefault()}
         onClick={handleQuote}
         className="flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold shadow-lg transition hover:opacity-90"
         style={{ background: 'var(--purple)', color: '#fff' }}

@@ -9,7 +9,7 @@ import { useForumStore } from '@/stores/forumStore';
 import { fireAndForget } from '@/lib/fireAndForget';
 import { THREAD_TAGS } from '@/lib/constants';
 import EmojiPickerButton from '@/components/shared/EmojiPickerButton';
-import FormattingToolbar, { makeBulletKeyHandler } from '@/components/shared/FormattingToolbar';
+import FormattingToolbar, { makeBulletKeyHandler, makeImagePasteHandler, makeImageDropHandler, preventDefaultDrag } from '@/components/shared/FormattingToolbar';
 
 export default function ComposeSheet({ onClose }) {
   const router = useRouter();
@@ -26,7 +26,12 @@ export default function ComposeSheet({ onClose }) {
 
   const bodyRef = useRef(null);
   const sheetRef = useRef(null);
+  const [imgUploading, setImgUploading] = useState(false);
   const bulletKeyHandler = makeBulletKeyHandler(bodyRef, setBody);
+  const bodyValRef = useRef(body);
+  bodyValRef.current = body;
+  const handlePaste = useCallback(makeImagePasteHandler(bodyRef, () => bodyValRef.current, setBody, setImgUploading), []);
+  const handleDrop = useCallback(makeImageDropHandler(bodyRef, () => bodyValRef.current, setBody, setImgUploading), []);
 
   // Swipe-to-dismiss state
   const touchStartY = useRef(0);
@@ -209,6 +214,9 @@ export default function ComposeSheet({ onClose }) {
               value={body}
               onChange={(e) => setBody(e.target.value)}
               onKeyDown={bulletKeyHandler}
+              onPaste={handlePaste}
+              onDrop={handleDrop}
+              onDragOver={preventDefaultDrag}
               placeholder="What's on your mind?"
               rows={6}
               className="mt-1 w-full resize-none rounded-xl border px-4 py-3 text-sm"

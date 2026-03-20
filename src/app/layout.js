@@ -7,6 +7,7 @@ import NotificationFab from '@/components/layout/NotificationFab';
 import BottomNav from '@/components/layout/BottomNav';
 import PageViewTracker from '@/components/layout/PageViewTracker';
 import ErrorBoundary from '@/components/layout/ErrorBoundary';
+import BraveBanner from '@/components/layout/BraveBanner';
 import SwipeBackWrapper from '@/components/layout/SwipeBackWrapper';
 import { FontSizeProvider } from '@/lib/fontSizeContext';
 import './globals.css';
@@ -92,6 +93,7 @@ export default function RootLayout({ children }) {
             <Sidebar />
             <SwipeBackWrapper>
               <ErrorBoundary>
+                <BraveBanner />
                 <main className="mx-auto max-w-7xl px-4 pb-20 pt-6 sm:px-6 lg:px-8 lg:pb-6">
                   {children}
                 </main>

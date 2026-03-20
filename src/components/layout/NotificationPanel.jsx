@@ -40,7 +40,11 @@ export function NotificationItem({ notification, onClick }) {
             <p className="text-sm text-foreground">
               <span className="font-semibold">{notification.actor?.display_name || 'Someone'}</span>
               {' '}
-              {notification.type === 'reply_mention' ? 'mentioned you in' : 'replied to'}
+              {notification.type === 'reply_mention'
+                ? 'mentioned you in'
+                : notification.type === 'forum_new_thread'
+                  ? 'posted in'
+                  : 'replied to'}
               {' '}
               <span className="font-medium" style={{ color: 'var(--purple)' }}>
                 &ldquo;{notification.thread?.title || 'a thread'}&rdquo;

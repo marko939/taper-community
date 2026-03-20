@@ -1,17 +1,22 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { useAuthStore } from '@/stores/authStore';
 import { useBlogStore } from '@/stores/blogStore';
-import { makeBulletKeyHandler } from '@/components/shared/FormattingToolbar';
+import { makeBulletKeyHandler, makeImagePasteHandler, makeImageDropHandler, preventDefaultDrag } from '@/components/shared/FormattingToolbar';
 
 export default function BlogCommentForm({ blogPostId, quotedText, onQuoteUsed }) {
   const [body, setBody] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const textareaRef = useRef(null);
+  const [imgUploading, setImgUploading] = useState(false);
   const bulletKeyHandler = makeBulletKeyHandler(textareaRef, setBody);
+  const bodyRef = useRef(body);
+  bodyRef.current = body;
+  const handlePaste = useCallback(makeImagePasteHandler(textareaRef, () => bodyRef.current, setBody, setImgUploading), []);
+  const handleDrop = useCallback(makeImageDropHandler(textareaRef, () => bodyRef.current, setBody, setImgUploading), []);
   const user = useAuthStore((s) => s.user);
   const authLoading = useAuthStore((s) => s.loading);
   const addComment = useBlogStore((s) => s.addComment);
@@ -61,6 +66,9 @@ export default function BlogCommentForm({ blogPostId, quotedText, onQuoteUsed })
           value={body}
           onChange={(e) => setBody(e.target.value)}
           onKeyDown={bulletKeyHandler}
+          onPaste={handlePaste}
+          onDrop={handleDrop}
+          onDragOver={preventDefaultDrag}
           placeholder="Share your thoughts on this article..."
           rows={1}
           className="textarea w-full resize-none"

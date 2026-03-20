@@ -24,7 +24,7 @@ export const useNotificationStore = create((set, get) => ({
         .from('notifications')
         .select('*, actor:actor_id(display_name, avatar_url), thread:thread_id(title), reply_id')
         .eq('user_id', userId)
-        .in('type', ['thread_reply', 'reply_mention', 'badge'])
+        .in('type', ['thread_reply', 'reply_mention', 'badge', 'forum_new_thread'])
         .order('created_at', { ascending: false })
         .limit(50);
 
@@ -48,7 +48,7 @@ export const useNotificationStore = create((set, get) => ({
         .select('id', { count: 'exact', head: true })
         .eq('user_id', userId)
         .eq('read', false)
-        .in('type', ['thread_reply', 'reply_mention', 'badge']);
+        .in('type', ['thread_reply', 'reply_mention', 'badge', 'forum_new_thread']);
 
       set({ unreadCount: count || 0 });
     } catch (err) {

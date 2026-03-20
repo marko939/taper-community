@@ -175,7 +175,12 @@ export const useBlogStore = create((set, get) => ({
     if (!userId) throw new Error('Please sign in to comment.');
     if (!body.trim()) throw new Error('Comment cannot be empty.');
 
-    await ensureSession();
+    try {
+      await ensureSession();
+    } catch (err) {
+      console.error('[blogStore] addComment ensureSession failed:', err);
+      throw new Error('Session expired. Please refresh the page and sign in again.');
+    }
 
     const supabase = createClient();
     const { data, error } = await supabase

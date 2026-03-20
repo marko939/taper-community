@@ -131,37 +131,59 @@ export const useForumStore = create((set, get) => ({
   loadMoreThreads: async (forumId) => {
     if (!forumId) return;
 
-    const supabase = createClient();
     const current = get().threadPages[forumId];
-    if (!current) return;
+    if (!current || current.loading) return;
 
-    const nextPage = current.page + 1;
-    const from = nextPage * THREADS_PER_PAGE;
-    const to = from + THREADS_PER_PAGE - 1;
-
-    const { data, count } = await supabase
-      .from('threads')
-      .select('*, profiles:user_id(display_name, is_peer_advisor, drug, taper_stage, drug_signature, avatar_url, is_founding_member), thread_forums!inner(forum_id)', { count: 'exact' })
-      .eq('thread_forums.forum_id', forumId)
-      .order('pinned', { ascending: false })
-      .order('created_at', { ascending: false })
-      .range(from, to);
-
-    const rows = data || [];
-    const total = count ?? current.totalCount;
-
+    get().cancelPending('loadMoreThreads');
+    const controller = new AbortController();
     set((state) => ({
+      _abortControllers: { ...state._abortControllers, loadMoreThreads: controller },
       threadPages: {
         ...state.threadPages,
-        [forumId]: {
-          items: [...current.items, ...rows],
-          hasMore: from + rows.length < total,
-          totalCount: total,
-          page: nextPage,
-          loading: false,
-        },
+        [forumId]: { ...current, loading: true },
       },
     }));
+
+    try {
+      const supabase = createClient();
+      const nextPage = current.page + 1;
+      const from = nextPage * THREADS_PER_PAGE;
+      const to = from + THREADS_PER_PAGE - 1;
+
+      const { data, count } = await supabase
+        .from('threads')
+        .select('*, profiles:user_id(display_name, is_peer_advisor, drug, taper_stage, drug_signature, avatar_url, is_founding_member), thread_forums!inner(forum_id)', { count: 'exact' })
+        .eq('thread_forums.forum_id', forumId)
+        .order('pinned', { ascending: false })
+        .order('created_at', { ascending: false })
+        .abortSignal(controller.signal)
+        .range(from, to);
+
+      const rows = data || [];
+      const total = count ?? current.totalCount;
+
+      set((state) => ({
+        threadPages: {
+          ...state.threadPages,
+          [forumId]: {
+            items: [...(state.threadPages[forumId]?.items || []), ...rows],
+            hasMore: from + rows.length < total,
+            totalCount: total,
+            page: nextPage,
+            loading: false,
+          },
+        },
+      }));
+    } catch (err) {
+      if (err.name === 'AbortError') return;
+      console.error('[forumStore] loadMoreThreads error:', err);
+      set((state) => ({
+        threadPages: {
+          ...state.threadPages,
+          [forumId]: { ...(state.threadPages[forumId] || {}), loading: false },
+        },
+      }));
+    }
   },
 
   fetchHotThreads: async (limit = 10, { force = false } = {}) => {

@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import { THREAD_TAGS } from '@/lib/constants';
 import EmojiPickerButton from '@/components/shared/EmojiPickerButton';
 import MentionAutocomplete from '@/components/shared/MentionAutocomplete';
-import FormattingToolbar, { makeBulletKeyHandler } from '@/components/shared/FormattingToolbar';
+import FormattingToolbar, { makeBulletKeyHandler, makeImagePasteHandler, makeImageDropHandler, preventDefaultDrag } from '@/components/shared/FormattingToolbar';
 
 export default function NewThreadForm({ forumId, onSubmit, disabled = false }) {
   const [title, setTitle] = useState('');
@@ -13,7 +13,12 @@ export default function NewThreadForm({ forumId, onSubmit, disabled = false }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const bodyRef = useRef(null);
+  const [imgUploading, setImgUploading] = useState(false);
   const bulletKeyHandler = makeBulletKeyHandler(bodyRef, setBody);
+  const bodyValRef = useRef(body);
+  bodyValRef.current = body;
+  const handlePaste = useCallback(makeImagePasteHandler(bodyRef, () => bodyValRef.current, setBody, setImgUploading), []);
+  const handleDrop = useCallback(makeImageDropHandler(bodyRef, () => bodyValRef.current, setBody, setImgUploading), []);
 
   const toggleTag = (tag) => {
     setSelectedTags((prev) =>
@@ -77,6 +82,9 @@ export default function NewThreadForm({ forumId, onSubmit, disabled = false }) {
             value={body}
             onChange={(e) => setBody(e.target.value)}
             onKeyDown={bulletKeyHandler}
+            onPaste={handlePaste}
+            onDrop={handleDrop}
+            onDragOver={preventDefaultDrag}
             placeholder="Share your experience, question, or thoughts..."
             rows={8}
             className="textarea rounded-t-none"
