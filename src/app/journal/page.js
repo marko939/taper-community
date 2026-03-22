@@ -243,22 +243,24 @@ export default function JournalPage() {
                   <DosePercentage entries={entries} />
                 </div>
               )}
-
-              {/* Log an Entry */}
-              <div className="card" id="entry-form">
-                <h2 className="mb-4 text-lg font-semibold text-foreground">Log an Entry</h2>
-                <JournalEntryForm onSubmit={handleSubmit} entryCount={entries.length} />
-              </div>
-
-              {/* Export */}
-              <ProviderPDFButton entries={entries} profile={profile || {}} assessments={assessments} />
-
-              {/* Assessments section */}
-              <div id="assessment-card">
-                <AssessmentCard assessments={assessments} />
-              </div>
             </>
           )}
+
+          {/* Log an Entry — always rendered so new users can create their first entry */}
+          <div className="card" id="entry-form">
+            <h2 className="mb-4 text-lg font-semibold text-foreground">Log an Entry</h2>
+            <JournalEntryForm onSubmit={handleSubmit} entryCount={entries.length} />
+          </div>
+
+          {/* Export */}
+          {entries.length > 0 && (
+            <ProviderPDFButton entries={entries} profile={profile || {}} assessments={assessments} />
+          )}
+
+          {/* Assessments section */}
+          <div id="assessment-card">
+            <AssessmentCard assessments={assessments} />
+          </div>
 
           {/* Invite prompt */}
           {inviteTrigger && <InvitePrompt trigger={inviteTrigger} userId={user.id} />}
