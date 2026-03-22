@@ -14,6 +14,10 @@ export const useJournalStore = create((set, get) => ({
   sharedEntries: {},   // keyed by shareToken: { entries, loading }
   publicEntries: {},   // keyed by userId: { entries, loading }
 
+  invalidate: () => {
+    set({ entriesLoaded: false, loading: true });
+  },
+
   fetchEntries: async () => {
     if (get().entriesLoaded) return;
     const userId = useAuthStore.getState().user?.id;

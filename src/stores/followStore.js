@@ -19,6 +19,10 @@ export const useFollowStore = create((set, get) => ({
   threadFollows: new Set(),
   threadFollowsLoaded: false,
 
+  invalidateFeeds: () => {
+    set({ followedThreadsLoaded: false });
+  },
+
   fetchFollowing: async (userId) => {
     if (!userId || get().followingLoaded) return;
 
