@@ -72,7 +72,7 @@ $$;
 -- ============================================================
 -- RPC: analytics_retention
 -- Returns D1/D7/D30 retention rates for current cohort + all-time
--- "Returned" = any activity: post, reply, vote, helpful vote, or journal entry
+-- "Returned" = any activity: visiting (page_view), post, reply, vote, helpful vote, or journal entry
 -- ============================================================
 CREATE OR REPLACE FUNCTION public.analytics_retention()
 RETURNS json
@@ -101,7 +101,8 @@ BEGIN
   FROM public.profiles p
   WHERE p.joined_at BETWEEN NOW() - INTERVAL '2 days' AND NOW() - INTERVAL '1 day'
     AND (
-      EXISTS (SELECT 1 FROM public.threads t WHERE t.user_id = p.id AND t.created_at > p.joined_at + INTERVAL '1 hour')
+      EXISTS (SELECT 1 FROM public.page_views pv WHERE pv.user_id = p.id AND pv.created_at > p.joined_at + INTERVAL '1 hour')
+      OR EXISTS (SELECT 1 FROM public.threads t WHERE t.user_id = p.id AND t.created_at > p.joined_at + INTERVAL '1 hour')
       OR EXISTS (SELECT 1 FROM public.replies r WHERE r.user_id = p.id AND r.created_at > p.joined_at + INTERVAL '1 hour')
       OR EXISTS (SELECT 1 FROM public.thread_votes v WHERE v.user_id = p.id AND v.created_at > p.joined_at + INTERVAL '1 hour')
       OR EXISTS (SELECT 1 FROM public.reply_votes v WHERE v.user_id = p.id AND v.created_at > p.joined_at + INTERVAL '1 hour')
@@ -118,7 +119,8 @@ BEGIN
   FROM public.profiles p
   WHERE p.joined_at BETWEEN NOW() - INTERVAL '14 days' AND NOW() - INTERVAL '7 days'
     AND (
-      EXISTS (SELECT 1 FROM public.threads t WHERE t.user_id = p.id AND t.created_at > p.joined_at + INTERVAL '7 days')
+      EXISTS (SELECT 1 FROM public.page_views pv WHERE pv.user_id = p.id AND pv.created_at > p.joined_at + INTERVAL '7 days')
+      OR EXISTS (SELECT 1 FROM public.threads t WHERE t.user_id = p.id AND t.created_at > p.joined_at + INTERVAL '7 days')
       OR EXISTS (SELECT 1 FROM public.replies r WHERE r.user_id = p.id AND r.created_at > p.joined_at + INTERVAL '7 days')
       OR EXISTS (SELECT 1 FROM public.thread_votes v WHERE v.user_id = p.id AND v.created_at > p.joined_at + INTERVAL '7 days')
       OR EXISTS (SELECT 1 FROM public.reply_votes v WHERE v.user_id = p.id AND v.created_at > p.joined_at + INTERVAL '7 days')
@@ -135,7 +137,8 @@ BEGIN
   FROM public.profiles p
   WHERE p.joined_at BETWEEN NOW() - INTERVAL '60 days' AND NOW() - INTERVAL '30 days'
     AND (
-      EXISTS (SELECT 1 FROM public.threads t WHERE t.user_id = p.id AND t.created_at > p.joined_at + INTERVAL '30 days')
+      EXISTS (SELECT 1 FROM public.page_views pv WHERE pv.user_id = p.id AND pv.created_at > p.joined_at + INTERVAL '30 days')
+      OR EXISTS (SELECT 1 FROM public.threads t WHERE t.user_id = p.id AND t.created_at > p.joined_at + INTERVAL '30 days')
       OR EXISTS (SELECT 1 FROM public.replies r WHERE r.user_id = p.id AND r.created_at > p.joined_at + INTERVAL '30 days')
       OR EXISTS (SELECT 1 FROM public.thread_votes v WHERE v.user_id = p.id AND v.created_at > p.joined_at + INTERVAL '30 days')
       OR EXISTS (SELECT 1 FROM public.reply_votes v WHERE v.user_id = p.id AND v.created_at > p.joined_at + INTERVAL '30 days')
@@ -154,7 +157,8 @@ BEGIN
   FROM public.profiles p
   WHERE p.joined_at < NOW() - INTERVAL '1 day'
     AND (
-      EXISTS (SELECT 1 FROM public.threads t WHERE t.user_id = p.id AND t.created_at > p.joined_at + INTERVAL '1 hour')
+      EXISTS (SELECT 1 FROM public.page_views pv WHERE pv.user_id = p.id AND pv.created_at > p.joined_at + INTERVAL '1 hour')
+      OR EXISTS (SELECT 1 FROM public.threads t WHERE t.user_id = p.id AND t.created_at > p.joined_at + INTERVAL '1 hour')
       OR EXISTS (SELECT 1 FROM public.replies r WHERE r.user_id = p.id AND r.created_at > p.joined_at + INTERVAL '1 hour')
       OR EXISTS (SELECT 1 FROM public.thread_votes v WHERE v.user_id = p.id AND v.created_at > p.joined_at + INTERVAL '1 hour')
       OR EXISTS (SELECT 1 FROM public.reply_votes v WHERE v.user_id = p.id AND v.created_at > p.joined_at + INTERVAL '1 hour')
@@ -171,7 +175,8 @@ BEGIN
   FROM public.profiles p
   WHERE p.joined_at < NOW() - INTERVAL '7 days'
     AND (
-      EXISTS (SELECT 1 FROM public.threads t WHERE t.user_id = p.id AND t.created_at > p.joined_at + INTERVAL '7 days')
+      EXISTS (SELECT 1 FROM public.page_views pv WHERE pv.user_id = p.id AND pv.created_at > p.joined_at + INTERVAL '7 days')
+      OR EXISTS (SELECT 1 FROM public.threads t WHERE t.user_id = p.id AND t.created_at > p.joined_at + INTERVAL '7 days')
       OR EXISTS (SELECT 1 FROM public.replies r WHERE r.user_id = p.id AND r.created_at > p.joined_at + INTERVAL '7 days')
       OR EXISTS (SELECT 1 FROM public.thread_votes v WHERE v.user_id = p.id AND v.created_at > p.joined_at + INTERVAL '7 days')
       OR EXISTS (SELECT 1 FROM public.reply_votes v WHERE v.user_id = p.id AND v.created_at > p.joined_at + INTERVAL '7 days')
@@ -188,7 +193,8 @@ BEGIN
   FROM public.profiles p
   WHERE p.joined_at < NOW() - INTERVAL '30 days'
     AND (
-      EXISTS (SELECT 1 FROM public.threads t WHERE t.user_id = p.id AND t.created_at > p.joined_at + INTERVAL '30 days')
+      EXISTS (SELECT 1 FROM public.page_views pv WHERE pv.user_id = p.id AND pv.created_at > p.joined_at + INTERVAL '30 days')
+      OR EXISTS (SELECT 1 FROM public.threads t WHERE t.user_id = p.id AND t.created_at > p.joined_at + INTERVAL '30 days')
       OR EXISTS (SELECT 1 FROM public.replies r WHERE r.user_id = p.id AND r.created_at > p.joined_at + INTERVAL '30 days')
       OR EXISTS (SELECT 1 FROM public.thread_votes v WHERE v.user_id = p.id AND v.created_at > p.joined_at + INTERVAL '30 days')
       OR EXISTS (SELECT 1 FROM public.reply_votes v WHERE v.user_id = p.id AND v.created_at > p.joined_at + INTERVAL '30 days')

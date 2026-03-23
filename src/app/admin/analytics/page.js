@@ -111,6 +111,7 @@ export default function AnalyticsDashboard() {
 
           {/* 3. Retention */}
           <RetentionCards retention={data.retention} />
+          <RetentionCohortTable cohorts={data.retentionCohorts} />
 
           {/* 4. Daily Posts & Comments */}
           <DailyActivityChart activity={data.dailyActivity} />
@@ -131,15 +132,15 @@ export default function AnalyticsDashboard() {
           {/* Top Members */}
           <TopMembersTable members={data.topMembers} />
 
-          {/* Time to First Post */}
-          <TimeToFirstPost data={data.timeToFirstPost} />
-
           {/* Taper Tracker Adoption */}
           <TaperTrackerSection tracker={data.taperTracker} />
 
           {/* Site Traffic */}
-          <PageViewsSection pageViews={data.pageViews} />
-          {data.plausible && <PlausibleSection plausible={data.plausible} />}
+          {data.plausible ? (
+            <PlausibleSection plausible={data.plausible} />
+          ) : (
+            <PlausibleUnavailableCard />
+          )}
 
           {/* Period Comparisons — DoD / WoW / MoM */}
           {data.periodComparisons && (
@@ -150,7 +151,7 @@ export default function AnalyticsDashboard() {
             </div>
           )}
 
-          {/* 13. QoQ / YoY */}
+          {/* QoQ / YoY */}
           {data.periodComparisons && (
             <div className="grid gap-4 sm:grid-cols-2">
               <ComparisonTable title="Quarter over Quarter" data={data.periodComparisons.quarterly} labels={['This Quarter', 'Last Quarter', 'QoQ']} historicalSeries={data.periodHistorical?.quarterly} />
@@ -424,9 +425,10 @@ function RetentionCards({ retention }) {
 
   return (
     <div className="space-y-3">
-      <div className="flex items-center gap-3">
-        <h2 className="text-sm font-semibold text-foreground">Retention</h2>
-        <div className="flex gap-1 rounded-lg p-0.5" style={{ background: 'var(--surface-strong)' }}>
+      <div>
+        <div className="flex items-center gap-3">
+          <h2 className="text-sm font-semibold text-foreground">Retention</h2>
+          <div className="flex gap-1 rounded-lg p-0.5" style={{ background: 'var(--surface-strong)' }}>
           {tabs.map(tab => (
             <button
               key={tab.key}
@@ -444,6 +446,8 @@ function RetentionCards({ retention }) {
         <span className="text-[10px] text-text-subtle">
           {tabs.find(t => t.key === retentionView)?.desc}
         </span>
+        </div>
+        <p className="mt-1 text-[10px] text-text-subtle">Measures users who return after signup (any activity: visiting, posting, replying, voting, or journaling)</p>
       </div>
       <div className="grid gap-4 sm:grid-cols-3">
         {metrics.map(m => {
@@ -459,6 +463,73 @@ function RetentionCards({ retention }) {
         })}
       </div>
     </div>
+  );
+}
+
+function RetentionCohortTable({ cohorts }) {
+  if (!cohorts || cohorts.length === 0) return null;
+
+  // Find max weeks across all cohorts
+  const maxWeeks = Math.max(...cohorts.map(c => c.weeksElapsed), 0);
+  const weekCols = Array.from({ length: Math.min(maxWeeks + 1, 8) }, (_, i) => i);
+
+  const cellColor = (pct) => {
+    if (pct == null) return 'transparent';
+    if (pct >= 60) return 'rgba(16,185,129,0.25)';
+    if (pct >= 40) return 'rgba(16,185,129,0.15)';
+    if (pct >= 20) return 'rgba(245,158,11,0.15)';
+    if (pct > 0) return 'rgba(239,68,68,0.1)';
+    return 'rgba(239,68,68,0.05)';
+  };
+
+  return (
+    <Card>
+      <h2 className="mb-4 text-sm font-semibold text-foreground">Retention by Signup Cohort</h2>
+      <p className="mb-3 text-[10px] text-text-subtle">Each row is a weekly signup cohort. Cells show % of users active in that week after signup.</p>
+      <div className="overflow-x-auto">
+        <table className="w-full text-xs">
+          <thead>
+            <tr className="border-b" style={{ borderColor: 'var(--border-subtle)' }}>
+              <th className="pb-2 pr-3 text-left font-medium text-text-subtle">Cohort</th>
+              <th className="pb-2 pr-3 text-right font-medium text-text-subtle">Size</th>
+              {weekCols.map(w => (
+                <th key={w} className="pb-2 px-2 text-center font-medium text-text-subtle">
+                  {w === 0 ? 'W0' : `W${w}`}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {cohorts.map(c => (
+              <tr key={c.cohort} className="border-b last:border-0" style={{ borderColor: 'var(--border-light)' }}>
+                <td className="py-2 pr-3 font-medium text-foreground whitespace-nowrap">{c.cohort}</td>
+                <td className="py-2 pr-3 text-right text-text-muted">{c.size}</td>
+                {weekCols.map(w => {
+                  const val = c[`week${w}`];
+                  const available = w <= c.weeksElapsed;
+                  return (
+                    <td key={w} className="py-2 px-2 text-center" style={{
+                      background: available ? cellColor(val) : 'transparent',
+                      borderRadius: 4,
+                    }}>
+                      {available ? (
+                        <span className="font-semibold" style={{
+                          color: val >= 40 ? '#10B981' : val >= 20 ? '#F59E0B' : val > 0 ? '#EF4444' : 'var(--text-subtle)',
+                        }}>
+                          {val}%
+                        </span>
+                      ) : (
+                        <span className="text-text-subtle">—</span>
+                      )}
+                    </td>
+                  );
+                })}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </Card>
   );
 }
 
@@ -493,20 +564,19 @@ function EngagementCards({ engagement }) {
 
   const cards = [
     { label: 'Posts / Active User', value: engagement.postsPerActiveUser, sub: 'This week' },
-    { label: 'Reply Rate', value: `${engagement.replyRate}%`, sub: 'Threads with replies (30d)' },
-    { label: 'Avg Replies / Thread', value: engagement.avgRepliesPerThread, sub: 'For threads with replies' },
+    { label: 'Avg Replies / Thread', value: engagement.avgRepliesPerThread, sub: 'For threads with replies (30d)' },
     {
-      label: 'Time to First Reply',
-      value: engagement.avgTimeToFirstReplyHours ? `${engagement.avgTimeToFirstReplyHours}h` : 'N/A',
-      sub: 'Average hours',
-      color: engagement.avgTimeToFirstReplyHours == null ? null
-        : engagement.avgTimeToFirstReplyHours < 1 ? '#10B981'
-        : engagement.avgTimeToFirstReplyHours < 24 ? '#F59E0B' : '#EF4444',
+      label: 'Time to First Post or Reply',
+      value: engagement.avgTimeToFirstPostOrReplyHours != null ? `${engagement.avgTimeToFirstPostOrReplyHours}h` : 'N/A',
+      sub: `${engagement.usersWhoPosted ?? 0} of ${engagement.totalUsers ?? 0} members`,
+      color: engagement.avgTimeToFirstPostOrReplyHours == null ? null
+        : engagement.avgTimeToFirstPostOrReplyHours < 1 ? '#10B981'
+        : engagement.avgTimeToFirstPostOrReplyHours < 24 ? '#F59E0B' : '#EF4444',
     },
   ];
 
   return (
-    <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+    <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
       {cards.map(c => (
         <Card key={c.label}>
           <p className="text-xs font-medium text-text-muted">{c.label}</p>
@@ -638,30 +708,34 @@ function TimeToFirstPost({ data }) {
 }
 
 function PageViewsSection({ pageViews }) {
-  if (!pageViews) return <SectionUnavailable label="Site Traffic" />;
+  if (!pageViews) return <SectionUnavailable label="Page Views (Custom Tracking)" />;
 
   return (
     <div className="space-y-4">
+      <div className="flex items-center gap-2">
+        <h2 className="text-sm font-semibold text-foreground">Page Views (Custom Tracking)</h2>
+        <span className="text-[10px] text-text-subtle">Logged-in member views only, excludes admin</span>
+      </div>
       {/* Traffic stat cards */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
         <Card>
-          <p className="text-xs font-medium text-text-muted">Page Views Today</p>
+          <p className="text-xs font-medium text-text-muted">Views Today</p>
           <p className="mt-1 text-2xl font-bold" style={{ color: '#5B2E91' }}>{pageViews.today.toLocaleString()}</p>
         </Card>
         <Card>
-          <p className="text-xs font-medium text-text-muted">Visitors Today</p>
+          <p className="text-xs font-medium text-text-muted">Sessions Today</p>
           <p className="mt-1 text-2xl font-bold" style={{ color: '#2EC4B6' }}>{pageViews.uniqueToday.toLocaleString()}</p>
         </Card>
         <Card>
-          <p className="text-xs font-medium text-text-muted">Views This Week</p>
+          <p className="text-xs font-medium text-text-muted">Views (7d)</p>
           <p className="mt-1 text-2xl font-bold" style={{ color: '#5B2E91' }}>{pageViews.thisWeek.toLocaleString()}</p>
         </Card>
         <Card>
-          <p className="text-xs font-medium text-text-muted">Visitors This Week</p>
+          <p className="text-xs font-medium text-text-muted">Sessions (7d)</p>
           <p className="mt-1 text-2xl font-bold" style={{ color: '#2EC4B6' }}>{pageViews.uniqueThisWeek.toLocaleString()}</p>
         </Card>
         <Card>
-          <p className="text-xs font-medium text-text-muted">Views This Month</p>
+          <p className="text-xs font-medium text-text-muted">Views (30d)</p>
           <p className="mt-1 text-2xl font-bold" style={{ color: '#5B2E91' }}>{pageViews.thisMonth.toLocaleString()}</p>
         </Card>
       </div>
@@ -754,7 +828,7 @@ function TaperTrackerSection({ tracker }) {
 function PlausibleSection({ plausible }) {
   if (!plausible) return <SectionUnavailable label="Site Traffic (Plausible)" />;
 
-  const { realtime, today, week, month, topPages, topSources, topCountries } = plausible;
+  const { realtime, today, week, month, timeseries, topPages, topSources, topCountries } = plausible;
 
   const fmtDuration = (s) => {
     if (!s) return '0s';
@@ -773,7 +847,7 @@ function PlausibleSection({ plausible }) {
     <div className="space-y-4">
       {/* Header with realtime */}
       <div className="flex items-center gap-3">
-        <h2 className="text-sm font-semibold text-foreground">Site Traffic</h2>
+        <h2 className="text-sm font-semibold text-foreground">Site Traffic (Plausible)</h2>
         {realtime != null && (
           <span className="flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-medium"
             style={{ background: 'rgba(46,196,182,0.12)', color: '#2EC4B6' }}>
@@ -782,6 +856,14 @@ function PlausibleSection({ plausible }) {
           </span>
         )}
       </div>
+
+      {/* Partial error warning */}
+      {plausible._errors && plausible._errors.length > 0 && (
+        <p className="rounded-lg px-3 py-2 text-xs text-text-muted"
+          style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.2)' }}>
+          Some Plausible data unavailable: {plausible._errors.join(', ')}
+        </p>
+      )}
 
       {/* Aggregate stat cards */}
       <div className="grid gap-4 sm:grid-cols-3">
@@ -809,6 +891,31 @@ function PlausibleSection({ plausible }) {
           </Card>
         ))}
       </div>
+
+      {/* 30-day traffic timeseries */}
+      {timeseries && timeseries.length > 0 && (
+        <Card>
+          <h3 className="text-sm font-semibold text-foreground">Daily Traffic (30 days)</h3>
+          <div className="mt-4 h-56">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={timeseries.map(d => ({
+                date: d.date,
+                Visitors: d.visitors,
+                Pageviews: d.pageviews,
+              }))}>
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--border-subtle)" />
+                <XAxis dataKey="date" tick={{ fontSize: 10, fill: 'var(--text-subtle)' }}
+                  tickFormatter={v => new Date(v).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} />
+                <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: 'var(--text-subtle)' }} />
+                <Tooltip contentStyle={tooltipStyle} />
+                <Legend wrapperStyle={{ fontSize: 11 }} />
+                <Bar dataKey="Visitors" fill="#2EC4B6" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="Pageviews" fill="#5B2E91" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </Card>
+      )}
 
       {/* Breakdowns grid */}
       <div className="grid gap-4 sm:grid-cols-3">
@@ -885,6 +992,27 @@ function ChangeIndicator({ value }) {
       {isPositive ? '+' : ''}{value}%
       <span className="text-[10px]">{isPositive ? '\u2191' : '\u2193'}</span>
     </span>
+  );
+}
+
+function PlausibleUnavailableCard() {
+  return (
+    <Card>
+      <div className="flex items-center gap-3">
+        <div className="flex h-8 w-8 items-center justify-center rounded-full"
+          style={{ background: 'rgba(239,68,68,0.1)' }}>
+          <svg className="h-4 w-4" style={{ color: '#EF4444' }} fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+          </svg>
+        </div>
+        <div>
+          <p className="text-sm font-semibold text-foreground">Plausible Analytics Unavailable</p>
+          <p className="text-xs text-text-muted">
+            Could not fetch data from Plausible. Check that PLAUSIBLE_API_KEY and PLAUSIBLE_SITE_ID are set in your environment variables.
+          </p>
+        </div>
+      </div>
+    </Card>
   );
 }
 

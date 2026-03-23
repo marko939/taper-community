@@ -35,7 +35,6 @@ export async function GET() {
       fetchRetention(supabase),
       fetchEngagement(supabase),
       fetchForumBreakdown(supabase),
-      fetchTimeToFirstPost(supabase),
       fetchPeakHours(supabase),
       fetchTaperTracker(supabase),
       fetchNewVsReturning(supabase),
@@ -44,13 +43,14 @@ export async function GET() {
       fetchThreadFunnel(supabase),
       fetchPageViews(supabase),
       fetchPlausibleStats(),
+      fetchRetentionCohorts(supabase),
     ]);
 
     const [
       topLine, signupSeries, periodComparisons, periodHistorical, dailyActivity,
-      retention, engagement, forumBreakdown, timeToFirstPost,
+      retention, engagement, forumBreakdown,
       peakHours, taperTracker, newVsReturning, churnRisk,
-      topMembers, threadFunnel, pageViews, plausible,
+      topMembers, threadFunnel, pageViews, plausible, retentionCohorts,
     ] = results.map(r => r.status === 'fulfilled' ? r.value : null);
 
     return NextResponse.json({
@@ -62,7 +62,6 @@ export async function GET() {
       retention,
       engagement,
       forumBreakdown,
-      timeToFirstPost,
       peakHours,
       taperTracker,
       newVsReturning,
@@ -71,6 +70,7 @@ export async function GET() {
       threadFunnel,
       pageViews,
       plausible,
+      retentionCohorts,
       fetchedAt: new Date().toISOString(),
     });
   } catch (err) {
@@ -374,18 +374,103 @@ async function fetchRetention(supabase) {
   return { current: data, alltime: data };
 }
 
+// ── Section 5b: Retention Cohorts (weekly cohort heatmap) ──
+async function fetchRetentionCohorts(supabase) {
+  const now = new Date();
+  const weeksBack = 8;
+  const cutoff = new Date(now - weeksBack * 7 * 86400000).toISOString();
+
+  // Get all users who signed up in the last N weeks
+  const { data: profiles } = await supabase
+    .from('profiles')
+    .select('id, joined_at')
+    .gte('joined_at', cutoff);
+
+  if (!profiles || profiles.length === 0) return [];
+
+  // Get all activity for these users — matches the retention SQL: page_views, threads, replies, votes, journal
+  const userIds = profiles.map(p => p.id);
+  const [threads, replies, pageViews, threadVotes, replyVotes, helpfulVotes, journalEntries] = await Promise.all([
+    supabase.from('threads').select('user_id, created_at').in('user_id', userIds).gte('created_at', cutoff),
+    supabase.from('replies').select('user_id, created_at').in('user_id', userIds).gte('created_at', cutoff),
+    supabase.from('page_views').select('user_id, created_at').in('user_id', userIds).gte('created_at', cutoff),
+    supabase.from('thread_votes').select('user_id, created_at').in('user_id', userIds).gte('created_at', cutoff),
+    supabase.from('reply_votes').select('user_id, created_at').in('user_id', userIds).gte('created_at', cutoff),
+    supabase.from('helpful_votes').select('user_id, created_at').in('user_id', userIds).gte('created_at', cutoff),
+    supabase.from('journal_entries').select('user_id, created_at').in('user_id', userIds).gte('created_at', cutoff),
+  ]);
+
+  // Build activity map: userId -> set of week numbers (weeks since signup)
+  const activityByUser = {};
+  const allActivity = [
+    ...(threads.data || []), ...(replies.data || []), ...(pageViews.data || []),
+    ...(threadVotes.data || []), ...(replyVotes.data || []), ...(helpfulVotes.data || []),
+    ...(journalEntries.data || []),
+  ];
+  const profileMap = {};
+  for (const p of profiles) profileMap[p.id] = new Date(p.joined_at).getTime();
+
+  for (const item of allActivity) {
+    if (!item.user_id) continue;
+    if (!activityByUser[item.user_id]) activityByUser[item.user_id] = new Set();
+    const joinedMs = profileMap[item.user_id];
+    if (!joinedMs) continue;
+    const activityMs = new Date(item.created_at).getTime();
+    const weekOffset = Math.floor((activityMs - joinedMs) / (7 * 86400000));
+    if (weekOffset >= 0) activityByUser[item.user_id].add(weekOffset);
+  }
+
+  // Group users into weekly cohorts by signup week
+  const getWeekStart = (date) => {
+    const d = new Date(date);
+    const day = d.getDay();
+    const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+    return new Date(d.getFullYear(), d.getMonth(), diff);
+  };
+
+  const cohortMap = {};
+  for (const p of profiles) {
+    const ws = getWeekStart(p.joined_at);
+    const key = ws.toISOString().slice(0, 10);
+    if (!cohortMap[key]) cohortMap[key] = { users: [], weekStart: ws };
+    cohortMap[key].users.push(p.id);
+  }
+
+  // For each cohort, calculate retention % for each week
+  const cohorts = Object.entries(cohortMap)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([key, { users, weekStart }]) => {
+      const size = users.length;
+      const weeksElapsed = Math.floor((now - weekStart) / (7 * 86400000));
+      const label = new Date(key).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+
+      const weeks = {};
+      for (let w = 0; w <= Math.min(weeksElapsed, weeksBack - 1); w++) {
+        const retained = users.filter(uid => activityByUser[uid]?.has(w)).length;
+        weeks[`week${w}`] = size > 0 ? Math.round((retained / size) * 100) : 0;
+      }
+
+      return { cohort: label, size, weeksElapsed, ...weeks };
+    });
+
+  return cohorts;
+}
+
 // ── Section 6: Engagement ──
 async function fetchEngagement(supabase) {
   const weekAgo = new Date(Date.now() - 7 * 86400000).toISOString();
   const monthAgo = new Date(Date.now() - 30 * 86400000).toISOString();
 
-  const [weekThreads, weekReplies, monthThreads, monthReplies] = await Promise.all([
+  const [weekThreads, weekReplies, monthThreads, profiles, allThreads, allReplies] = await Promise.all([
     supabase.from('threads').select('user_id').gte('created_at', weekAgo),
     supabase.from('replies').select('user_id').gte('created_at', weekAgo),
     supabase.from('threads').select('id, reply_count, created_at').gte('created_at', monthAgo),
-    supabase.from('replies').select('thread_id, created_at').gte('created_at', monthAgo),
+    supabase.from('profiles').select('id, joined_at'),
+    supabase.from('threads').select('user_id, created_at').order('created_at', { ascending: true }),
+    supabase.from('replies').select('user_id, created_at').order('created_at', { ascending: true }),
   ]);
 
+  // Posts per active user
   const weekActiveUsers = new Set([
     ...(weekThreads.data || []).map(r => r.user_id),
     ...(weekReplies.data || []).map(r => r.user_id),
@@ -393,30 +478,44 @@ async function fetchEngagement(supabase) {
   const postsPerActive = weekActiveUsers.size > 0
     ? ((weekThreads.data || []).length / weekActiveUsers.size).toFixed(1) : '0';
 
+  // Avg replies per thread (threads with replies, 30d)
   const monthThreadData = monthThreads.data || [];
-  const threadsWithReplies = monthThreadData.filter(t => t.reply_count > 0).length;
-  const replyRate = monthThreadData.length > 0
-    ? Math.round((threadsWithReplies / monthThreadData.length) * 100) : 0;
-
   const threadsWithRepliesData = monthThreadData.filter(t => t.reply_count > 0);
   const avgReplies = threadsWithRepliesData.length > 0
     ? (threadsWithRepliesData.reduce((s, t) => s + t.reply_count, 0) / threadsWithRepliesData.length).toFixed(1) : '0';
 
-  const threadCreatedMap = {};
-  for (const t of monthThreadData) threadCreatedMap[t.id] = new Date(t.created_at).getTime();
-  const firstReplyByThread = {};
-  for (const r of (monthReplies.data || [])) {
-    const rt = new Date(r.created_at).getTime();
-    if (!firstReplyByThread[r.thread_id] || rt < firstReplyByThread[r.thread_id]) firstReplyByThread[r.thread_id] = rt;
+  // Time to first post or reply (earliest of first thread or first reply per user)
+  const firstActivityByUser = {};
+  for (const t of (allThreads.data || [])) {
+    const ts = new Date(t.created_at).getTime();
+    if (!firstActivityByUser[t.user_id] || ts < firstActivityByUser[t.user_id]) {
+      firstActivityByUser[t.user_id] = ts;
+    }
   }
-  const replyDelays = [];
-  for (const [tid, fr] of Object.entries(firstReplyByThread)) {
-    if (threadCreatedMap[tid]) replyDelays.push((fr - threadCreatedMap[tid]) / 3600000);
+  for (const r of (allReplies.data || [])) {
+    const ts = new Date(r.created_at).getTime();
+    if (!firstActivityByUser[r.user_id] || ts < firstActivityByUser[r.user_id]) {
+      firstActivityByUser[r.user_id] = ts;
+    }
   }
-  const avgTimeToFirstReply = replyDelays.length > 0
-    ? (replyDelays.reduce((s, v) => s + v, 0) / replyDelays.length).toFixed(1) : null;
 
-  return { postsPerActiveUser: postsPerActive, replyRate, avgRepliesPerThread: avgReplies, avgTimeToFirstReplyHours: avgTimeToFirstReply };
+  const delays = [];
+  for (const p of (profiles.data || [])) {
+    if (firstActivityByUser[p.id]) {
+      const hours = (firstActivityByUser[p.id] - new Date(p.joined_at).getTime()) / 3600000;
+      if (hours >= 0) delays.push(hours);
+    }
+  }
+  const avgTimeToFirstPostOrReply = delays.length > 0
+    ? parseFloat((delays.reduce((s, v) => s + v, 0) / delays.length).toFixed(1)) : null;
+
+  return {
+    postsPerActiveUser: postsPerActive,
+    avgRepliesPerThread: avgReplies,
+    avgTimeToFirstPostOrReplyHours: avgTimeToFirstPostOrReply,
+    usersWhoPosted: delays.length,
+    totalUsers: (profiles.data || []).length,
+  };
 }
 
 // ── Section 7: Forum Breakdown ──
@@ -685,15 +784,13 @@ async function fetchPageViews(supabase) {
     const d = v.created_at.slice(0, 10);
     dayMap[d] = (dayMap[d] || 0) + 1;
   }
-  // Build 30-day series, then trim leading zeros (before tracking started)
-  const fullSeries = [];
+  // Build full 30-day series (always show all days, even zeros)
+  const dailySeries = [];
   for (let i = 29; i >= 0; i--) {
     const d = new Date(now - i * 86400000);
     const key = d.toISOString().slice(0, 10);
-    fullSeries.push({ date: key, views: dayMap[key] || 0 });
+    dailySeries.push({ date: key, views: dayMap[key] || 0 });
   }
-  const firstDataIdx = fullSeries.findIndex(d => d.views > 0);
-  const dailySeries = firstDataIdx >= 0 ? fullSeries.slice(firstDataIdx) : fullSeries;
 
   return {
     today: todayViews.count || 0,
@@ -734,7 +831,8 @@ async function plausibleFetch(endpoint, params = {}) {
 async function fetchPlausibleStats() {
   if (!PLAUSIBLE_KEY) return null;
 
-  const [realtime, today, week, month, timeseries, topPages, topSources, topCountries] = await Promise.all([
+  const labels = ['realtime', 'today', 'week', 'month', 'timeseries', 'topPages', 'topSources', 'topCountries'];
+  const results = await Promise.allSettled([
     plausibleFetch('realtime/visitors'),
     plausibleFetch('aggregate', { period: 'day', metrics: 'visitors,pageviews,bounce_rate,visit_duration' }),
     plausibleFetch('aggregate', { period: '7d', metrics: 'visitors,pageviews,bounce_rate,visit_duration' }),
@@ -745,14 +843,26 @@ async function fetchPlausibleStats() {
     plausibleFetch('breakdown', { period: '7d', property: 'visit:country', metrics: 'visitors', limit: '10' }),
   ]);
 
+  const values = results.map((r, i) => {
+    if (r.status === 'fulfilled') return r.value;
+    console.error(`Plausible ${labels[i]} failed:`, r.reason?.message || r.reason);
+    return null;
+  });
+  const [realtime, today, week, month, timeseries, topPages, topSources, topCountries] = values;
+
+  const errors = results
+    .map((r, i) => r.status === 'rejected' ? labels[i] : null)
+    .filter(Boolean);
+
   return {
     realtime,
-    today: today.results,
-    week: week.results,
-    month: month.results,
-    timeseries: timeseries.results,
-    topPages: topPages.results,
-    topSources: topSources.results,
-    topCountries: topCountries.results,
+    today: today?.results ?? null,
+    week: week?.results ?? null,
+    month: month?.results ?? null,
+    timeseries: timeseries?.results ?? null,
+    topPages: topPages?.results ?? null,
+    topSources: topSources?.results ?? null,
+    topCountries: topCountries?.results ?? null,
+    _errors: errors.length > 0 ? errors : undefined,
   };
 }
