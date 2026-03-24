@@ -37,9 +37,10 @@ export const useClinicianStore = create((set, get) => ({
 
     await ensureSession();
 
+    const { _clinician_name, ...dbFields } = requestData;
     const { data, error } = await supabase
       .from('match_requests')
-      .insert({ ...requestData, user_id: userId })
+      .insert({ ...dbFields, user_id: userId })
       .select()
       .single();
 
@@ -56,7 +57,7 @@ export const useClinicianStore = create((set, get) => ({
         matchRequestId: data.id,
         patientName: requestData.patient_name,
         patientEmail: requestData.patient_email,
-        clinicianName: requestData._clinician_name, // passed for email, not stored
+        clinicianName: _clinician_name,
       }),
     }).catch((err) => console.warn('[clinicianStore] Email notification failed:', err));
 

@@ -103,6 +103,17 @@ export default function PatientDashboard({ user, profile }) {
                 )}
               </div>
             </>
+          ) : profile?.post_count ? (
+            <div className="mt-6 flex items-center justify-between rounded-xl px-5 py-3" style={{ background: 'rgba(255,255,255,0.1)' }}>
+              <p className="text-sm text-white/80">Start tracking your taper journey</p>
+              <Link
+                href="/journal"
+                className="shrink-0 rounded-lg px-4 py-2 text-xs font-bold text-purple no-underline transition hover:opacity-90"
+                style={{ background: 'white' }}
+              >
+                Start tracking
+              </Link>
+            </div>
           ) : (
             <div className="mt-6 flex items-center justify-between rounded-xl px-5 py-3" style={{ background: 'rgba(255,255,255,0.1)' }}>
               <p className="text-sm text-white/80">Welcome! Introduce yourself to the community</p>
