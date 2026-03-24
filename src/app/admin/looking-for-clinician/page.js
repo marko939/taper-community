@@ -41,8 +41,22 @@ export default function LookingForClinicianAdmin() {
       return;
     }
 
+    // Fallback: if join returned null profiles (FK missing), fetch separately
+    let records = data;
+    const needsProfileFetch = data.some((r) => !r.profile);
+    if (needsProfileFetch) {
+      const userIds = [...new Set(data.map((r) => r.user_id))];
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id, display_name, avatar_url, drug, taper_stage, drug_signature, created_at')
+        .in('id', userIds);
+      const profileMap = {};
+      if (profiles) profiles.forEach((p) => { profileMap[p.id] = p; });
+      records = data.map((r) => ({ ...r, profile: r.profile || profileMap[r.user_id] || null }));
+    }
+
     // Fetch emails
-    const ids = data.map((r) => r.user_id);
+    const ids = records.map((r) => r.user_id);
     let emailMap = {};
     try {
       const res = await fetch('/api/admin/user-emails', {
@@ -53,7 +67,7 @@ export default function LookingForClinicianAdmin() {
       if (res.ok) emailMap = await res.json();
     } catch { /* fallback */ }
 
-    setRequests(data.map((r) => ({ ...r, email: emailMap[r.user_id] || 'N/A' })));
+    setRequests(records.map((r) => ({ ...r, email: emailMap[r.user_id] || 'N/A' })));
     setLoading(false);
   };
 

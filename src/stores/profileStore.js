@@ -2,7 +2,6 @@
 
 import { create } from 'zustand';
 import { createClient } from '@/lib/supabase/client';
-import { ensureSession } from '@/lib/ensureSession';
 import { useAuthStore } from './authStore';
 
 export const useProfileStore = create((set, get) => ({
@@ -74,7 +73,6 @@ export const useProfileStore = create((set, get) => ({
   },
 
   updateProfile: async (partial) => {
-    await ensureSession();
     const supabase = createClient();
     const userId = useAuthStore.getState().user?.id;
     if (!userId) return;

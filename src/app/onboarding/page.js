@@ -8,7 +8,6 @@ import { DRUG_LIST } from '@/lib/drugs';
 import { TAPER_STAGES } from '@/lib/constants';
 import { recordReferral } from '@/lib/invites';
 import { createClient } from '@/lib/supabase/client';
-import { ensureSession } from '@/lib/ensureSession';
 import { ADMIN_USER_ID } from '@/lib/blog';
 
 function buildSignature(medications, hasClinician) {
@@ -121,14 +120,13 @@ export default function OnboardingPage() {
       const userId = useAuthStore.getState().user?.id;
       if (lookingForClinician && userId) {
         try {
-          await ensureSession();
           const supabase = createClient();
           const { error: helpErr } = await supabase
             .from('clinician_help_requests')
             .insert({ user_id: userId });
           if (helpErr) console.error('[onboarding] clinician_help_requests insert failed:', helpErr);
 
-          // Notification — non-critical, fire-and-forget
+          // Notification — fire-and-forget
           supabase.from('notifications').insert({
             user_id: ADMIN_USER_ID,
             type: 'badge',
