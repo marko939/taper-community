@@ -43,6 +43,7 @@ export default function OnboardingPage() {
   const [notOnMeds, setNotOnMeds] = useState(false);
   const [medications, setMedications] = useState([{ _key: crypto.randomUUID(), drug: '', dose: '', duration: '', stage: '' }]);
   const [hasClinician, setHasClinician] = useState(null);
+  const [wantsClinicianHelp, setWantsClinicianHelp] = useState(null);
   const [drugSignature, setDrugSignature] = useState('');
   const [signatureEdited, setSignatureEdited] = useState(false);
   const [usernameInput, setUsernameInput] = useState('');
@@ -92,12 +93,19 @@ export default function OnboardingPage() {
     try {
       const primaryDrug = notOnMeds ? null : medications[0]?.drug || null;
       const primaryStage = notOnMeds ? 'supporting' : medications[0]?.stage || null;
+      const lookingForClinician = hasClinician === false ? wantsClinicianHelp === true : false;
       const profileData = {
         drug: primaryDrug,
         taper_stage: primaryStage,
         has_clinician: hasClinician,
         drug_signature: drugSignature || null,
       };
+
+      // Save looking_for_clinician separately so it doesn't break
+      // onboarding if the column hasn't been added yet
+      try {
+        await updateProfile({ looking_for_clinician: lookingForClinician });
+      } catch { /* column may not exist yet — ignore */ }
       if (usernameInput && usernameInput.length >= 3) {
         profileData.username = usernameInput;
       }
@@ -330,7 +338,7 @@ export default function OnboardingPage() {
             </h2>
             <div className="grid grid-cols-2 gap-3">
               <button
-                onClick={() => setHasClinician(true)}
+                onClick={() => { setHasClinician(true); setWantsClinicianHelp(null); }}
                 className={`rounded-xl border p-4 text-center transition ${
                   hasClinician === true
                     ? 'border-purple-300 bg-purple-50 text-foreground'
@@ -352,11 +360,44 @@ export default function OnboardingPage() {
                 <p className="mt-1 text-sm">Not yet</p>
               </button>
             </div>
+
+            {/* Sub-question: Would you like help finding one? */}
             {hasClinician === false && (
-              <p className="text-xs text-amber-600">
-                We strongly recommend finding a clinician who understands tapering.
-                Check our deprescriber map for informed providers.
-              </p>
+              <div className="space-y-3">
+                <p className="text-sm font-medium text-foreground">
+                  Would you like help finding a Taper Community verified clinician?
+                </p>
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    onClick={() => setWantsClinicianHelp(true)}
+                    className={`rounded-xl border p-3 text-center text-sm transition ${
+                      wantsClinicianHelp === true
+                        ? 'border-purple-300 bg-purple-50 text-foreground'
+                        : 'border-border-subtle text-text-muted hover:border-slate-300'
+                    }`}
+                  >
+                    Yes, please
+                  </button>
+                  <button
+                    onClick={() => setWantsClinicianHelp(false)}
+                    className={`rounded-xl border p-3 text-center text-sm transition ${
+                      wantsClinicianHelp === false
+                        ? 'border-purple-300 bg-purple-50 text-foreground'
+                        : 'border-border-subtle text-text-muted hover:border-slate-300'
+                    }`}
+                  >
+                    No thanks
+                  </button>
+                </div>
+
+                {/* Warning only shows if they decline help */}
+                {wantsClinicianHelp === false && (
+                  <p className="text-xs text-amber-600">
+                    We strongly recommend finding a clinician who understands tapering.
+                    Check our deprescriber map for informed providers.
+                  </p>
+                )}
+              </div>
             )}
           </div>
         )}

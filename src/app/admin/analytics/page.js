@@ -152,6 +152,9 @@ export default function AnalyticsDashboard() {
           {/* Taper Tracker Adoption */}
           <TaperTrackerSection tracker={data.taperTracker} />
 
+          {/* Clinician Interest */}
+          <ClinicianInterestCard data={data.clinicianInterest} />
+
           {/* Site Traffic */}
           {data.plausible ? (
             <PlausibleSection plausible={data.plausible} />
@@ -832,6 +835,41 @@ function TaperTrackerSection({ tracker }) {
         <div>
           <p className="text-xs font-medium text-text-muted">Avg / User / Week</p>
           <p className="mt-1 text-2xl font-bold text-foreground">{tracker.avgCheckinsPerUserPerWeek}</p>
+        </div>
+      </div>
+    </Card>
+  );
+}
+
+function ClinicianInterestCard({ data }) {
+  if (!data) return <SectionUnavailable label="Clinician Interest" />;
+
+  const total = data.withClinician + data.withoutClinician;
+  const lookingPct = data.withoutClinician > 0
+    ? Math.round((data.lookingForClinician / data.withoutClinician) * 100)
+    : 0;
+
+  return (
+    <Card>
+      <h2 className="mb-4 text-sm font-semibold text-foreground">Clinician Interest (Onboarding)</h2>
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+        <div>
+          <p className="text-xs font-medium text-text-muted">Has Clinician</p>
+          <p className="mt-1 text-2xl font-bold" style={{ color: '#10B981' }}>{data.withClinician}</p>
+          <p className="text-[10px] text-text-subtle">of {total} who answered</p>
+        </div>
+        <div>
+          <p className="text-xs font-medium text-text-muted">No Clinician</p>
+          <p className="mt-1 text-2xl font-bold" style={{ color: '#F59E0B' }}>{data.withoutClinician}</p>
+        </div>
+        <div>
+          <p className="text-xs font-medium text-text-muted">Looking for Clinician</p>
+          <p className="mt-1 text-2xl font-bold" style={{ color: '#5B2E91' }}>{data.lookingForClinician}</p>
+          <p className="text-[10px] text-text-subtle">{lookingPct}% of those without</p>
+        </div>
+        <div>
+          <p className="text-xs font-medium text-text-muted">Declined Help</p>
+          <p className="mt-1 text-2xl font-bold" style={{ color: '#EF4444' }}>{data.withoutClinician - data.lookingForClinician}</p>
         </div>
       </div>
     </Card>

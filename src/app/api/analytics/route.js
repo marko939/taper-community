@@ -44,13 +44,14 @@ export async function GET() {
       fetchPageViews(supabase),
       fetchPlausibleStats(),
       fetchRetentionCohorts(supabase),
+      fetchClinicianInterest(supabase),
     ]);
 
     const [
       topLine, signupSeries, periodComparisons, periodHistorical, dailyActivity,
       retention, engagement, forumBreakdown,
       peakHours, taperTracker, newVsReturning, churnRisk,
-      topMembers, threadFunnel, pageViews, plausible, retentionCohorts,
+      topMembers, threadFunnel, pageViews, plausible, retentionCohorts, clinicianInterest,
     ] = results.map(r => r.status === 'fulfilled' ? r.value : null);
 
     return NextResponse.json({
@@ -71,6 +72,7 @@ export async function GET() {
       pageViews,
       plausible,
       retentionCohorts,
+      clinicianInterest,
       fetchedAt: new Date().toISOString(),
     });
   } catch (err) {
@@ -801,6 +803,30 @@ async function fetchPageViews(supabase) {
     topPages,
     topReferrers,
     dailySeries,
+  };
+}
+
+// ── Clinician Interest (from onboarding) ──
+async function fetchClinicianInterest(supabase) {
+  const [withClinician, withoutClinician] = await Promise.all([
+    supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('has_clinician', true),
+    supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('has_clinician', false),
+  ]);
+
+  // looking_for_clinician column may not exist yet — query separately
+  let lookingCount = 0;
+  try {
+    const { count } = await supabase
+      .from('profiles')
+      .select('id', { count: 'exact', head: true })
+      .eq('looking_for_clinician', true);
+    lookingCount = count || 0;
+  } catch { /* column not yet added */ }
+
+  return {
+    withClinician: withClinician.count || 0,
+    withoutClinician: withoutClinician.count || 0,
+    lookingForClinician: lookingCount,
   };
 }
 
