@@ -8,6 +8,7 @@ import { DRUG_LIST } from '@/lib/drugs';
 import { TAPER_STAGES } from '@/lib/constants';
 import { recordReferral } from '@/lib/invites';
 import { createClient } from '@/lib/supabase/client';
+import { ensureSession } from '@/lib/ensureSession';
 import { ADMIN_USER_ID } from '@/lib/blog';
 
 function buildSignature(medications, hasClinician) {
@@ -116,12 +117,18 @@ export default function OnboardingPage() {
         new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 8000)),
       ]);
 
-      // Clinician help request + notification — must complete before redirect
+      // Clinician help request — must complete before redirect
       const userId = useAuthStore.getState().user?.id;
       if (lookingForClinician && userId) {
-        const supabase = createClient();
-        await Promise.all([
-          supabase.from('clinician_help_requests').insert({ user_id: userId }),
+        try {
+          await ensureSession();
+          const supabase = createClient();
+          const { error: helpErr } = await supabase
+            .from('clinician_help_requests')
+            .insert({ user_id: userId });
+          if (helpErr) console.error('[onboarding] clinician_help_requests insert failed:', helpErr);
+
+          // Notification — non-critical, fire-and-forget
           supabase.from('notifications').insert({
             user_id: ADMIN_USER_ID,
             type: 'badge',
@@ -129,8 +136,10 @@ export default function OnboardingPage() {
             actor_id: userId,
             thread_id: null,
             reply_id: null,
-          }),
-        ]).catch(() => {});
+          }).then(({ error }) => { if (error) console.error('[onboarding] notification failed:', error); });
+        } catch (e) {
+          console.error('[onboarding] clinician help request failed:', e);
+        }
       }
 
       // Referral — best effort

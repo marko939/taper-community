@@ -28,10 +28,12 @@ export default function LookingForClinicianAdmin() {
 
   const fetchRequests = async () => {
     const supabase = createClient();
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('clinician_help_requests')
       .select('*, profile:user_id(id, display_name, avatar_url, drug, taper_stage, drug_signature, created_at)')
       .order('created_at', { ascending: false });
+
+    if (error) console.error('[clinician-admin] fetch error:', error);
 
     if (!data || data.length === 0) {
       setRequests([]);
