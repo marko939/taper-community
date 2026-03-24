@@ -49,9 +49,9 @@ export default function AnalyticsDashboard() {
       .eq('status', 'pending')
       .then(({ count }) => setPendingMatchCount(count || 0));
     supabase
-      .from('profiles')
+      .from('clinician_help_requests')
       .select('id', { count: 'exact', head: true })
-      .eq('looking_for_clinician', true)
+      .eq('status', 'pending')
       .then(({ count }) => setLookingForClinicianCount(count || 0))
       .catch(() => {});
   }, [user]);

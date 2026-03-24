@@ -130,11 +130,16 @@ export default function OnboardingPage() {
         }
       } catch { /* ignore */ }
 
-      // Notify admin when a new user wants help finding a clinician
+      // Create clinician help request + notify admin
       if (lookingForClinician) {
         try {
           const userId = useAuthStore.getState().user?.id;
           const supabase = createClient();
+          // Insert into clinician_help_requests table
+          await supabase.from('clinician_help_requests').insert({
+            user_id: userId,
+          });
+          // Notify admin
           await supabase.from('notifications').insert({
             user_id: ADMIN_USER_ID,
             type: 'badge',
