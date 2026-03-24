@@ -103,27 +103,25 @@ export default function OnboardingPage() {
         drug_signature: drugSignature || null,
       };
 
+      // Add looking_for_clinician to the main profile save
+      if (lookingForClinician) profileData.looking_for_clinician = true;
+
       if (usernameInput && usernameInput.length >= 3) {
         profileData.username = usernameInput;
       }
 
-      // Only critical save — timeout after 8s
+      // Save profile — timeout after 8s
       await Promise.race([
         updateProfile(profileData),
         new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 8000)),
       ]);
 
-      // Redirect immediately — everything below is fire-and-forget
-      router.push('/');
-
-      // Non-critical: save looking_for_clinician, referral, clinician request
-      // These run after redirect so they never block the user
+      // Clinician help request + notification — must complete before redirect
       const userId = useAuthStore.getState().user?.id;
-      if (lookingForClinician) {
-        updateProfile({ looking_for_clinician: true }).catch(() => {});
-        if (userId) {
-          const supabase = createClient();
-          supabase.from('clinician_help_requests').insert({ user_id: userId }).then(() => {});
+      if (lookingForClinician && userId) {
+        const supabase = createClient();
+        await Promise.all([
+          supabase.from('clinician_help_requests').insert({ user_id: userId }),
           supabase.from('notifications').insert({
             user_id: ADMIN_USER_ID,
             type: 'badge',
@@ -131,10 +129,11 @@ export default function OnboardingPage() {
             actor_id: userId,
             thread_id: null,
             reply_id: null,
-          }).then(() => {});
-        }
+          }),
+        ]).catch(() => {});
       }
 
+      // Referral — best effort
       try {
         const ref = localStorage.getItem('taper_ref');
         if (ref && userId) {
