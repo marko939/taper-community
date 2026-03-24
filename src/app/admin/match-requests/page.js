@@ -128,8 +128,9 @@ export default function MatchRequestsAdmin() {
                   </div>
                   <p className="mt-0.5 text-xs text-text-muted">{req.patient_email}</p>
                   <p className="mt-1 text-xs text-text-subtle">
-                    → {req.clinician?.name || 'Unknown clinician'}
-                    {req.clinician?.role ? ` (${req.clinician.role})` : ''}
+                    → {req.clinician_id
+                      ? `${req.clinician?.name || 'Unknown clinician'}${req.clinician?.role ? ` (${req.clinician.role})` : ''}`
+                      : 'General request — needs clinician match'}
                   </p>
                   {req.medications && (
                     <p className="mt-1 text-xs text-text-muted">

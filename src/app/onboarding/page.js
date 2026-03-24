@@ -8,7 +8,8 @@ import { DRUG_LIST } from '@/lib/drugs';
 import { TAPER_STAGES } from '@/lib/constants';
 import { recordReferral } from '@/lib/invites';
 import { createClient } from '@/lib/supabase/client';
-import { ADMIN_USER_ID } from '@/lib/blog';
+import { ensureSession } from '@/lib/ensureSession';
+import { fireAndForget } from '@/lib/fireAndForget';
 
 function buildSignature(medications, hasClinician) {
   if (medications.length === 0) return '';
@@ -45,7 +46,7 @@ export default function OnboardingPage() {
   const [notOnMeds, setNotOnMeds] = useState(false);
   const [medications, setMedications] = useState([{ _key: crypto.randomUUID(), drug: '', dose: '', duration: '', stage: '' }]);
   const [hasClinician, setHasClinician] = useState(null);
-  const [wantsClinicianHelp, setWantsClinicianHelp] = useState(null);
+  const [wantsClinicianHelp, setWantsClinicianHelp] = useState(false);
   const [drugSignature, setDrugSignature] = useState('');
   const [signatureEdited, setSignatureEdited] = useState(false);
   const [usernameInput, setUsernameInput] = useState('');
@@ -92,71 +93,87 @@ export default function OnboardingPage() {
     setLoading(true);
     setError('');
 
-    try {
-      const primaryDrug = notOnMeds ? null : medications[0]?.drug || null;
-      const primaryStage = notOnMeds ? 'supporting' : medications[0]?.stage || null;
-      const lookingForClinician = hasClinician === false ? wantsClinicianHelp === true : false;
-      const profileData = {
-        drug: primaryDrug,
-        taper_stage: primaryStage,
-        has_clinician: hasClinician,
-        drug_signature: drugSignature || null,
-      };
-
-      // Add looking_for_clinician to the main profile save
-      if (lookingForClinician) profileData.looking_for_clinician = true;
-
-      if (usernameInput && usernameInput.length >= 3) {
-        profileData.username = usernameInput;
-      }
-
-      // Save profile — timeout after 8s
-      await Promise.race([
-        updateProfile(profileData),
-        new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 8000)),
-      ]);
-
-      // Clinician help request — must complete before redirect
-      const userId = useAuthStore.getState().user?.id;
-      if (lookingForClinician && userId) {
-        try {
-          const supabase = createClient();
-          const { error: helpErr } = await supabase
-            .from('clinician_help_requests')
-            .insert({ user_id: userId });
-          if (helpErr) console.error('[onboarding] clinician_help_requests insert failed:', helpErr);
-
-          // Notification — fire-and-forget
-          supabase.from('notifications').insert({
-            user_id: ADMIN_USER_ID,
-            type: 'badge',
-            title: '🔍 New member is looking for a clinician',
-            actor_id: userId,
-            thread_id: null,
-            reply_id: null,
-          }).then(({ error }) => { if (error) console.error('[onboarding] notification failed:', error); });
-        } catch (e) {
-          console.error('[onboarding] clinician help request failed:', e);
-        }
-      }
-
-      // Referral — best effort
-      try {
-        const ref = localStorage.getItem('taper_ref');
-        if (ref && userId) {
-          recordReferral(ref, userId).catch(() => {});
-          localStorage.removeItem('taper_ref');
-        }
-      } catch { /* ignore */ }
-    } catch (err) {
-      console.error('[onboarding] save error:', err);
-      if (err?.message === 'timeout') {
-        setError('Saving is taking too long. Please try again.');
-      } else {
-        setError('Could not save your profile. Please try again.');
-      }
-      setLoading(false);
+    const primaryDrug = notOnMeds ? null : medications[0]?.drug || null;
+    const primaryStage = notOnMeds ? 'supporting' : medications[0]?.stage || null;
+    const profileData = {
+      drug: primaryDrug,
+      taper_stage: primaryStage,
+      has_clinician: hasClinician,
+      drug_signature: drugSignature || null,
+    };
+    if (usernameInput && usernameInput.length >= 3) {
+      profileData.username = usernameInput;
     }
+
+    // Retry up to 3 times — the Supabase auth lock (10s) can block the
+    // first attempt while the session is still being established after signup.
+    let saved = false;
+    for (let attempt = 0; attempt < 3 && !saved; attempt++) {
+      try {
+        if (attempt > 0) {
+          // Short pause before retry to let auth lock release
+          await new Promise((r) => setTimeout(r, 2000));
+        }
+        await updateProfile(profileData);
+        saved = true;
+      } catch (err) {
+        console.warn(`[onboarding] save attempt ${attempt + 1} failed:`, err?.message);
+      }
+    }
+
+    // Even if save failed, don't block — navigate home.
+    // Profile can be updated later from settings.
+    if (!saved) {
+      console.error('[onboarding] all save attempts failed, proceeding anyway');
+    }
+
+    // Record referral if present (best-effort)
+    try {
+      const ref = localStorage.getItem('taper_ref');
+      if (ref) {
+        const userId = useAuthStore.getState().user?.id;
+        if (userId) {
+          await recordReferral(ref, userId);
+        }
+        localStorage.removeItem('taper_ref');
+      }
+    } catch { /* ignore */ }
+
+    // Navigate home first — never block the user
+    router.push('/');
+
+    // Fire-and-forget: create match request if user wants clinician help
+    if (wantsClinicianHelp) {
+      const patientName = usernameInput || useAuthStore.getState().user?.email || 'New user';
+      const patientEmail = useAuthStore.getState().user?.email;
+      fireAndForget('onboarding-match-request', async () => {
+        const supabase = createClient();
+        const userId = useAuthStore.getState().user?.id;
+        await ensureSession();
+        await supabase.from('match_requests').insert({
+          clinician_id: null,
+          user_id: userId,
+          patient_name: patientName,
+          patient_email: patientEmail,
+          medications: profileData.drug || null,
+          support_types: ['general'],
+          notes: 'Submitted during onboarding — user requested help finding a clinician.',
+          status: 'pending',
+        });
+        // Admin email notification (best-effort)
+        fetch('/api/match-request', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            patientName,
+            patientEmail,
+            clinicianName: null,
+          }),
+        }).catch(() => {});
+      });
+    }
+
+    setLoading(false);
   };
 
   const handleSkip = () => router.push('/');
@@ -357,7 +374,7 @@ export default function OnboardingPage() {
             </h2>
             <div className="grid grid-cols-2 gap-3">
               <button
-                onClick={() => { setHasClinician(true); setWantsClinicianHelp(null); }}
+                onClick={() => { setHasClinician(true); setWantsClinicianHelp(false); }}
                 className={`rounded-xl border p-4 text-center transition ${
                   hasClinician === true
                     ? 'border-purple-300 bg-purple-50 text-foreground'
@@ -383,39 +400,45 @@ export default function OnboardingPage() {
             {/* Sub-question: Would you like help finding one? */}
             {hasClinician === false && (
               <div className="space-y-3">
-                <p className="text-sm font-medium text-foreground">
-                  Would you like help finding a Taper Community verified clinician?
+                <p className="text-xs text-amber-600">
+                  We strongly recommend finding a clinician who understands tapering.
+                  Check our deprescriber map for informed providers.
                 </p>
-                <div className="grid grid-cols-2 gap-3">
-                  <button
-                    onClick={() => setWantsClinicianHelp(true)}
-                    className={`rounded-xl border p-3 text-center text-sm transition ${
-                      wantsClinicianHelp === true
-                        ? 'border-purple-300 bg-purple-50 text-foreground'
-                        : 'border-border-subtle text-text-muted hover:border-slate-300'
-                    }`}
-                  >
-                    Yes, please
-                  </button>
-                  <button
-                    onClick={() => setWantsClinicianHelp(false)}
-                    className={`rounded-xl border p-3 text-center text-sm transition ${
-                      wantsClinicianHelp === false
-                        ? 'border-purple-300 bg-purple-50 text-foreground'
-                        : 'border-border-subtle text-text-muted hover:border-slate-300'
-                    }`}
-                  >
-                    No thanks
-                  </button>
-                </div>
-
-                {/* Warning only shows if they decline help */}
-                {wantsClinicianHelp === false && (
-                  <p className="text-xs text-amber-600">
-                    We strongly recommend finding a clinician who understands tapering.
-                    Check our deprescriber map for informed providers.
+                <div
+                  className="rounded-xl border p-4 transition"
+                  style={{
+                    borderColor: wantsClinicianHelp ? 'var(--purple)' : 'var(--border-subtle)',
+                    background: wantsClinicianHelp ? 'var(--purple-ghost)' : 'transparent',
+                  }}
+                >
+                  <label className="flex cursor-pointer items-center gap-3">
+                    <input
+                      type="checkbox"
+                      checked={wantsClinicianHelp}
+                      onChange={(e) => setWantsClinicianHelp(e.target.checked)}
+                      className="sr-only"
+                    />
+                    <div
+                      className="flex h-5 w-5 shrink-0 items-center justify-center rounded-md border-2 transition"
+                      style={{
+                        borderColor: wantsClinicianHelp ? 'var(--purple)' : 'var(--border-subtle)',
+                        background: wantsClinicianHelp ? 'var(--purple)' : 'transparent',
+                      }}
+                    >
+                      {wantsClinicianHelp && (
+                        <svg className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" strokeWidth={3} stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                        </svg>
+                      )}
+                    </div>
+                    <span className="text-sm font-medium text-foreground">
+                      Yes, I&apos;d like help finding a clinician
+                    </span>
+                  </label>
+                  <p className="mt-2 ml-8 text-xs text-text-muted">
+                    We&apos;ll connect you with someone from our network who can support your taper.
                   </p>
-                )}
+                </div>
               </div>
             )}
           </div>
