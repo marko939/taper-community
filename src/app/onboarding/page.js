@@ -103,55 +103,45 @@ export default function OnboardingPage() {
         drug_signature: drugSignature || null,
       };
 
-      // Save looking_for_clinician separately so it doesn't break
-      // onboarding if the column hasn't been added yet
-      try {
-        await updateProfile({ looking_for_clinician: lookingForClinician });
-      } catch { /* column may not exist yet — ignore */ }
       if (usernameInput && usernameInput.length >= 3) {
         profileData.username = usernameInput;
       }
 
-      // Timeout so onboarding never hangs forever
+      // Only critical save — timeout after 8s
       await Promise.race([
         updateProfile(profileData),
-        new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 10000)),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 8000)),
       ]);
 
-      // Record referral if present (best-effort)
-      try {
-        const ref = localStorage.getItem('taper_ref');
-        if (ref) {
-          const userId = useAuthStore.getState().user?.id;
-          if (userId) {
-            await recordReferral(ref, userId);
-          }
-          localStorage.removeItem('taper_ref');
-        }
-      } catch { /* ignore */ }
+      // Redirect immediately — everything below is fire-and-forget
+      router.push('/');
 
-      // Create clinician help request + notify admin
+      // Non-critical: save looking_for_clinician, referral, clinician request
+      // These run after redirect so they never block the user
+      const userId = useAuthStore.getState().user?.id;
       if (lookingForClinician) {
-        try {
-          const userId = useAuthStore.getState().user?.id;
+        updateProfile({ looking_for_clinician: true }).catch(() => {});
+        if (userId) {
           const supabase = createClient();
-          // Insert into clinician_help_requests table
-          await supabase.from('clinician_help_requests').insert({
-            user_id: userId,
-          });
-          // Notify admin
-          await supabase.from('notifications').insert({
+          supabase.from('clinician_help_requests').insert({ user_id: userId }).then(() => {});
+          supabase.from('notifications').insert({
             user_id: ADMIN_USER_ID,
             type: 'badge',
             title: '🔍 New member is looking for a clinician',
             actor_id: userId,
             thread_id: null,
             reply_id: null,
-          });
-        } catch { /* non-critical */ }
+          }).then(() => {});
+        }
       }
 
-      router.push('/');
+      try {
+        const ref = localStorage.getItem('taper_ref');
+        if (ref && userId) {
+          recordReferral(ref, userId).catch(() => {});
+          localStorage.removeItem('taper_ref');
+        }
+      } catch { /* ignore */ }
     } catch (err) {
       console.error('[onboarding] save error:', err);
       if (err?.message === 'timeout') {
