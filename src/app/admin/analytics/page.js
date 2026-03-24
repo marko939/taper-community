@@ -18,7 +18,6 @@ export default function AnalyticsDashboard() {
   const [signupRange, setSignupRange] = useState('last30');
   const [lastUpdated, setLastUpdated] = useState(null);
   const [pendingMatchCount, setPendingMatchCount] = useState(0);
-  const [lookingForClinicianCount, setLookingForClinicianCount] = useState(0);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -48,12 +47,6 @@ export default function AnalyticsDashboard() {
       .select('id', { count: 'exact', head: true })
       .eq('status', 'pending')
       .then(({ count }) => setPendingMatchCount(count || 0));
-    supabase
-      .from('clinician_help_requests')
-      .select('id', { count: 'exact', head: true })
-      .eq('status', 'pending')
-      .then(({ count }) => setLookingForClinicianCount(count || 0))
-      .catch(() => {});
   }, [user]);
 
   if (authLoading) return <LoadingSkeleton />;
@@ -99,21 +92,6 @@ export default function AnalyticsDashboard() {
             {pendingMatchCount > 0 && (
               <span className="inline-flex h-5 min-w-[20px] items-center justify-center rounded-full bg-red-500 px-1.5 text-[10px] font-bold text-white">
                 {pendingMatchCount}
-              </span>
-            )}
-          </Link>
-          <Link
-            href="/admin/looking-for-clinician"
-            className="inline-flex items-center gap-1.5 rounded-xl border px-3.5 py-2 text-xs font-medium text-foreground no-underline transition hover:border-purple"
-            style={{ borderColor: 'var(--border-subtle)', background: 'var(--surface-strong)' }}
-          >
-            <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
-            </svg>
-            Looking for Clinician
-            {lookingForClinicianCount > 0 && (
-              <span className="inline-flex h-5 min-w-[20px] items-center justify-center rounded-full px-1.5 text-[10px] font-bold text-white" style={{ background: '#5B2E91' }}>
-                {lookingForClinicianCount}
               </span>
             )}
           </Link>
@@ -175,7 +153,6 @@ export default function AnalyticsDashboard() {
           <TaperTrackerSection tracker={data.taperTracker} />
 
           {/* Clinician Interest */}
-          <ClinicianInterestCard data={data.clinicianInterest} />
 
           {/* Site Traffic */}
           {data.plausible ? (
@@ -863,40 +840,6 @@ function TaperTrackerSection({ tracker }) {
   );
 }
 
-function ClinicianInterestCard({ data }) {
-  if (!data) return <SectionUnavailable label="Clinician Interest" />;
-
-  const total = data.withClinician + data.withoutClinician;
-  const lookingPct = data.withoutClinician > 0
-    ? Math.round((data.lookingForClinician / data.withoutClinician) * 100)
-    : 0;
-
-  return (
-    <Card>
-      <h2 className="mb-4 text-sm font-semibold text-foreground">Clinician Interest (Onboarding)</h2>
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-        <div>
-          <p className="text-xs font-medium text-text-muted">Has Clinician</p>
-          <p className="mt-1 text-2xl font-bold" style={{ color: '#10B981' }}>{data.withClinician}</p>
-          <p className="text-[10px] text-text-subtle">of {total} who answered</p>
-        </div>
-        <div>
-          <p className="text-xs font-medium text-text-muted">No Clinician</p>
-          <p className="mt-1 text-2xl font-bold" style={{ color: '#F59E0B' }}>{data.withoutClinician}</p>
-        </div>
-        <div>
-          <p className="text-xs font-medium text-text-muted">Looking for Clinician</p>
-          <p className="mt-1 text-2xl font-bold" style={{ color: '#5B2E91' }}>{data.lookingForClinician}</p>
-          <p className="text-[10px] text-text-subtle">{lookingPct}% of those without</p>
-        </div>
-        <div>
-          <p className="text-xs font-medium text-text-muted">Declined Help</p>
-          <p className="mt-1 text-2xl font-bold" style={{ color: '#EF4444' }}>{data.withoutClinician - data.lookingForClinician}</p>
-        </div>
-      </div>
-    </Card>
-  );
-}
 
 // ═══════════════════════════════════════════════════════
 // Plausible Analytics

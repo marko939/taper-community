@@ -7,8 +7,6 @@ import { useAuthStore } from '@/stores/authStore';
 import { DRUG_LIST } from '@/lib/drugs';
 import { TAPER_STAGES } from '@/lib/constants';
 import { recordReferral } from '@/lib/invites';
-import { createClient } from '@/lib/supabase/client';
-import { ensureSession } from '@/lib/ensureSession';
 import { fireAndForget } from '@/lib/fireAndForget';
 
 function buildSignature(medications, hasClinician) {
@@ -89,7 +87,7 @@ export default function OnboardingPage() {
 
   const [error, setError] = useState('');
 
-  const handleComplete = async () => {
+  const handleComplete = () => {
     setLoading(true);
     setError('');
 
@@ -105,75 +103,57 @@ export default function OnboardingPage() {
       profileData.username = usernameInput;
     }
 
-    // Retry up to 3 times — the Supabase auth lock (10s) can block the
-    // first attempt while the session is still being established after signup.
-    let saved = false;
-    for (let attempt = 0; attempt < 3 && !saved; attempt++) {
-      try {
-        if (attempt > 0) {
-          // Short pause before retry to let auth lock release
-          await new Promise((r) => setTimeout(r, 2000));
+    // Navigate home IMMEDIATELY — never block the user.
+    // All saves happen in the background via fire-and-forget.
+    router.push('/');
+
+    // Fire-and-forget: save profile (retries up to 3 times)
+    fireAndForget('onboarding-profile-save', async () => {
+      for (let attempt = 0; attempt < 3; attempt++) {
+        try {
+          if (attempt > 0) await new Promise((r) => setTimeout(r, 2000));
+          await updateProfile(profileData);
+          return; // success
+        } catch (err) {
+          console.warn(`[onboarding] save attempt ${attempt + 1} failed:`, err?.message);
         }
-        await updateProfile(profileData);
-        saved = true;
-      } catch (err) {
-        console.warn(`[onboarding] save attempt ${attempt + 1} failed:`, err?.message);
       }
-    }
+      console.error('[onboarding] all profile save attempts failed');
+    });
 
-    // Even if save failed, don't block — navigate home.
-    // Profile can be updated later from settings.
-    if (!saved) {
-      console.error('[onboarding] all save attempts failed, proceeding anyway');
-    }
-
-    // Record referral if present (best-effort)
-    try {
+    // Fire-and-forget: referral tracking
+    fireAndForget('onboarding-referral', async () => {
       const ref = localStorage.getItem('taper_ref');
       if (ref) {
         const userId = useAuthStore.getState().user?.id;
-        if (userId) {
-          await recordReferral(ref, userId);
-        }
+        if (userId) await recordReferral(ref, userId);
         localStorage.removeItem('taper_ref');
       }
-    } catch { /* ignore */ }
-
-    // Navigate home first — never block the user
-    router.push('/');
+    });
 
     // Fire-and-forget: create match request if user wants clinician help
+    // Uses server API route to bypass the client-side Supabase auth lock
     if (wantsClinicianHelp) {
       const patientName = usernameInput || useAuthStore.getState().user?.email || 'New user';
       const patientEmail = useAuthStore.getState().user?.email;
+      const userId = useAuthStore.getState().user?.id;
       fireAndForget('onboarding-match-request', async () => {
-        const supabase = createClient();
-        const userId = useAuthStore.getState().user?.id;
-        await ensureSession();
-        await supabase.from('match_requests').insert({
-          clinician_id: null,
-          user_id: userId,
-          patient_name: patientName,
-          patient_email: patientEmail,
-          medications: profileData.drug || null,
-          support_types: ['general'],
-          notes: 'Submitted during onboarding — user requested help finding a clinician.',
-          status: 'pending',
-        });
-        // Admin email notification (best-effort)
-        fetch('/api/match-request', {
+        await fetch('/api/match-request', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
+            insert: true,
+            userId,
             patientName,
             patientEmail,
             clinicianName: null,
+            medications: profileData.drug || null,
+            supportTypes: ['general'],
+            notes: 'Submitted during onboarding — user requested help finding a clinician.',
           }),
-        }).catch(() => {});
+        });
       });
     }
-
-    setLoading(false);
   };
 
   const handleSkip = () => router.push('/');
