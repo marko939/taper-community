@@ -7,6 +7,8 @@ import { useAuthStore } from '@/stores/authStore';
 import { DRUG_LIST } from '@/lib/drugs';
 import { TAPER_STAGES } from '@/lib/constants';
 import { recordReferral } from '@/lib/invites';
+import { createClient } from '@/lib/supabase/client';
+import { ADMIN_USER_ID } from '@/lib/blog';
 
 function buildSignature(medications, hasClinician) {
   if (medications.length === 0) return '';
@@ -127,6 +129,22 @@ export default function OnboardingPage() {
           localStorage.removeItem('taper_ref');
         }
       } catch { /* ignore */ }
+
+      // Notify admin when a new user wants help finding a clinician
+      if (lookingForClinician) {
+        try {
+          const userId = useAuthStore.getState().user?.id;
+          const supabase = createClient();
+          await supabase.from('notifications').insert({
+            user_id: ADMIN_USER_ID,
+            type: 'badge',
+            title: '🔍 New member is looking for a clinician',
+            actor_id: userId,
+            thread_id: null,
+            reply_id: null,
+          });
+        } catch { /* non-critical */ }
+      }
 
       router.push('/');
     } catch (err) {

@@ -18,6 +18,7 @@ export default function AnalyticsDashboard() {
   const [signupRange, setSignupRange] = useState('last30');
   const [lastUpdated, setLastUpdated] = useState(null);
   const [pendingMatchCount, setPendingMatchCount] = useState(0);
+  const [lookingForClinicianCount, setLookingForClinicianCount] = useState(0);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -47,6 +48,12 @@ export default function AnalyticsDashboard() {
       .select('id', { count: 'exact', head: true })
       .eq('status', 'pending')
       .then(({ count }) => setPendingMatchCount(count || 0));
+    supabase
+      .from('profiles')
+      .select('id', { count: 'exact', head: true })
+      .eq('looking_for_clinician', true)
+      .then(({ count }) => setLookingForClinicianCount(count || 0))
+      .catch(() => {});
   }, [user]);
 
   if (authLoading) return <LoadingSkeleton />;
@@ -95,6 +102,20 @@ export default function AnalyticsDashboard() {
               </span>
             )}
           </Link>
+          {lookingForClinicianCount > 0 && (
+            <span
+              className="inline-flex items-center gap-1.5 rounded-xl border px-3.5 py-2 text-xs font-medium text-foreground"
+              style={{ borderColor: 'var(--border-subtle)', background: 'var(--surface-strong)' }}
+            >
+              <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+              </svg>
+              Looking for Clinician
+              <span className="inline-flex h-5 min-w-[20px] items-center justify-center rounded-full px-1.5 text-[10px] font-bold text-white" style={{ background: '#5B2E91' }}>
+                {lookingForClinicianCount}
+              </span>
+            </span>
+          )}
           {lastUpdated && (
             <span className="text-xs text-text-subtle">Updated {lastUpdated.toLocaleTimeString()}</span>
           )}
