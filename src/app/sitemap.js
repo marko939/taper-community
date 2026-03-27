@@ -1,6 +1,7 @@
+import { createClient } from '@supabase/supabase-js';
 import { DRUG_LIST } from '@/lib/drugs';
 
-export default function sitemap() {
+export default async function sitemap() {
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://taper.community';
 
   const staticPages = [
@@ -24,5 +25,35 @@ export default function sitemap() {
     priority: 0.7,
   }));
 
-  return [...staticPages, ...drugPages];
+  const forumPages = DRUG_LIST.map((drug) => ({
+    url: `${siteUrl}/forums/${drug.slug}`,
+    changeFrequency: 'daily',
+    priority: 0.7,
+  }));
+
+  // Fetch published blog posts for sitemap
+  let blogPages = [];
+  try {
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+    );
+    const { data: posts } = await supabase
+      .from('blog_posts')
+      .select('slug, updated_at')
+      .eq('published', true);
+
+    if (posts) {
+      blogPages = posts.map((post) => ({
+        url: `${siteUrl}/resources/blog/${post.slug}`,
+        lastModified: post.updated_at ? new Date(post.updated_at) : undefined,
+        changeFrequency: 'weekly',
+        priority: 0.7,
+      }));
+    }
+  } catch {
+    // Supabase unavailable at build time — skip blog pages
+  }
+
+  return [...staticPages, ...drugPages, ...forumPages, ...blogPages];
 }

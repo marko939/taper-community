@@ -55,13 +55,13 @@ export default function HomePage() {
               Peer Support Community
             </p>
             <h1 className="font-serif text-[24px] font-semibold leading-tight text-white sm:text-[36px]">
-              Share your{' '}
-              <span style={{ color: '#2EC4B6' }}>taper journey</span>.{' '}
-              You&apos;re not alone.
+              Taper Off Psychiatric Medications
+              <br />
+              with <span style={{ color: '#2EC4B6' }}>Peer Support</span>
             </h1>
             <p className="mx-auto mt-3 max-w-xl text-[13px] font-semibold leading-relaxed text-white/80 sm:mt-4 sm:text-[15px]">
-              Thousands of people are tapering psychiatric medications.
-              Share what you&apos;ve learned, see what others have done, and build the knowledge together.
+              Share your taper journey — you&apos;re not alone.
+              Join thousands tapering psychiatric medications safely together.
             </p>
             <div className="mt-6 flex items-center justify-center gap-3 sm:mt-8 sm:gap-4">
               <Link
@@ -166,9 +166,18 @@ export default function HomePage() {
             </div>
           );
           return (
-            <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3">
+            <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-6">
               {allCards.map((item, i) => (
-                <div key={i} className={allCards.length % 2 !== 0 && i === allCards.length - 1 ? 'col-span-2 lg:col-span-1' : ''}>
+                <div
+                  key={i}
+                  className={
+                    i < 3
+                      ? 'col-span-1 lg:col-span-2'
+                      : i === 3
+                        ? 'col-span-1 lg:col-start-2 lg:col-span-2'
+                        : 'col-span-2 lg:col-span-2'
+                  }
+                >
                   <Card item={item} />
                 </div>
               ))}
@@ -287,6 +296,19 @@ export default function HomePage() {
 
       {/* Testimonials */}
       <TestimonialCarousel />
+
+      <div className="text-center">
+        <Link
+          href="/auth/signup"
+          className="inline-flex items-center gap-2 rounded-xl px-8 py-3 text-sm font-semibold text-white no-underline transition hover:opacity-90"
+          style={{ background: '#1FA89B' }}
+        >
+          Join for Free
+          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+          </svg>
+        </Link>
+      </div>
 
       <ForumSections />
 

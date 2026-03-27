@@ -15,7 +15,7 @@ function ExpandableList({ title, items, variant = 'default' }) {
 
   return (
     <div>
-      <h4 className="mb-2 text-sm font-semibold text-foreground">{title}</h4>
+      <h3 className="mb-2 text-sm font-semibold text-foreground">{title}</h3>
       <ul className="space-y-1.5">
         {visibleItems.map((item, i) => (
           <li key={i} className="flex items-start gap-2 text-sm text-text-muted">

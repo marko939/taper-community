@@ -46,11 +46,79 @@ export default async function DrugProfilePage({ params }) {
     url: `https://taper.community/drugs/${drug.slug}`,
   };
 
+  // Build FAQ schema from drug data — first-mover advantage for rich results
+  const faqEntries = [];
+  if (drug.withdrawalSymptoms?.length) {
+    faqEntries.push({
+      '@type': 'Question',
+      name: `What are the withdrawal symptoms of ${drug.name} (${drug.generic})?`,
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: `Common withdrawal symptoms of ${drug.name} (${drug.generic}) include: ${drug.withdrawalSymptoms.join(', ')}. Symptom severity varies by individual, dose, and duration of use.`,
+      },
+    });
+  }
+  if (drug.taperNotes || drug.maudsleyGuidance) {
+    faqEntries.push({
+      '@type': 'Question',
+      name: `How should I taper off ${drug.name} (${drug.generic})?`,
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: [drug.taperNotes, drug.maudsleyGuidance].filter(Boolean).join(' '),
+      },
+    });
+  }
+  if (drug.withdrawalTimeline) {
+    const tl = drug.withdrawalTimeline;
+    faqEntries.push({
+      '@type': 'Question',
+      name: `How long does ${drug.name} withdrawal last?`,
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: `${drug.name} withdrawal typically begins ${tl.onset}, peaks around ${tl.peak}, and resolves within ${tl.resolution}.${tl.protracted ? ` ${tl.protracted}` : ''}`,
+      },
+    });
+  }
+  if (drug.communityTips?.length) {
+    faqEntries.push({
+      '@type': 'Question',
+      name: `What tips do others have for tapering ${drug.name}?`,
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: drug.communityTips.slice(0, 4).join(' '),
+      },
+    });
+  }
+
+  const faqSchema = faqEntries.length > 0
+    ? { '@context': 'https://schema.org', '@type': 'FAQPage', mainEntity: faqEntries }
+    : null;
+
+  const breadcrumbSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://taper.community' },
+      { '@type': 'ListItem', position: 2, name: 'Drug Profiles', item: 'https://taper.community/drugs' },
+      { '@type': 'ListItem', position: 3, name: `${drug.name} Tapering Guide`, item: `https://taper.community/drugs/${drug.slug}` },
+    ],
+  };
+
   return (
     <div className="space-y-8">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(drugSchema) }}
+      />
+      {faqSchema && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
+        />
+      )}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
       />
       <div className="mb-2 flex items-center gap-2">
         <Link href="/forums" className="text-sm text-text-subtle hover:text-foreground">

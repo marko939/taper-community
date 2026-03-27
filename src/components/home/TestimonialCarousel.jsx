@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState, useCallback, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import { createClient } from '@/lib/supabase/client';
 
@@ -44,9 +44,6 @@ const TESTIMONIALS = [
 ];
 
 export default function TestimonialCarousel() {
-  const scrollRef = useRef(null);
-  const [canScrollLeft, setCanScrollLeft] = useState(false);
-  const [canScrollRight, setCanScrollRight] = useState(true);
   const [avatarUrls, setAvatarUrls] = useState({});
 
   // Fetch real avatar URLs for community members
@@ -68,72 +65,25 @@ export default function TestimonialCarousel() {
       });
   }, []);
 
-  const updateArrows = useCallback(() => {
-    const el = scrollRef.current;
-    if (!el) return;
-    setCanScrollLeft(el.scrollLeft > 10);
-    setCanScrollRight(el.scrollLeft < el.scrollWidth - el.clientWidth - 10);
-  }, []);
-
-  const scroll = (dir) => {
-    const el = scrollRef.current;
-    if (!el) return;
-    const cardWidth = el.querySelector('[data-card]')?.offsetWidth || 400;
-    el.scrollBy({ left: dir === 'right' ? cardWidth + 16 : -(cardWidth + 16), behavior: 'smooth' });
-    setTimeout(updateArrows, 400);
-  };
-
   return (
     <section className="space-y-6">
-      <div className="flex items-end justify-between">
-        <div>
-          <p className="text-[11px] font-bold uppercase tracking-[0.1em]" style={{ color: 'var(--purple)' }}>
-            Trusted by Patients & Clinicians
-          </p>
-          <h2 className="mt-2 font-serif text-2xl font-semibold text-foreground sm:text-3xl">
-            What people are{' '}
-            <span style={{ color: 'var(--purple)' }}>saying</span>
-          </h2>
-        </div>
-        <div className="flex gap-2">
-          <button
-            onClick={() => scroll('left')}
-            disabled={!canScrollLeft}
-            className="flex h-10 w-10 items-center justify-center rounded-full border transition active:bg-white/60 disabled:opacity-30 disabled:cursor-default sm:h-9 sm:w-9 sm:hover:bg-white/60"
-            style={{ borderColor: 'var(--border-subtle)' }}
-            aria-label="Previous testimonial"
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M15 18l-6-6 6-6" />
-            </svg>
-          </button>
-          <button
-            onClick={() => scroll('right')}
-            disabled={!canScrollRight}
-            className="flex h-10 w-10 items-center justify-center rounded-full border transition active:bg-white/60 disabled:opacity-30 disabled:cursor-default sm:h-9 sm:w-9 sm:hover:bg-white/60"
-            style={{ borderColor: 'var(--border-subtle)' }}
-            aria-label="Next testimonial"
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M9 18l6-6-6-6" />
-            </svg>
-          </button>
-        </div>
+      <div>
+        <p className="text-[11px] font-bold uppercase tracking-[0.1em]" style={{ color: 'var(--purple)' }}>
+          Trusted by Patients & Clinicians
+        </p>
+        <h2 className="mt-2 font-serif text-2xl font-semibold text-foreground sm:text-3xl">
+          What people are{' '}
+          <span style={{ color: 'var(--purple)' }}>saying</span>
+        </h2>
       </div>
 
-      <div
-        ref={scrollRef}
-        onScroll={updateArrows}
-        className="flex gap-4 overflow-x-auto pb-2 snap-x snap-mandatory"
-        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', WebkitOverflowScrolling: 'touch' }}
-      >
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         {TESTIMONIALS.map((t, idx) => {
           const dynamicUrl = avatarUrls[idx];
           return (
             <div
               key={t.name}
-              data-card
-              className="flex w-[85%] min-w-0 flex-shrink-0 snap-start flex-col rounded-2xl border p-5 sm:w-[calc(50%-8px)] sm:min-w-[280px] sm:p-6"
+              className="flex flex-col rounded-2xl border p-5 sm:p-6"
               style={{ borderColor: 'var(--border-subtle)', background: 'var(--surface-strong)' }}
             >
               {QUOTE_ICON}

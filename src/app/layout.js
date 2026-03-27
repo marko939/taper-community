@@ -44,6 +44,10 @@ export const metadata = {
   alternates: {
     canonical: '/',
   },
+  // TODO: Replace with your actual Google Search Console verification code
+  verification: {
+    google: 'GOOGLE_SITE_VERIFICATION_CODE',
+  },
 };
 
 export default function RootLayout({ children }) {
@@ -74,6 +78,19 @@ export default function RootLayout({ children }) {
         <script dangerouslySetInnerHTML={{ __html: `
           window.plausible=window.plausible||function(){(plausible.q=plausible.q||[]).push(arguments)},plausible.init=plausible.init||function(i){plausible.o=i||{}};
           plausible.init();
+        `}} />
+        {/* Google Analytics 4 — TODO: Replace G-XXXXXXXXXX with your GA4 measurement ID */}
+        <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX" />
+        <script dangerouslySetInnerHTML={{ __html: `
+          window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}
+          gtag('js',new Date());gtag('config','G-XXXXXXXXXX');
+        `}} />
+        {/* Microsoft Clarity — TODO: Replace CLARITY_PROJECT_ID with your Clarity project ID */}
+        <script dangerouslySetInnerHTML={{ __html: `
+          (function(c,l,a,r,i,t,y){c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+          t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+          y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+          })(window,document,"clarity","script","CLARITY_PROJECT_ID");
         `}} />
         {/* Apply saved font size before first paint to prevent flash */}
         <script dangerouslySetInnerHTML={{ __html: `
