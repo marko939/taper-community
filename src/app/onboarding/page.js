@@ -38,8 +38,8 @@ function buildSignature(medications, hasClinician) {
   return sig;
 }
 
-const STEPS = ['meds', 'details', 'clinician', 'signature', 'location', 'introPost'];
-const SKIPPABLE_STEPS = new Set([4, 5]); // location and introPost
+const STEPS = ['meds', 'details', 'clinician', 'location', 'introPost'];
+const SKIPPABLE_STEPS = new Set([3, 4]); // location and introPost
 
 export default function OnboardingPage() {
   const [step, setStep] = useState(0);
@@ -90,7 +90,7 @@ export default function OnboardingPage() {
 
   const [error, setError] = useState('');
 
-  const handleComplete = () => {
+  const handleComplete = async () => {
     setLoading(true);
     setError('');
 
@@ -106,8 +106,26 @@ export default function OnboardingPage() {
       profileData.location = locationInput.trim();
     }
 
-    // Navigate home IMMEDIATELY — never block the user.
-    // All saves happen in the background via fire-and-forget.
+    // Await intro post creation so it's visible immediately on home
+    if (introPostBody.trim()) {
+      const displayName = useAuthStore.getState().user?.user_metadata?.display_name || 'new member';
+      const userId = useAuthStore.getState().user?.id;
+      try {
+        await fetch('/api/intro-post', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId,
+            title: `Hi, I'm ${displayName}`,
+            body: introPostBody.trim(),
+          }),
+        });
+      } catch (err) {
+        console.error('[onboarding] intro post failed:', err?.message);
+      }
+    }
+
+    // Navigate home after intro post is saved
     router.push('/');
 
     // Fire-and-forget: save profile (retries up to 3 times)
@@ -135,7 +153,6 @@ export default function OnboardingPage() {
     });
 
     // Fire-and-forget: create match request if user wants clinician help
-    // Uses server API route to bypass the client-side Supabase auth lock
     if (wantsClinicianHelp) {
       const patientName = useAuthStore.getState().user?.user_metadata?.display_name || useAuthStore.getState().user?.email || 'New user';
       const patientEmail = useAuthStore.getState().user?.email;
@@ -153,23 +170,6 @@ export default function OnboardingPage() {
             medications: profileData.drug || null,
             supportTypes: ['general'],
             notes: 'Submitted during onboarding — user requested help finding a clinician.',
-          }),
-        });
-      });
-    }
-
-    // Fire-and-forget: create intro post if user wrote one
-    if (introPostBody.trim()) {
-      const displayName = useAuthStore.getState().user?.user_metadata?.display_name || 'new member';
-      const userId = useAuthStore.getState().user?.id;
-      fireAndForget('onboarding-intro-post', async () => {
-        await fetch('/api/intro-post', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            userId,
-            title: `Hi, I'm ${displayName}`,
-            body: introPostBody.trim(),
           }),
         });
       });
@@ -434,41 +434,8 @@ export default function OnboardingPage() {
         )}
 
         {/* Step 3: Signature */}
+        {/* Step 3: Location (skippable) */}
         {step === 3 && (
-          <div className="space-y-4">
-            <h2 className="text-lg font-semibold text-foreground">
-              Your drug history signature
-            </h2>
-            <p className="text-sm text-text-muted">
-              We&apos;ve auto-generated this from your answers. Feel free to edit it — this appears under every post you make.
-            </p>
-            <textarea
-              value={drugSignature}
-              onChange={(e) => {
-                setDrugSignature(e.target.value);
-                setSignatureEdited(true);
-              }}
-              className="textarea"
-              rows={3}
-              placeholder="e.g. Lexapro 20mg 2018–2023 → tapered to 5mg (liquid) → 0 Mar 2025"
-            />
-            {drugSignature && (
-              <div className="rounded-xl border border-border-subtle bg-slate-50 px-3 py-2">
-                <p className="mb-1 text-[11px] font-medium text-text-subtle">Preview</p>
-                <p className="text-xs italic text-text-muted">{drugSignature}</p>
-              </div>
-            )}
-            <div className="rounded-xl border border-border-subtle bg-slate-50 p-3">
-              <p className="mb-1 text-xs font-medium text-text-subtle">Format tips:</p>
-              <p className="text-xs text-text-subtle">
-                Drug Dose Year&ndash;Year &rarr; method &rarr; status | Next drug...
-              </p>
-            </div>
-          </div>
-        )}
-
-        {/* Step 4: Location (skippable) */}
-        {step === 4 && (
           <div className="space-y-4">
             <h2 className="text-lg font-semibold text-foreground">
               Where are you located?
@@ -486,8 +453,8 @@ export default function OnboardingPage() {
           </div>
         )}
 
-        {/* Step 5: Intro Post (skippable) */}
-        {step === 5 && (
+        {/* Step 4: Intro Post (skippable) */}
+        {step === 4 && (
           <div className="space-y-4">
             <h2 className="text-lg font-semibold text-foreground">
               Introduce yourself to the community
