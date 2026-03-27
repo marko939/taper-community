@@ -77,10 +77,23 @@ function MessagesContent() {
 
   const isCurrentMod = isMod(user?.id);
 
-  // Prevent body scroll while messages page is mounted
+  // Prevent page scroll while messages page is mounted — hide footer/disclaimer
   useEffect(() => {
     document.body.style.overflow = 'hidden';
-    return () => { document.body.style.overflow = ''; };
+    // Also hide overflow on the flex wrapper that contains main + footer
+    const main = document.querySelector('main');
+    const wrapper = main?.parentElement;
+    if (wrapper) {
+      wrapper.style.overflow = 'hidden';
+      wrapper.style.maxHeight = '100dvh';
+    }
+    return () => {
+      document.body.style.overflow = '';
+      if (wrapper) {
+        wrapper.style.overflow = '';
+        wrapper.style.maxHeight = '';
+      }
+    };
   }, []);
 
   // Compose search — debounced profile lookup
