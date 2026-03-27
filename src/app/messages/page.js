@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { useMessageStore, STAFF_IDS } from '@/stores/messageStore';
 import { createClient } from '@/lib/supabase/client';
@@ -262,11 +263,13 @@ function MessagesContent() {
                   }`}
                   style={selectedPartner?.id === conv.partnerId ? { background: 'var(--purple-ghost)' } : {}}
                 >
-                  <Avatar
-                    name={conv.partner.display_name}
-                    avatarUrl={conv.partner.avatar_url}
-                    size="sm"
-                  />
+                  <Link href={`/profile/${conv.partnerId}`} onClick={(e) => e.stopPropagation()} className="shrink-0 transition hover:opacity-80">
+                    <Avatar
+                      name={conv.partner.display_name}
+                      avatarUrl={conv.partner.avatar_url}
+                      size="sm"
+                    />
+                  </Link>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center justify-between">
                       <p className="truncate text-sm font-semibold text-foreground">
@@ -318,12 +321,14 @@ function MessagesContent() {
                     <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
                   </svg>
                 </button>
-                <Avatar
-                  name={selectedPartner.display_name}
-                  avatarUrl={selectedPartner.avatar_url}
-                  size="sm"
-                />
-                <p className="text-sm font-semibold text-foreground">{selectedPartner.display_name}</p>
+                <Link href={`/profile/${selectedPartner.id}`} className="flex items-center gap-3 transition hover:opacity-80">
+                  <Avatar
+                    name={selectedPartner.display_name}
+                    avatarUrl={selectedPartner.avatar_url}
+                    size="sm"
+                  />
+                  <p className="text-sm font-semibold text-foreground">{selectedPartner.display_name}</p>
+                </Link>
               </div>
 
               {/* Messages */}
