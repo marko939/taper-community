@@ -30,7 +30,7 @@ export default function CommunityPulse({ large }) {
           supabase.from('replies').select('id', { count: 'exact', head: true }),
           supabase.from('journal_entries').select('id', { count: 'exact', head: true }).gte('created_at', sevenDaysAgo),
           supabase.from('journal_entries').select('id', { count: 'exact', head: true }),
-          supabase.from('journal_entries').select('user_id, drug, dose_numeric, date').not('dose_numeric', 'is', null).order('date', { ascending: true }).limit(5000),
+          supabase.from('journal_entries').select('user_id, drug, dose_numeric, date').not('dose_numeric', 'is', null).order('date', { ascending: true }).limit(500),
         ]);
 
         // Calculate total mg reduced across all users/drugs

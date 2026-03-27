@@ -35,6 +35,7 @@ export async function POST(request) {
       .from('threads')
       .insert({
         user_id: userId,
+        forum_id: forum.id,
         title: title.trim(),
         body: body.trim(),
         tags: ['introduction'],

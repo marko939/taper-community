@@ -44,7 +44,7 @@ export default function PatientDashboard({ user, profile }) {
         </div>
         <div className="pointer-events-none absolute inset-0" style={{ background: 'rgba(42,18,80,0.35)' }} />
         <div className="relative z-10">
-          <p className="text-sm font-medium text-white/60">Welcome back</p>
+          <p className="text-base font-bold text-white/80">Welcome back</p>
           <h1 className="mt-1 text-2xl font-bold text-white">
             {profile?.display_name || 'there'}
           </h1>
@@ -103,9 +103,9 @@ export default function PatientDashboard({ user, profile }) {
                 )}
               </div>
             </>
-          ) : profile?.post_count ? (
+          ) : (
             <div className="mt-6 flex items-center justify-between rounded-xl px-5 py-3" style={{ background: 'rgba(255,255,255,0.1)' }}>
-              <p className="text-sm text-white/80">Start tracking your taper journey</p>
+              <p className="text-sm font-semibold text-white">Start your Taper Tracker</p>
               <Link
                 href="/journal"
                 className="shrink-0 rounded-lg px-4 py-2 text-xs font-bold text-purple no-underline transition hover:opacity-90"
@@ -113,18 +113,6 @@ export default function PatientDashboard({ user, profile }) {
               >
                 Start tracking
               </Link>
-            </div>
-          ) : (
-            <div className="mt-6 flex items-center justify-between rounded-xl px-5 py-3" style={{ background: 'rgba(255,255,255,0.1)' }}>
-              <p className="text-sm text-white/80">Welcome! Introduce yourself to the community</p>
-              <button
-                type="button"
-                onClick={() => document.getElementById('quick-post')?.scrollIntoView({ behavior: 'smooth' })}
-                className="rounded-lg px-4 py-2 text-xs font-bold text-purple no-underline transition hover:opacity-90"
-                style={{ background: 'white' }}
-              >
-                Introduce yourself
-              </button>
             </div>
           )}
         </div>

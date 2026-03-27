@@ -8,6 +8,7 @@ import { DRUG_LIST } from '@/lib/drugs';
 import { TAPER_STAGES } from '@/lib/constants';
 import { recordReferral } from '@/lib/invites';
 import { fireAndForget } from '@/lib/fireAndForget';
+import DrugAutocomplete from '@/components/shared/DrugAutocomplete';
 
 function buildSignature(medications, hasClinician) {
   if (medications.length === 0) return '';
@@ -249,19 +250,10 @@ export default function OnboardingPage() {
                         </button>
                       )}
                     </div>
-                    <select
+                    <DrugAutocomplete
                       value={med.drug}
-                      onChange={(e) => updateMed(idx, 'drug', e.target.value)}
-                      className="input"
-                    >
-                      <option value="">Select a medication...</option>
-                      {DRUG_LIST.map((d) => (
-                        <option key={d.slug} value={d.name}>
-                          {d.name} ({d.generic})
-                        </option>
-                      ))}
-                      <option value="other">Other</option>
-                    </select>
+                      onChange={(val) => updateMed(idx, 'drug', val)}
+                    />
                   </div>
                 ))}
                 <button
