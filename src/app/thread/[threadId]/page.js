@@ -84,61 +84,39 @@ export default function ThreadPage() {
 
       <ThreadView thread={thread} />
 
-      {user ? (
-        <>
-          <div className="space-y-4">
-            <h2 className="text-lg font-semibold text-foreground">
-              {totalReplies} {totalReplies === 1 ? 'Reply' : 'Replies'}
-            </h2>
-            <ReplyList
-              replies={replies}
-              threadId={threadId}
-              hasMore={hasMoreReplies}
-              totalCount={totalReplies}
-              onLoadMore={() => loadMoreReplies(threadId)}
-            />
-            <ReplyForm threadId={threadId} />
-          </div>
-
-          <QuoteToolbar />
-          <ImageLightbox />
-          <DeprescriberCTA className="mt-8" />
-        </>
-      ) : (
-        <div className="relative">
-          <div className="pointer-events-none select-none" style={{ filter: 'blur(4px)', opacity: 0.4, maxHeight: 200, overflow: 'hidden' }}>
-            <div className="space-y-4">
-              <h2 className="text-lg font-semibold text-foreground">
-                {totalReplies} {totalReplies === 1 ? 'Reply' : 'Replies'}
-              </h2>
-              <div className="rounded-xl border border-border-subtle bg-surface-strong p-4">
-                <div className="h-4 w-3/4 rounded bg-border-subtle" />
-                <div className="mt-2 h-3 w-1/2 rounded bg-border-subtle" />
-              </div>
-              <div className="rounded-xl border border-border-subtle bg-surface-strong p-4">
-                <div className="h-4 w-2/3 rounded bg-border-subtle" />
-                <div className="mt-2 h-3 w-1/3 rounded bg-border-subtle" />
-              </div>
-            </div>
-          </div>
+      <div className="space-y-4">
+        <h2 className="text-lg font-semibold text-foreground">
+          {totalReplies} {totalReplies === 1 ? 'Reply' : 'Replies'}
+        </h2>
+        <ReplyList
+          replies={replies}
+          threadId={threadId}
+          hasMore={hasMoreReplies}
+          totalCount={totalReplies}
+          onLoadMore={() => loadMoreReplies(threadId)}
+        />
+        {user ? (
+          <ReplyForm threadId={threadId} />
+        ) : (
           <div
-            className="rounded-2xl border p-8 text-center"
+            className="rounded-2xl border p-6 text-center"
             style={{ borderColor: 'var(--border-subtle)', background: 'linear-gradient(135deg, var(--purple-ghost) 0%, var(--surface-strong) 100%)' }}
           >
-            <svg className="mx-auto mb-3 h-8 w-8" style={{ color: 'var(--purple)' }} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
-            </svg>
-            <h3 className="text-lg font-semibold text-foreground">Sign in to read replies</h3>
-            <p className="mx-auto mt-2 max-w-sm text-sm text-text-muted">
-              Join the conversation — create a free account to read replies, share your experience, and connect with others on their taper journey.
+            <h3 className="text-base font-semibold text-foreground">Join the conversation</h3>
+            <p className="mx-auto mt-1 max-w-sm text-sm text-text-muted">
+              Sign in to share your experience and connect with others.
             </p>
-            <div className="mt-5 flex flex-wrap justify-center gap-3">
+            <div className="mt-4 flex flex-wrap justify-center gap-3">
               <Link href="/auth/signin" className="btn btn-primary text-sm no-underline">Sign In</Link>
               <Link href="/auth/signup" className="btn btn-secondary text-sm no-underline">Create Free Account</Link>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
+
+      {user && <QuoteToolbar />}
+      <ImageLightbox />
+      <DeprescriberCTA className="mt-8" />
     </div>
   );
 }

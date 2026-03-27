@@ -351,27 +351,33 @@ export const useForumStore = create((set, get) => ({
 
     try {
       const supabase = createClient();
-      const selectFields = forumId
-        ? '*, profiles:user_id(display_name, is_peer_advisor, avatar_url, is_founding_member), forums:forum_id(name, slug, drug_slug), thread_forums!inner(forum_id)'
-        : '*, profiles:user_id(display_name, is_peer_advisor, avatar_url, is_founding_member), forums:forum_id(name, slug, drug_slug)';
-
-      let qb = supabase
-        .from('threads')
-        .select(selectFields)
-        .textSearch('title', query)
-        .order('created_at', { ascending: false })
-        .abortSignal(controller.signal)
-        .limit(20);
 
       if (forumId) {
-        qb = qb.eq('thread_forums.forum_id', forumId);
+        // Forum-specific search: use FTS on threads within this forum
+        const { data } = await supabase
+          .from('threads')
+          .select('*, profiles:user_id(display_name, is_peer_advisor, avatar_url, is_founding_member), forums:forum_id(name, slug, drug_slug), thread_forums!inner(forum_id)')
+          .textSearch('fts', query)
+          .eq('thread_forums.forum_id', forumId)
+          .order('created_at', { ascending: false })
+          .abortSignal(controller.signal)
+          .limit(20);
+
+        set((state) => ({
+          searchState: { ...state.searchState, [key]: { results: data || [], loading: false, query } },
+        }));
+      } else {
+        // Global search: use unified RPC across threads + replies
+        const { data, error } = await supabase
+          .rpc('search_all', { search_query: query, result_limit: 30 })
+          .abortSignal(controller.signal);
+
+        if (error) throw error;
+
+        set((state) => ({
+          searchState: { ...state.searchState, [key]: { results: data || [], loading: false, query } },
+        }));
       }
-
-      const { data } = await qb;
-
-      set((state) => ({
-        searchState: { ...state.searchState, [key]: { results: data || [], loading: false, query } },
-      }));
     } catch (err) {
       if (err.name === 'AbortError') return;
       console.error('[forumStore] search error:', err);

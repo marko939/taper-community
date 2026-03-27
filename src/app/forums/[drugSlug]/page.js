@@ -133,7 +133,7 @@ export default function ForumPage() {
       </div>
 
       {/* Search */}
-      <SearchBar onSearch={handleSearch} placeholder={`Search in ${forum.name}...`} />
+      <SearchBar onSearch={handleSearch} placeholder={`Search threads in ${forum.name}...`} />
 
       {isSearching && (
         <p className="text-sm text-text-muted">

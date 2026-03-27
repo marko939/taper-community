@@ -10,6 +10,7 @@ import { getGeneralSections, getDrugClassGroups, CATEGORY_ICONS, DRUG_CLASS_ICON
 import { useFollowStore } from '@/stores/followStore';
 import SearchBar from '@/components/shared/SearchBar';
 import ThreadCard from '@/components/forums/ThreadCard';
+import SearchResultCard from '@/components/forums/SearchResultCard';
 import FeedTabs from '@/components/shared/FeedTabs';
 import ForumFollowButton from '@/components/shared/ForumFollowButton';
 
@@ -76,15 +77,21 @@ function ForumsContent() {
         </Link>
       </div>
 
-      <SearchBar onSearch={handleSearch} placeholder="Search all threads..." />
+      <SearchBar onSearch={handleSearch} placeholder="Search threads and replies..." />
 
       {isSearching && (
         <div className="space-y-3">
           <p className="text-sm text-text-muted">
             {searchLoading ? 'Searching...' : `${searchResults.length} result${searchResults.length !== 1 ? 's' : ''} for "${searchQuery}"`}
           </p>
-          {searchResults.map((thread) => (
-            <ThreadCard key={thread.id} thread={thread} />
+          {!searchLoading && searchResults.length === 0 && (
+            <div className="rounded-xl border px-6 py-10 text-center" style={{ borderColor: 'var(--border-subtle)', background: 'var(--surface-strong)' }}>
+              <p className="text-sm font-medium text-foreground">No results found</p>
+              <p className="mt-1 text-xs text-text-muted">Try different keywords or check your spelling</p>
+            </div>
+          )}
+          {searchResults.map((result) => (
+            <SearchResultCard key={`${result.type || 'thread'}-${result.id}`} result={result} />
           ))}
         </div>
       )}

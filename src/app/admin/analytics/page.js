@@ -150,9 +150,6 @@ export default function AnalyticsDashboard() {
           {/* Top Members */}
           <TopMembersTable members={data.topMembers} />
 
-          {/* New Users — Intake Forms */}
-          <NewUsersIntake data={data.newUsers} />
-
           {/* Taper Tracker Adoption */}
           <TaperTrackerSection tracker={data.taperTracker} />
 
@@ -181,6 +178,9 @@ export default function AnalyticsDashboard() {
               <ComparisonTable title="Year over Year" data={data.periodComparisons.yearly} labels={['This Year', 'Last Year', 'YoY']} historicalSeries={data.periodHistorical?.yearly} />
             </div>
           )}
+
+          {/* New Users — Intake Forms */}
+          <NewUsersIntake data={data.newUsers} />
         </>
       ) : null}
     </div>

@@ -163,6 +163,9 @@ export const useMessageStore = create((set, get) => ({
       // Append to current messages
       set((state) => ({ messages: [...state.messages, data] }));
 
+      // Refresh conversation list to update sidebar preview
+      setTimeout(() => get().fetchConversations(), 500);
+
       // Fire-and-forget email notification to recipient
       fetch('/api/dm-notification', {
         method: 'POST',
