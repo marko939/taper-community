@@ -37,7 +37,8 @@ function buildSignature(medications, hasClinician) {
   return sig;
 }
 
-const STEPS = ['meds', 'details', 'clinician', 'signature', 'intro'];
+const STEPS = ['meds', 'details', 'clinician', 'signature', 'location', 'introPost'];
+const SKIPPABLE_STEPS = new Set([4, 5]); // location and introPost
 
 export default function OnboardingPage() {
   const [step, setStep] = useState(0);
@@ -47,7 +48,8 @@ export default function OnboardingPage() {
   const [wantsClinicianHelp, setWantsClinicianHelp] = useState(false);
   const [drugSignature, setDrugSignature] = useState('');
   const [signatureEdited, setSignatureEdited] = useState(false);
-  const [usernameInput, setUsernameInput] = useState('');
+  const [locationInput, setLocationInput] = useState('');
+  const [introPostBody, setIntroPostBody] = useState('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const updateProfile = useProfileStore((s) => s.updateProfile);
@@ -99,8 +101,8 @@ export default function OnboardingPage() {
       has_clinician: hasClinician,
       drug_signature: drugSignature || null,
     };
-    if (usernameInput && usernameInput.length >= 3) {
-      profileData.username = usernameInput;
+    if (locationInput.trim()) {
+      profileData.location = locationInput.trim();
     }
 
     // Navigate home IMMEDIATELY — never block the user.
@@ -134,7 +136,7 @@ export default function OnboardingPage() {
     // Fire-and-forget: create match request if user wants clinician help
     // Uses server API route to bypass the client-side Supabase auth lock
     if (wantsClinicianHelp) {
-      const patientName = usernameInput || useAuthStore.getState().user?.email || 'New user';
+      const patientName = useAuthStore.getState().user?.user_metadata?.display_name || useAuthStore.getState().user?.email || 'New user';
       const patientEmail = useAuthStore.getState().user?.email;
       const userId = useAuthStore.getState().user?.id;
       fireAndForget('onboarding-match-request', async () => {
@@ -154,9 +156,24 @@ export default function OnboardingPage() {
         });
       });
     }
-  };
 
-  const handleSkip = () => router.push('/');
+    // Fire-and-forget: create intro post if user wrote one
+    if (introPostBody.trim()) {
+      const displayName = useAuthStore.getState().user?.user_metadata?.display_name || 'new member';
+      const userId = useAuthStore.getState().user?.id;
+      fireAndForget('onboarding-intro-post', async () => {
+        await fetch('/api/intro-post', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId,
+            title: `Hi, I'm ${displayName}`,
+            body: introPostBody.trim(),
+          }),
+        });
+      });
+    }
+  };
 
   return (
     <div className="mx-auto max-w-lg py-12">
@@ -165,7 +182,7 @@ export default function OnboardingPage() {
           Tell us about your journey
         </h1>
         <p className="mb-6 text-center text-sm text-text-muted">
-          This helps us personalize your experience. You can skip any step.
+          This helps us personalize your experience.
         </p>
 
         <div className="mb-8 h-1.5 overflow-hidden rounded-full bg-slate-100">
@@ -458,42 +475,49 @@ export default function OnboardingPage() {
           </div>
         )}
 
-        {/* Step 4: Intro + Username */}
+        {/* Step 4: Location (skippable) */}
         {step === 4 && (
           <div className="space-y-4">
             <h2 className="text-lg font-semibold text-foreground">
-              Start your Taper Journal
+              Where are you located?
             </h2>
             <p className="text-sm text-text-muted">
-              Your journal is the best way to document and share your taper experience with the community.
-              Add notes about your journey &mdash; you can mark entries as public on your profile
-              and even post them to community forums.
+              General area only — helps others find nearby support.
             </p>
-            <div className="rounded-xl border p-4" style={{ borderColor: 'var(--purple-pale)', background: 'var(--purple-ghost)' }}>
-              <p className="text-sm font-medium text-foreground">What to journal:</p>
-              <ul className="mt-2 list-inside list-disc space-y-1 text-xs text-text-muted">
-                <li>Your medication history (what, when, why)</li>
-                <li>Why you decided to taper</li>
-                <li>Current dose, symptoms, and mood</li>
-                <li>What has helped or made things worse</li>
-              </ul>
-            </div>
+            <input
+              type="text"
+              value={locationInput}
+              onChange={(e) => setLocationInput(e.target.value)}
+              className="input"
+              placeholder="e.g. Northeast US, UK, Australia"
+            />
+          </div>
+        )}
 
-            {/* Username */}
-            <div>
-              <label className="mb-1 block text-sm font-medium text-foreground">
-                Choose a username <span className="font-normal text-text-subtle">(optional)</span>
-              </label>
-              <input
-                type="text"
-                value={usernameInput}
-                onChange={(e) => setUsernameInput(e.target.value.toLowerCase().replace(/[^a-z0-9_-]/g, ''))}
-                className="input"
-                placeholder="e.g. sarah-taper"
-              />
-              <p className="mt-1 text-xs text-text-subtle">
-                This creates a public journey page others can follow.
-              </p>
+        {/* Step 5: Intro Post (skippable) */}
+        {step === 5 && (
+          <div className="space-y-4">
+            <h2 className="text-lg font-semibold text-foreground">
+              Introduce yourself to the community
+            </h2>
+            <p className="text-sm text-text-muted">
+              This will be posted to the Introductions forum as &ldquo;Hi, I&apos;m {useAuthStore.getState().user?.user_metadata?.display_name || 'you'}&rdquo;
+            </p>
+            <textarea
+              value={introPostBody}
+              onChange={(e) => setIntroPostBody(e.target.value)}
+              className="textarea"
+              rows={5}
+              placeholder="Tell the community about yourself — your journey, what brought you here, or what you're hoping to find..."
+            />
+            <div className="rounded-xl border p-4" style={{ borderColor: 'var(--purple-pale)', background: 'var(--purple-ghost)' }}>
+              <p className="text-sm font-medium text-foreground">Ideas for your intro:</p>
+              <ul className="mt-2 list-inside list-disc space-y-1 text-xs text-text-muted">
+                <li>What medication(s) you&apos;re tapering from</li>
+                <li>How long you&apos;ve been on them</li>
+                <li>What brought you to TaperCommunity</li>
+                <li>What you&apos;re hoping to get from the community</li>
+              </ul>
             </div>
           </div>
         )}
@@ -505,9 +529,13 @@ export default function OnboardingPage() {
         )}
 
         <div className="mt-8 flex items-center justify-between">
-          <button onClick={handleSkip} className="text-sm text-text-subtle hover:text-foreground">
-            Skip
-          </button>
+          {SKIPPABLE_STEPS.has(step) ? (
+            <button onClick={handleNext} className="text-sm text-text-subtle hover:text-foreground">
+              Skip
+            </button>
+          ) : (
+            <div />
+          )}
           <div className="flex gap-3">
             {step > 0 && (
               <button onClick={() => setStep(step - 1)} className="btn btn-secondary text-sm">

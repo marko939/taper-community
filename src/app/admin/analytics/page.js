@@ -9,6 +9,7 @@ import {
   Tooltip, ResponsiveContainer, Legend,
 } from 'recharts';
 import { createClient } from '@/lib/supabase/client';
+import Avatar from '@/components/shared/Avatar';
 
 export default function AnalyticsDashboard() {
   const { user, loading: authLoading } = useAuth();
@@ -148,6 +149,9 @@ export default function AnalyticsDashboard() {
 
           {/* Top Members */}
           <TopMembersTable members={data.topMembers} />
+
+          {/* New Users — Intake Forms */}
+          <NewUsersIntake data={data.newUsers} />
 
           {/* Taper Tracker Adoption */}
           <TaperTrackerSection tracker={data.taperTracker} />
@@ -702,6 +706,177 @@ function TopMembersTable({ members }) {
           ))}
         </tbody>
       </table>
+    </Card>
+  );
+}
+
+const CLINICIAN_FILTERS = [
+  { key: 'all', label: 'All' },
+  { key: 'has', label: 'Has Clinician' },
+  { key: 'no', label: 'No Clinician' },
+  { key: 'wants', label: 'Wants Help' },
+];
+
+function NewUsersIntake({ data }) {
+  const [expandedId, setExpandedId] = useState(null);
+  const [filter, setFilter] = useState('all');
+
+  if (!data || !data.users || data.users.length === 0) return <SectionUnavailable label="New Users — Intake Forms" />;
+
+  const { users, matchRequestUserIds = [] } = data;
+  const matchSet = new Set(matchRequestUserIds);
+
+  const getClinicianStatus = (u) => {
+    if (matchSet.has(u.id)) return 'wants';
+    if (u.has_clinician === true) return 'has';
+    if (u.has_clinician === false) return 'no';
+    return 'unknown';
+  };
+
+  const filtered = filter === 'all'
+    ? users
+    : users.filter((u) => getClinicianStatus(u) === filter);
+
+  const counts = {
+    all: users.length,
+    has: users.filter((u) => u.has_clinician === true).length,
+    no: users.filter((u) => u.has_clinician === false && !matchSet.has(u.id)).length,
+    wants: users.filter((u) => matchSet.has(u.id)).length,
+  };
+
+  const statusBadge = (status) => {
+    const styles = {
+      has: { bg: '#ECFDF5', color: '#059669', label: 'Has clinician' },
+      no: { bg: '#FEF2F2', color: '#DC2626', label: 'No clinician' },
+      wants: { bg: '#FFF7ED', color: '#D97706', label: 'Wants help' },
+      unknown: { bg: '#F3F4F6', color: '#6B7280', label: 'Not set' },
+    };
+    const s = styles[status] || styles.unknown;
+    return (
+      <span className="rounded-full px-2 py-0.5 text-[10px] font-medium" style={{ background: s.bg, color: s.color }}>
+        {s.label}
+      </span>
+    );
+  };
+
+  const formatDate = (d) => {
+    if (!d) return '—';
+    const date = new Date(d);
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  };
+
+  const timeAgo = (d) => {
+    if (!d) return '';
+    const s = Math.floor((Date.now() - new Date(d).getTime()) / 1000);
+    if (s < 60) return 'just now';
+    const m = Math.floor(s / 60);
+    if (m < 60) return `${m}m ago`;
+    const h = Math.floor(m / 60);
+    if (h < 24) return `${h}h ago`;
+    const days = Math.floor(h / 24);
+    return `${days}d ago`;
+  };
+
+  return (
+    <Card>
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+        <h2 className="text-sm font-semibold text-foreground">New Users — Intake Forms</h2>
+        <div className="flex flex-wrap gap-1">
+          {CLINICIAN_FILTERS.map((f) => (
+            <button
+              key={f.key}
+              onClick={() => setFilter(f.key)}
+              className="rounded-full px-3 py-1 text-xs font-medium transition"
+              style={{
+                background: filter === f.key ? 'var(--purple)' : 'var(--purple-ghost)',
+                color: filter === f.key ? 'white' : 'var(--purple)',
+              }}
+            >
+              {f.label}
+              <span className="ml-1 opacity-70">({counts[f.key] ?? 0})</span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="overflow-y-auto" style={{ maxHeight: '420px' }}>
+        {filtered.length === 0 ? (
+          <p className="py-6 text-center text-xs text-text-muted">No users match this filter</p>
+        ) : (
+          <div className="space-y-0">
+            {filtered.map((u) => {
+              const status = getClinicianStatus(u);
+              const isExpanded = expandedId === u.id;
+              return (
+                <div key={u.id}>
+                  <button
+                    onClick={() => setExpandedId(isExpanded ? null : u.id)}
+                    className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition hover:bg-purple-ghost"
+                  >
+                    <Avatar name={u.display_name} avatarUrl={u.avatar_url} size="sm" />
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <p className="truncate text-xs font-semibold text-foreground">{u.display_name}</p>
+                        {statusBadge(status)}
+                      </div>
+                      <p className="text-[11px] text-text-subtle">
+                        {u.drug || 'No drug set'} · {timeAgo(u.joined_at)}
+                      </p>
+                    </div>
+                    <svg
+                      className={`h-4 w-4 shrink-0 text-text-subtle transition ${isExpanded ? 'rotate-180' : ''}`}
+                      fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+                    </svg>
+                  </button>
+
+                  {isExpanded && (
+                    <div
+                      className="mx-3 mb-2 rounded-xl p-4 space-y-2"
+                      style={{ background: 'var(--purple-ghost)' }}
+                    >
+                      <div className="grid grid-cols-2 gap-3 text-xs">
+                        <div>
+                          <p className="font-medium text-text-subtle">Drug</p>
+                          <p className="text-foreground">{u.drug || '—'}</p>
+                        </div>
+                        <div>
+                          <p className="font-medium text-text-subtle">Taper Stage</p>
+                          <p className="text-foreground">{u.taper_stage || '—'}</p>
+                        </div>
+                        <div>
+                          <p className="font-medium text-text-subtle">Has Clinician</p>
+                          <p className="text-foreground">
+                            {u.has_clinician === true ? 'Yes' : u.has_clinician === false ? 'No' : '—'}
+                            {matchSet.has(u.id) && ' (requested help)'}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="font-medium text-text-subtle">Location</p>
+                          <p className="text-foreground">{u.location || '—'}</p>
+                        </div>
+                      </div>
+                      {u.drug_signature && (
+                        <div className="text-xs">
+                          <p className="font-medium text-text-subtle">Drug Signature</p>
+                          <p className="mt-0.5 italic text-foreground">{u.drug_signature}</p>
+                        </div>
+                      )}
+                      <div className="flex items-center justify-between pt-1 text-[11px] text-text-subtle">
+                        <span>Joined {formatDate(u.joined_at)}</span>
+                        <Link href={`/profile/${u.id}`} className="font-medium hover:underline" style={{ color: 'var(--purple)' }}>
+                          View profile →
+                        </Link>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
     </Card>
   );
 }

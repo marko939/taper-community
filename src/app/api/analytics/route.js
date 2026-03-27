@@ -44,6 +44,7 @@ export async function GET() {
       fetchPageViews(supabase),
       fetchPlausibleStats(),
       fetchRetentionCohorts(supabase),
+      fetchNewUsers(supabase),
     ]);
 
     const [
@@ -51,6 +52,7 @@ export async function GET() {
       retention, engagement, forumBreakdown,
       peakHours, taperTracker, newVsReturning, churnRisk,
       topMembers, threadFunnel, pageViews, plausible, retentionCohorts,
+      newUsers,
     ] = results.map(r => r.status === 'fulfilled' ? r.value : null);
 
     return NextResponse.json({
@@ -71,6 +73,7 @@ export async function GET() {
       pageViews,
       plausible,
       retentionCohorts,
+      newUsers,
       fetchedAt: new Date().toISOString(),
     });
   } catch (err) {
@@ -866,4 +869,23 @@ async function fetchPlausibleStats() {
     topCountries: topCountries?.results ?? null,
     _errors: errors.length > 0 ? errors : undefined,
   };
+}
+
+// ── NEW: New Users with Intake Data ──
+async function fetchNewUsers(supabase) {
+  const [profilesRes, matchRes] = await Promise.all([
+    supabase
+      .from('profiles')
+      .select('id, display_name, avatar_url, drug, taper_stage, has_clinician, drug_signature, location, joined_at')
+      .order('joined_at', { ascending: false }),
+    supabase
+      .from('match_requests')
+      .select('user_id')
+      .not('user_id', 'is', null),
+  ]);
+
+  const users = profilesRes.data || [];
+  const matchRequestUserIds = [...new Set((matchRes.data || []).map(r => r.user_id))];
+
+  return { users, matchRequestUserIds };
 }
