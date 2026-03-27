@@ -353,11 +353,15 @@ export const useForumStore = create((set, get) => ({
       const supabase = createClient();
 
       if (forumId) {
-        // Forum-specific search: use FTS on threads within this forum
+        // Forum-specific search: use FTS with prefix matching
+        // Build prefix query: "withdr" → "withdr:*", "withdrawal sym" → "withdrawal & sym:*"
+        const words = query.trim().split(/\s+/).filter(Boolean);
+        const prefixQuery = words.map((w, i) => i === words.length - 1 ? `${w}:*` : w).join(' & ');
+
         const { data } = await supabase
           .from('threads')
           .select('*, profiles:user_id(display_name, is_peer_advisor, avatar_url, is_founding_member), forums:forum_id(name, slug, drug_slug), thread_forums!inner(forum_id)')
-          .textSearch('fts', query)
+          .textSearch('fts', prefixQuery)
           .eq('thread_forums.forum_id', forumId)
           .order('created_at', { ascending: false })
           .abortSignal(controller.signal)

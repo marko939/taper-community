@@ -77,23 +77,20 @@ function MessagesContent() {
 
   const isCurrentMod = isMod(user?.id);
 
-  // Prevent page scroll while messages page is mounted — hide footer/disclaimer
+  const [sidebarWidth, setSidebarWidth] = useState(0);
+
+  // Measure sidebar and hide body scroll
   useEffect(() => {
     document.body.style.overflow = 'hidden';
-    // Also hide overflow on the flex wrapper that contains main + footer
-    const main = document.querySelector('main');
-    const wrapper = main?.parentElement;
-    if (wrapper) {
-      wrapper.style.overflow = 'hidden';
-      wrapper.style.maxHeight = '100dvh';
+    const aside = document.querySelector('aside');
+    if (aside) {
+      const update = () => setSidebarWidth(aside.getBoundingClientRect().width);
+      update();
+      const observer = new ResizeObserver(update);
+      observer.observe(aside);
+      return () => { document.body.style.overflow = ''; observer.disconnect(); };
     }
-    return () => {
-      document.body.style.overflow = '';
-      if (wrapper) {
-        wrapper.style.overflow = '';
-        wrapper.style.maxHeight = '';
-      }
-    };
+    return () => { document.body.style.overflow = ''; };
   }, []);
 
   // Compose search — debounced profile lookup
@@ -213,12 +210,14 @@ function MessagesContent() {
 
   return (
     <div
-      className="-mx-4 -mt-6 -mb-20 flex flex-col pb-16 sm:-mx-6 lg:-mx-8 lg:-mb-6 lg:pb-0"
-      style={{ height: 'calc(100dvh - 73px)', overflow: 'hidden' }}
+      className="fixed inset-0 z-40 flex flex-col pb-16 lg:pb-0"
+      style={{ left: sidebarWidth > 0 ? `${sidebarWidth}px` : '0', background: 'var(--surface-strong)' }}
     >
+      {/* Spacer for mobile navbar */}
+      <div className="h-[57px] shrink-0 lg:hidden" />
       <div
         className="flex flex-1 overflow-hidden border-t"
-        style={{ borderColor: 'var(--border-subtle)', background: 'var(--surface-strong)' }}
+        style={{ borderColor: 'var(--border-subtle)' }}
       >
         {/* Conversation List */}
         <div
