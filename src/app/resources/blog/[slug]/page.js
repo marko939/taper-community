@@ -9,7 +9,6 @@ import { useBlogStore } from '@/stores/blogStore';
 import { useAuth } from '@/hooks/useAuth';
 import { isPrimaryAdmin } from '@/lib/blog';
 import BlogCommentSection from '@/components/blog/BlogCommentSection';
-import BlogCommentForm from '@/components/blog/BlogCommentForm';
 import ShareButtons from '@/components/shared/ShareButtons';
 
 function getPreviewBody(body) {
@@ -183,39 +182,8 @@ export default function BlogPostPage() {
 
           <hr style={{ borderColor: 'var(--border-subtle)' }} />
 
-          {/* Comment list (inline, scrolls with content) */}
-          <BlogCommentSection blogPostId={post.id} />
-
-          {/* Spacer so sticky form doesn't cover last content */}
-          <div className="h-44" />
-
-          {/* Sticky comment form pinned to bottom of viewport */}
-          <div
-            className="fixed bottom-0 left-0 right-0 z-40 border-t"
-            style={{ borderColor: 'var(--border-subtle)', background: 'var(--background)', boxShadow: '0 -4px 24px rgba(0,0,0,0.08)' }}
-          >
-            <div className="mx-auto max-w-2xl px-4 py-3">
-              {quotedText && (
-                <div
-                  className="mb-2 flex items-start gap-2 rounded-lg px-3 py-2 text-xs"
-                  style={{ background: 'var(--purple-ghost)', color: 'var(--text-muted)' }}
-                >
-                  <span className="shrink-0 font-semibold" style={{ color: 'var(--purple)' }}>Quoting:</span>
-                  <span className="line-clamp-2 italic">&ldquo;{quotedText}&rdquo;</span>
-                  <button
-                    onClick={() => setQuotedText('')}
-                    className="ml-auto shrink-0 text-text-subtle hover:text-foreground"
-                    aria-label="Remove quote"
-                  >
-                    <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  </button>
-                </div>
-              )}
-              <BlogCommentForm blogPostId={post.id} quotedText={quotedText} onQuoteUsed={() => setQuotedText('')} />
-            </div>
-          </div>
+          {/* Comments + inline form */}
+          <BlogCommentSection blogPostId={post.id} quotedText={quotedText} onQuoteUsed={() => setQuotedText('')} />
         </>
       ) : (
         <>
