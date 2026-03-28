@@ -87,7 +87,7 @@ export default function ForumPage() {
           created_at: p.created_at,
           user_id: p.author_id,
           blog_post_slug: p.slug,
-          profiles: { display_name: 'Based Psychiatrist', avatar_url: null, is_peer_advisor: false, is_founding_member: false },
+          profiles: { display_name: 'Based Psychiatrist', avatar_url: 'https://aygtqzhccqmglkvtvish.supabase.co/storage/v1/object/public/avatars/8572637a-2109-4471-bcb4-3163d04094d0/avatar.jpg', is_peer_advisor: false, is_founding_member: false },
         })));
       });
   }, [forum]);
