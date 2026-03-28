@@ -51,11 +51,46 @@ export default function ForumPage() {
     fetchForum();
   }, [drugSlug]);
 
+  const [blogPosts, setBlogPosts] = useState([]);
+
   useEffect(() => {
     if (forum?.id) {
       fetchThreads(forum.id);
     }
   }, [forum?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Fetch blog posts assigned to this forum
+  useEffect(() => {
+    if (!forum) return;
+    const forumSlug = forum.drug_slug || forum.slug;
+    if (!forumSlug) return;
+    const supabase = createClient();
+    supabase
+      .from('blog_posts')
+      .select('id, title, slug, excerpt, tags, cover_image_url, created_at, author_id, comment_count, forum_slugs')
+      .eq('published', true)
+      .contains('forum_slugs', [forumSlug])
+      .order('created_at', { ascending: false })
+      .then(({ data }) => {
+        if (data) {
+          // Shape blog posts to look like threads for ThreadCard
+          setBlogPosts(data.map((p) => ({
+            id: p.id,
+            title: p.title,
+            body: p.excerpt || '',
+            tags: p.tags || [],
+            reply_count: p.comment_count || 0,
+            view_count: 0,
+            vote_score: 0,
+            pinned: false,
+            created_at: p.created_at,
+            user_id: p.author_id,
+            blog_post_slug: p.slug,
+            profiles: null,
+          })));
+        }
+      });
+  }, [forum]);
 
   if (forumLoading) return <PageLoading />;
 
@@ -83,9 +118,10 @@ export default function ForumPage() {
 
   const handleSearch = (q) => searchFn(forum.id, q);
 
-  const displayThreads = isSearching ? searchResults : threads;
-  const pinnedThreads = isSearching ? [] : displayThreads.filter((t) => t.pinned);
-  const regularThreads = isSearching ? displayThreads : displayThreads.filter((t) => !t.pinned);
+  // Merge blog posts into thread list, sorted by created_at
+  const allItems = isSearching ? searchResults : [...threads, ...blogPosts].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+  const pinnedThreads = isSearching ? [] : allItems.filter((t) => t.pinned);
+  const regularThreads = isSearching ? allItems : allItems.filter((t) => !t.pinned);
 
   return (
     <div className="space-y-6">

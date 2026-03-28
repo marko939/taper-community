@@ -21,9 +21,10 @@ function timeAgo(dateStr) {
 }
 
 function ThreadCard({ thread }) {
-  const { id, title, body, tags = [], reply_count, view_count, vote_score, pinned, created_at, user_id, profiles } = thread;
+  const { id, title, body, tags = [], reply_count, view_count, vote_score, pinned, created_at, user_id, profiles, blog_post_slug } = thread;
   const displayName = profiles?.display_name || 'Anonymous';
   const bodyPreview = body?.length > 150 ? body.slice(0, 150) + '...' : body;
+  const href = blog_post_slug ? `/resources/blog/${blog_post_slug}` : `/thread/${id}`;
 
   return (
     <div
@@ -39,8 +40,11 @@ function ThreadCard({ thread }) {
         </div>
       )}
 
-      <Link href={`/thread/${id}`} className="no-underline">
-        <h3 className="font-semibold transition hover:text-purple" style={{ color: 'var(--foreground)' }}>{title}</h3>
+      <Link href={href} className="no-underline">
+        <h3 className="font-semibold transition hover:text-purple" style={{ color: 'var(--foreground)' }}>
+          {blog_post_slug && <span className="mr-1.5 text-xs font-medium text-purple">ARTICLE</span>}
+          {title}
+        </h3>
       </Link>
 
       {bodyPreview && (

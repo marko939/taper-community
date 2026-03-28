@@ -33,7 +33,7 @@ export const useBlogStore = create((set, get) => ({
       const supabase = createClient();
       let query = supabase
         .from('blog_posts')
-        .select('id, title, slug, excerpt, body, cover_image_url, tags, published, meta_description, forum_thread_id, created_at, updated_at')
+        .select('id, title, slug, excerpt, body, cover_image_url, tags, published, meta_description, forum_thread_id, forum_slugs, created_at, updated_at')
         .order('created_at', { ascending: false });
 
       if (!includeUnpublished) {
