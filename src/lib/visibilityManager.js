@@ -39,8 +39,19 @@ function onVisibilityChange() {
     // Tab becoming visible — debounce to prevent rapid-fire
     if (_debounceTimer) clearTimeout(_debounceTimer);
 
-    _debounceTimer = setTimeout(() => {
+    _debounceTimer = setTimeout(async () => {
       _debounceTimer = null;
+
+      // CRITICAL: Refresh the auth token FIRST. When the tab is in the
+      // background for minutes/hours, the JWT expires. If we fetch before
+      // refreshing, all requests fail silently (empty data or 401).
+      try {
+        const { createClient } = await import('@/lib/supabase/client');
+        const supabase = createClient();
+        await supabase.auth.getSession(); // triggers token refresh if expired
+      } catch (e) {
+        console.warn('[visibilityManager] auth refresh failed:', e);
+      }
 
       const user = useAuthStore.getState().user;
       if (user?.id) {
@@ -50,10 +61,6 @@ function onVisibilityChange() {
       }
 
       // Invalidate stale caches AND force re-fetch feed data.
-      // We can't rely solely on component effects detecting loaded-flag changes,
-      // because if a previous fetch was aborted (cancelAll on hidden), the flag
-      // is already false — Zustand won't detect a change, so effects won't re-fire.
-      // Solution: invalidate, then force-fetch directly.
       useForumStore.getState().invalidate();
       useForumStore.getState().fetchHotThreads(10, { force: true });
       useForumStore.getState().fetchNewThreads(10, { force: true });

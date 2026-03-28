@@ -6,6 +6,7 @@ import { useForumStore } from '@/stores/forumStore';
 import { useAuthStore } from '@/stores/authStore';
 import { useFollowStore } from '@/stores/followStore';
 import { useBlogStore } from '@/stores/blogStore';
+import { createClient } from '@/lib/supabase/client';
 import { GENERAL_FORUMS } from '@/lib/forumCategories';
 import FollowButton from '@/components/shared/FollowButton';
 import { usePullToRefresh, PullIndicator } from '@/hooks/usePullToRefresh';
@@ -172,38 +173,51 @@ export default function FeedTabs({ activeTab: controlledTab, onTabChange, useUrl
     }
   }, [followingLoaded]);
 
-  // Subscribe to loaded flags — when invalidate() resets them to false
-  // (e.g. tab comes back visible while we're already mounted), re-fetch.
-  const hotThreadsLoaded = useForumStore((s) => s.hotThreadsLoaded);
-  const newThreadsLoaded = useForumStore((s) => s.newThreadsLoaded);
-
-  // Fetch on mount AND whenever loaded flags are reset to false
+  // Fetch on mount — always fetch fresh data when component mounts
   useEffect(() => {
-    if (!hotThreadsLoaded) useForumStore.getState().fetchHotThreads(10);
-  }, [hotThreadsLoaded]);
+    useForumStore.getState().fetchHotThreads(10);
+    useForumStore.getState().fetchNewThreads(10);
+    useBlogStore.getState().fetchPosts();
+  }, []);
 
+  // CRITICAL: Direct visibilitychange listener inside FeedTabs.
+  // When the tab comes back from background, refresh auth token first
+  // (JWT may have expired), then force-fetch all feed data.
+  // This is independent of the visibility manager — belt AND suspenders.
   useEffect(() => {
-    if (!newThreadsLoaded) useForumStore.getState().fetchNewThreads(10);
-  }, [newThreadsLoaded]);
+    const handleVisible = async () => {
+      if (document.hidden) return;
 
-  // Blog posts — fetch on mount AND when invalidated (tab stale recovery)
-  const postsLoaded = useBlogStore((s) => s.postsLoaded);
-  useEffect(() => {
-    if (!postsLoaded) useBlogStore.getState().fetchPosts();
-  }, [postsLoaded]);
+      // Wait a beat for the visibility manager's cancelAll to settle,
+      // then refresh auth and force-fetch
+      await new Promise((r) => setTimeout(r, 500));
 
-  // Safety net: if still loading after 8 seconds, force re-fetch.
-  // Catches any edge case where effects didn't fire or fetches silently failed.
+      // Refresh auth token (may have expired while tab was in background)
+      try {
+        const supabase = createClient();
+        await supabase.auth.getSession();
+      } catch (e) {
+        // Auth refresh failed — try fetching anyway
+      }
+
+      // Force-fetch fresh data regardless of loaded flags
+      useForumStore.getState().fetchHotThreads(10, { force: true });
+      useForumStore.getState().fetchNewThreads(10, { force: true });
+      useBlogStore.getState().fetchPosts();
+    };
+    document.addEventListener('visibilitychange', handleVisible);
+    return () => document.removeEventListener('visibilitychange', handleVisible);
+  }, []);
+
+  // Safety net: if still loading after 6 seconds on mount, force re-fetch.
   useEffect(() => {
     const timer = setTimeout(() => {
-      const state = useForumStore.getState();
-      if (state.recentThreads.loading && !state.hotThreadsLoaded) {
-        state.fetchHotThreads(10, { force: true });
+      const s = useForumStore.getState();
+      if (s.newThreads.loading || s.recentThreads.loading) {
+        s.fetchHotThreads(10, { force: true });
+        s.fetchNewThreads(10, { force: true });
       }
-      if (state.newThreads.loading && !state.newThreadsLoaded) {
-        state.fetchNewThreads(10, { force: true });
-      }
-    }, 8000);
+    }, 6000);
     return () => clearTimeout(timer);
   }, []);
 
