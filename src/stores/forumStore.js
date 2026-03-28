@@ -54,13 +54,20 @@ export const useForumStore = create((set, get) => ({
     };
   },
 
-  // Reset cached flags so next fetch actually hits the DB
-  invalidate: () => {
+  // Reset cached flags so next fetch actually hits the DB.
+  // IMPORTANT: Keep existing items visible while refetching (don't flash "Loading...").
+  // Only clear items if explicitly requested (e.g. route change to a different page).
+  invalidate: ({ clearItems = false } = {}) => {
+    const s = get();
     set({
       hotThreadsLoaded: false,
       newThreadsLoaded: false,
-      recentThreads: { items: [], loading: true },
-      newThreads: { items: [], loading: true },
+      recentThreads: clearItems
+        ? { items: [], loading: true }
+        : { items: s.recentThreads.items, loading: s.recentThreads.items.length === 0 },
+      newThreads: clearItems
+        ? { items: [], loading: true }
+        : { items: s.newThreads.items, loading: s.newThreads.items.length === 0 },
       threadPages: {},
       searchState: {},
     });

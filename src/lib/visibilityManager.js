@@ -49,13 +49,21 @@ function onVisibilityChange() {
         useNotificationStore.getState().subscribeRealtime();
       }
 
-      // Invalidate stale caches so next render re-fetches fresh data.
-      // Components watching these loaded flags (e.g. FeedTabs) will
-      // automatically re-fetch when they see the flag go false.
+      // Invalidate stale caches AND force re-fetch feed data.
+      // We can't rely solely on component effects detecting loaded-flag changes,
+      // because if a previous fetch was aborted (cancelAll on hidden), the flag
+      // is already false — Zustand won't detect a change, so effects won't re-fire.
+      // Solution: invalidate, then force-fetch directly.
       useForumStore.getState().invalidate();
+      useForumStore.getState().fetchHotThreads(10, { force: true });
+      useForumStore.getState().fetchNewThreads(10, { force: true });
+      useBlogStore.getState().invalidate();
+      useBlogStore.getState().fetchPosts();
       useJournalStore.getState().invalidate();
       useFollowStore.getState().invalidateFeeds();
-      useBlogStore.getState().invalidate();
+      if (user?.id) {
+        useFollowStore.getState().fetchFollowedThreads({ force: true });
+      }
     }, 300);
   }
 }

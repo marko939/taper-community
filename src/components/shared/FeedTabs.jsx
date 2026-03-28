@@ -192,6 +192,21 @@ export default function FeedTabs({ activeTab: controlledTab, onTabChange, useUrl
     if (!postsLoaded) useBlogStore.getState().fetchPosts();
   }, [postsLoaded]);
 
+  // Safety net: if still loading after 8 seconds, force re-fetch.
+  // Catches any edge case where effects didn't fire or fetches silently failed.
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      const state = useForumStore.getState();
+      if (state.recentThreads.loading && !state.hotThreadsLoaded) {
+        state.fetchHotThreads(10, { force: true });
+      }
+      if (state.newThreads.loading && !state.newThreadsLoaded) {
+        state.fetchNewThreads(10, { force: true });
+      }
+    }, 8000);
+    return () => clearTimeout(timer);
+  }, []);
+
   useEffect(() => {
     if (user?.id) useFollowStore.getState().fetchFollowing(user.id);
   }, [user?.id]);
