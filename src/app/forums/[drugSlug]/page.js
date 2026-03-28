@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
-import { waitForAuth } from '@/lib/visibilityManager';
+import { fetchWithRetry } from '@/lib/fetchWithRetry';
 import { useForumStore } from '@/stores/forumStore';
 import { getDrug } from '@/lib/drugs';
 import Badge from '@/components/shared/Badge';
@@ -31,22 +31,27 @@ export default function ForumPage() {
     setForumLoading(true);
     const controller = new AbortController();
     const fetchForum = async () => {
-      await waitForAuth(); // ensure JWT is fresh after stale tab
       const supabase = createClient();
-      let { data } = await supabase
-        .from('forums')
-        .select('*')
-        .eq('drug_slug', drugSlug)
-        .abortSignal(controller.signal)
-        .maybeSingle();
-
-      if (!data && !controller.signal.aborted) {
-        const result = await supabase
+      let { data } = await fetchWithRetry(
+        () => supabase
           .from('forums')
           .select('*')
-          .eq('slug', drugSlug)
+          .eq('drug_slug', drugSlug)
           .abortSignal(controller.signal)
-          .maybeSingle();
+          .maybeSingle(),
+        { signal: controller.signal }
+      );
+
+      if (!data && !controller.signal.aborted) {
+        const result = await fetchWithRetry(
+          () => supabase
+            .from('forums')
+            .select('*')
+            .eq('slug', drugSlug)
+            .abortSignal(controller.signal)
+            .maybeSingle(),
+          { signal: controller.signal }
+        );
         data = result.data;
       }
 

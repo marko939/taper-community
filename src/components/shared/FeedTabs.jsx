@@ -6,7 +6,6 @@ import { useForumStore } from '@/stores/forumStore';
 import { useAuthStore } from '@/stores/authStore';
 import { useFollowStore } from '@/stores/followStore';
 import { useBlogStore } from '@/stores/blogStore';
-import { waitForAuth } from '@/lib/visibilityManager';
 import { GENERAL_FORUMS } from '@/lib/forumCategories';
 import FollowButton from '@/components/shared/FollowButton';
 import { usePullToRefresh, PullIndicator } from '@/hooks/usePullToRefresh';
@@ -181,14 +180,16 @@ export default function FeedTabs({ activeTab: controlledTab, onTabChange, useUrl
   }, []);
 
   // Direct visibilitychange listener — force-fetch when tab comes back.
-  // Uses global waitForAuth() to ensure JWT is refreshed first.
+  // fetchWithRetry inside stores auto-refreshes stale JWT on failure.
   useEffect(() => {
-    const handleVisible = async () => {
+    const handleVisible = () => {
       if (document.hidden) return;
-      await waitForAuth(); // global auth refresh (runs once, shared)
-      useForumStore.getState().fetchHotThreads(10, { force: true });
-      useForumStore.getState().fetchNewThreads(10, { force: true });
-      useBlogStore.getState().fetchPosts();
+      // Small delay to let visibility manager's auth refresh start first
+      setTimeout(() => {
+        useForumStore.getState().fetchHotThreads(10, { force: true });
+        useForumStore.getState().fetchNewThreads(10, { force: true });
+        useBlogStore.getState().fetchPosts();
+      }, 400);
     };
     document.addEventListener('visibilitychange', handleVisible);
     return () => document.removeEventListener('visibilitychange', handleVisible);

@@ -2,6 +2,7 @@
 
 import { create } from 'zustand';
 import { createClient } from '@/lib/supabase/client';
+import { fetchWithRetry } from '@/lib/fetchWithRetry';
 
 const THREADS_PER_PAGE = 20;
 
@@ -78,11 +79,13 @@ export const useForumStore = create((set, get) => ({
 
     try {
       const supabase = createClient();
-      const { data } = await supabase
-        .from('forums')
-        .select('*')
-        .order('category')
-        .order('name');
+      const { data } = await fetchWithRetry(
+        () => supabase
+          .from('forums')
+          .select('*')
+          .order('category')
+          .order('name')
+      );
 
       const forums = data || [];
       set({ forums, forumsLoaded: true, forumsLoading: false });
@@ -110,14 +113,17 @@ export const useForumStore = create((set, get) => ({
     try {
       const supabase = createClient();
       // Query threads through junction table (one thread, many forums)
-      const { data, count } = await supabase
-        .from('threads')
-        .select('*, profiles:user_id(display_name, is_peer_advisor, drug, taper_stage, drug_signature, avatar_url, is_founding_member), thread_forums!inner(forum_id)', { count: 'exact' })
-        .eq('thread_forums.forum_id', forumId)
-        .order('pinned', { ascending: false })
-        .order('created_at', { ascending: false })
-        .abortSignal(controller.signal)
-        .range(0, THREADS_PER_PAGE - 1);
+      const { data, count } = await fetchWithRetry(
+        () => supabase
+          .from('threads')
+          .select('*, profiles:user_id(display_name, is_peer_advisor, drug, taper_stage, drug_signature, avatar_url, is_founding_member), thread_forums!inner(forum_id)', { count: 'exact' })
+          .eq('thread_forums.forum_id', forumId)
+          .order('pinned', { ascending: false })
+          .order('created_at', { ascending: false })
+          .abortSignal(controller.signal)
+          .range(0, THREADS_PER_PAGE - 1),
+        { signal: controller.signal }
+      );
 
       const rows = data || [];
       const total = count ?? rows.length;

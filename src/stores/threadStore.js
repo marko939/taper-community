@@ -4,6 +4,7 @@ import { create } from 'zustand';
 import { createClient } from '@/lib/supabase/client';
 import { ensureSession } from '@/lib/ensureSession';
 import { fireAndForget } from '@/lib/fireAndForget';
+import { fetchWithRetry } from '@/lib/fetchWithRetry';
 import { useAuthStore } from './authStore';
 import { useForumStore } from './forumStore';
 
@@ -98,13 +99,19 @@ export const useThreadStore = create((set, get) => ({
 
     try {
       const supabase = createClient();
+      const selectFields = '*, profiles:user_id(display_name, is_peer_advisor, drug, taper_stage, post_count, drug_signature, location, avatar_url, is_founding_member), thread_forums(forum_id, forums:forum_id(name, slug, drug_slug))';
 
-      const { data: threadData } = await supabase
-        .from('threads')
-        .select('*, profiles:user_id(display_name, is_peer_advisor, drug, taper_stage, post_count, drug_signature, location, avatar_url, is_founding_member), thread_forums(forum_id, forums:forum_id(name, slug, drug_slug))')
-        .eq('id', threadId)
-        .abortSignal(controller.signal)
-        .single();
+      // fetchWithRetry: if first attempt fails (stale JWT after tab switch),
+      // automatically refreshes auth token and retries once
+      const { data: threadData } = await fetchWithRetry(
+        () => supabase
+          .from('threads')
+          .select(selectFields)
+          .eq('id', threadId)
+          .abortSignal(controller.signal)
+          .single(),
+        { signal: controller.signal }
+      );
 
       if (threadData) {
         set((state) => ({
@@ -143,13 +150,16 @@ export const useThreadStore = create((set, get) => ({
       const from = 0;
       const to = REPLIES_PER_PAGE - 1;
 
-      const { data, count } = await supabase
-        .from('replies')
-        .select('*, profiles:user_id(display_name, is_peer_advisor, drug, taper_stage, post_count, drug_signature, location, avatar_url, is_founding_member)', { count: 'exact' })
-        .eq('thread_id', threadId)
-        .order('created_at')
-        .abortSignal(controller.signal)
-        .range(from, to);
+      const { data, count } = await fetchWithRetry(
+        () => supabase
+          .from('replies')
+          .select('*, profiles:user_id(display_name, is_peer_advisor, drug, taper_stage, post_count, drug_signature, location, avatar_url, is_founding_member)', { count: 'exact' })
+          .eq('thread_id', threadId)
+          .order('created_at')
+          .abortSignal(controller.signal)
+          .range(from, to),
+        { signal: controller.signal }
+      );
 
       const rows = data || [];
       const total = count ?? rows.length;
