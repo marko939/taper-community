@@ -172,12 +172,25 @@ export default function FeedTabs({ activeTab: controlledTab, onTabChange, useUrl
     }
   }, [followingLoaded]);
 
-  // Initial fetch on mount — getState() keeps dep array empty
+  // Subscribe to loaded flags — when invalidate() resets them to false
+  // (e.g. tab comes back visible while we're already mounted), re-fetch.
+  const hotThreadsLoaded = useForumStore((s) => s.hotThreadsLoaded);
+  const newThreadsLoaded = useForumStore((s) => s.newThreadsLoaded);
+
+  // Fetch on mount AND whenever loaded flags are reset to false
   useEffect(() => {
-    useForumStore.getState().fetchHotThreads(10);
-    useForumStore.getState().fetchNewThreads(10);
-    useBlogStore.getState().fetchPosts();
-  }, []);
+    if (!hotThreadsLoaded) useForumStore.getState().fetchHotThreads(10);
+  }, [hotThreadsLoaded]);
+
+  useEffect(() => {
+    if (!newThreadsLoaded) useForumStore.getState().fetchNewThreads(10);
+  }, [newThreadsLoaded]);
+
+  // Blog posts — fetch on mount AND when invalidated (tab stale recovery)
+  const postsLoaded = useBlogStore((s) => s.postsLoaded);
+  useEffect(() => {
+    if (!postsLoaded) useBlogStore.getState().fetchPosts();
+  }, [postsLoaded]);
 
   useEffect(() => {
     if (user?.id) useFollowStore.getState().fetchFollowing(user.id);

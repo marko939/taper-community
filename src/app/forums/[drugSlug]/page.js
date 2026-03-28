@@ -61,11 +61,15 @@ export default function ForumPage() {
 
   const [blogPosts, setBlogPosts] = useState([]);
 
+  // Re-fetch threads when forum loads, AND when threadData is cleared by invalidate()
+  // (e.g. tab comes back from background). Without the threadData dep, the effect
+  // wouldn't re-run because forum.id hasn't changed.
+  const hasThreadData = !!threadData;
   useEffect(() => {
-    if (forum?.id) {
+    if (forum?.id && !hasThreadData) {
       fetchThreads(forum.id);
     }
-  }, [forum?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [forum?.id, hasThreadData]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Fetch blog posts assigned to this forum
   useEffect(() => {

@@ -57,6 +57,10 @@ export const useBlogStore = create((set, get) => ({
     set({ comments: pruned });
   },
 
+  invalidate: () => {
+    set({ postsLoaded: false });
+  },
+
   getSnapshot: () => {
     const s = get();
     return {

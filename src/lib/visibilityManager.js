@@ -49,10 +49,13 @@ function onVisibilityChange() {
         useNotificationStore.getState().subscribeRealtime();
       }
 
-      // Invalidate stale caches so next render re-fetches fresh data
+      // Invalidate stale caches so next render re-fetches fresh data.
+      // Components watching these loaded flags (e.g. FeedTabs) will
+      // automatically re-fetch when they see the flag go false.
       useForumStore.getState().invalidate();
       useJournalStore.getState().invalidate();
       useFollowStore.getState().invalidateFeeds();
+      useBlogStore.getState().invalidate();
     }, 300);
   }
 }
@@ -65,6 +68,18 @@ export function initVisibilityManager() {
   _handler = onVisibilityChange;
   document.addEventListener('visibilitychange', _handler);
   _initialized = true;
+}
+
+/**
+ * Cancel any pending visibility debounce timer.
+ * Call this on route change to prevent a stale invalidate() from wiping
+ * data that a newly-mounted page component just fetched.
+ */
+export function cancelVisibilityDebounce() {
+  if (_debounceTimer) {
+    clearTimeout(_debounceTimer);
+    _debounceTimer = null;
+  }
 }
 
 export function destroyVisibilityManager() {

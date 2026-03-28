@@ -3,6 +3,7 @@
 import { useEffect, useRef } from 'react';
 import { usePathname } from 'next/navigation';
 import { releaseNavigationLock } from '@/lib/navigationLock';
+import { cancelVisibilityDebounce } from '@/lib/visibilityManager';
 import { useProfileStore } from '@/stores/profileStore';
 import { useBlogStore } from '@/stores/blogStore';
 import { useJournalStore } from '@/stores/journalStore';
@@ -24,6 +25,10 @@ export default function NavigationObserver() {
 
     // Release navigation lock on successful route change
     releaseNavigationLock();
+
+    // Cancel any pending visibility debounce to prevent it from wiping
+    // data that the new page just fetched
+    cancelVisibilityDebounce();
 
     // Prune accumulated state in stores
     useProfileStore.getState().pruneCache?.();
