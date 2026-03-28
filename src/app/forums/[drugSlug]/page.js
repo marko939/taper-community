@@ -69,26 +69,26 @@ export default function ForumPage() {
       .from('blog_posts')
       .select('id, title, slug, excerpt, tags, cover_image_url, created_at, author_id, comment_count, forum_slugs')
       .eq('published', true)
-      .contains('forum_slugs', [forumSlug])
       .order('created_at', { ascending: false })
       .then(({ data }) => {
-        if (data) {
-          // Shape blog posts to look like threads for ThreadCard
-          setBlogPosts(data.map((p) => ({
-            id: p.id,
-            title: p.title,
-            body: p.excerpt || '',
-            tags: p.tags || [],
-            reply_count: p.comment_count || 0,
-            view_count: 0,
-            vote_score: 0,
-            pinned: false,
-            created_at: p.created_at,
-            user_id: p.author_id,
-            blog_post_slug: p.slug,
-            profiles: null,
-          })));
-        }
+        if (!data) return;
+        // Filter client-side for posts assigned to this forum
+        const matched = data.filter((p) => p.forum_slugs && p.forum_slugs.includes(forumSlug));
+        // Shape blog posts to look like threads for ThreadCard
+        setBlogPosts(matched.map((p) => ({
+          id: p.id,
+          title: p.title,
+          body: p.excerpt || '',
+          tags: p.tags || [],
+          reply_count: p.comment_count || 0,
+          view_count: 0,
+          vote_score: 0,
+          pinned: false,
+          created_at: p.created_at,
+          user_id: p.author_id,
+          blog_post_slug: p.slug,
+          profiles: { display_name: 'Based Psychiatrist', avatar_url: null, is_peer_advisor: false, is_founding_member: false },
+        })));
       });
   }, [forum]);
 
