@@ -221,10 +221,6 @@ export const useForumStore = create((set, get) => ({
     set({ recentThreads: { items: get().recentThreads.items, loading: true } });
     try {
       const supabase = createClient();
-      // Ensure auth token is fresh (prevents stale-tab failures)
-      if (force) {
-        try { await supabase.auth.getSession(); } catch {}
-      }
       const selectFields = '*, profiles:user_id(display_name, is_peer_advisor, avatar_url, is_founding_member), thread_forums(forum_id, forums:forum_id(name, slug, drug_slug))';
 
       // Try recent threads from last 30 days first, then widen if needed
@@ -330,10 +326,6 @@ export const useForumStore = create((set, get) => ({
     set({ newThreads: { items: get().newThreads.items, loading: true } });
     try {
       const supabase = createClient();
-      // Ensure auth token is fresh (prevents stale-tab failures)
-      if (force) {
-        try { await supabase.auth.getSession(); } catch {}
-      }
       const { data, error } = await supabase
         .from('threads')
         .select('*, profiles:user_id(display_name, is_peer_advisor, avatar_url, is_founding_member), thread_forums(forum_id, forums:forum_id(name, slug, drug_slug))')

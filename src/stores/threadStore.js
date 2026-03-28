@@ -99,8 +99,6 @@ export const useThreadStore = create((set, get) => ({
 
     try {
       const supabase = createClient();
-      // Ensure auth token is fresh (prevents stale-tab failures)
-      try { await supabase.auth.getSession(); } catch {}
       const selectFields = '*, profiles:user_id(display_name, is_peer_advisor, drug, taper_stage, post_count, drug_signature, location, avatar_url, is_founding_member), thread_forums(forum_id, forums:forum_id(name, slug, drug_slug))';
 
       // fetchWithRetry: if first attempt fails (stale JWT after tab switch),

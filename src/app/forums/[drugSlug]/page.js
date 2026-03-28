@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import { fetchWithRetry } from '@/lib/fetchWithRetry';
+import { authReady } from '@/lib/visibilityManager';
 import { useForumStore } from '@/stores/forumStore';
 import { getDrug } from '@/lib/drugs';
 import Badge from '@/components/shared/Badge';
@@ -31,6 +32,7 @@ export default function ForumPage() {
     setForumLoading(true);
     const controller = new AbortController();
     const fetchForum = async () => {
+      await authReady(); // wait for auth refresh if tab was stale
       const supabase = createClient();
       let { data } = await fetchWithRetry(
         () => supabase

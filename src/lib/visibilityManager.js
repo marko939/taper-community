@@ -1,5 +1,6 @@
 'use client';
 
+import { createClient } from '@/lib/supabase/client';
 import { useMessageStore } from '@/stores/messageStore';
 import { useNotificationStore } from '@/stores/notificationStore';
 import { useForumStore } from '@/stores/forumStore';
@@ -14,19 +15,20 @@ let _initialized = false;
 let _handler = null;
 let _debounceTimer = null;
 
+// Resolves when auth is confirmed fresh after a stale tab.
+// Components/stores can await this before fetching.
+let _authRefreshed = Promise.resolve();
+
 function onVisibilityChange() {
   if (document.hidden) {
-    // Tab going to background — pause everything
     if (_debounceTimer) {
       clearTimeout(_debounceTimer);
       _debounceTimer = null;
     }
 
-    // Unsubscribe non-critical realtime channels
     useMessageStore.getState().unsubscribeRealtime();
     useNotificationStore.getState().unsubscribeRealtime();
 
-    // Cancel all pending fetches across all stores
     useForumStore.getState().cancelAll();
     useThreadStore.getState().cancelAll();
     useFollowStore.getState().cancelAll?.();
@@ -35,22 +37,40 @@ function onVisibilityChange() {
     useBlogStore.getState().cancelAll?.();
     useNotificationStore.getState().cancelAll?.();
     useMessageStore.getState().cancelAll?.();
+
+    // Mark auth as needing refresh for next visible event
+    let _resolve;
+    _authRefreshed = new Promise(r => { _resolve = r; });
+    _authRefreshed._resolve = _resolve;
   } else {
-    // Tab becoming visible — debounce to prevent rapid-fire
+    // Tab visible — ONE auth refresh, then ALL fetches after it completes
     if (_debounceTimer) clearTimeout(_debounceTimer);
 
-    _debounceTimer = setTimeout(() => {
+    _debounceTimer = setTimeout(async () => {
       _debounceTimer = null;
 
+      // Step 1: Refresh auth token (ONE call, no lock contention)
+      try {
+        const supabase = createClient();
+        await supabase.auth.getSession();
+      } catch (e) {
+        console.warn('[visibilityManager] auth refresh failed:', e);
+      }
+
+      // Resolve the auth promise so any waiting fetches can proceed
+      if (_authRefreshed._resolve) {
+        _authRefreshed._resolve();
+        _authRefreshed = Promise.resolve();
+      }
+
+      // Step 2: Re-subscribe realtime
       const user = useAuthStore.getState().user;
       if (user?.id) {
         useMessageStore.getState().subscribeRealtime();
         useNotificationStore.getState().subscribeRealtime();
       }
 
-      // Invalidate stale caches AND force re-fetch feed data.
-      // force:true triggers getSession() inside each fetch function,
-      // which refreshes the JWT if it expired while in background.
+      // Step 3: Invalidate + force re-fetch with now-fresh auth
       useForumStore.getState().invalidate();
       useForumStore.getState().fetchHotThreads(10, { force: true });
       useForumStore.getState().fetchNewThreads(10, { force: true });
@@ -65,6 +85,15 @@ function onVisibilityChange() {
   }
 }
 
+/**
+ * Returns a promise that resolves once auth is confirmed fresh.
+ * If the tab was never stale, resolves immediately.
+ * Call this before fetching after a navigation from a stale tab.
+ */
+export function authReady() {
+  return _authRefreshed;
+}
+
 export function initVisibilityManager() {
   if (typeof window === 'undefined') return;
   if (process.env.NEXT_PUBLIC_VISIBILITY_MANAGER === 'false') return;
@@ -75,15 +104,25 @@ export function initVisibilityManager() {
   _initialized = true;
 }
 
-/**
- * Cancel any pending visibility debounce timer.
- * Call this on route change to prevent a stale invalidate() from wiping
- * data that a newly-mounted page component just fetched.
- */
 export function cancelVisibilityDebounce() {
   if (_debounceTimer) {
     clearTimeout(_debounceTimer);
     _debounceTimer = null;
+  }
+  // Even if debounce is cancelled (user navigated), resolve auth
+  // so navigated-to pages aren't stuck waiting
+  if (_authRefreshed._resolve) {
+    // Kick off auth refresh independently
+    (async () => {
+      try {
+        const supabase = createClient();
+        await supabase.auth.getSession();
+      } catch {}
+      if (_authRefreshed._resolve) {
+        _authRefreshed._resolve();
+        _authRefreshed = Promise.resolve();
+      }
+    })();
   }
 }
 
@@ -96,5 +135,9 @@ export function destroyVisibilityManager() {
     clearTimeout(_debounceTimer);
     _debounceTimer = null;
   }
+  if (_authRefreshed._resolve) {
+    _authRefreshed._resolve();
+  }
+  _authRefreshed = Promise.resolve();
   _initialized = false;
 }

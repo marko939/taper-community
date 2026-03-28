@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useThreadStore } from '@/stores/threadStore';
 import { useAuthStore } from '@/stores/authStore';
 import { useFollowStore } from '@/stores/followStore';
+import { authReady } from '@/lib/visibilityManager';
 import { GENERAL_FORUMS } from '@/lib/forumCategories';
 import ThreadView from '@/components/thread/ThreadView';
 import ReplyList from '@/components/thread/ReplyList';
@@ -33,10 +34,12 @@ export default function ThreadPage() {
   const totalReplies = replyData?.totalCount || 0;
   const loading = !thread && !replyData;
 
-  // Load thread (fetchWithRetry inside store auto-refreshes stale JWT)
+  // Load thread — wait for auth to be fresh first (handles stale tab → click thread)
   useEffect(() => {
     if (!threadId) return;
-    fetchThread(threadId);
+    let cancelled = false;
+    authReady().then(() => { if (!cancelled) fetchThread(threadId); });
+    return () => { cancelled = true; };
   }, [threadId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Load replies only after thread data exists (waterfall)
