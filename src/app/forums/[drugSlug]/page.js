@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
+import { waitForAuth } from '@/lib/visibilityManager';
 import { useForumStore } from '@/stores/forumStore';
 import { getDrug } from '@/lib/drugs';
 import Badge from '@/components/shared/Badge';
@@ -30,6 +31,7 @@ export default function ForumPage() {
     setForumLoading(true);
     const controller = new AbortController();
     const fetchForum = async () => {
+      await waitForAuth(); // ensure JWT is fresh after stale tab
       const supabase = createClient();
       let { data } = await supabase
         .from('forums')

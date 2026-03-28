@@ -1,11 +1,12 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { useThreadStore } from '@/stores/threadStore';
 import { useAuthStore } from '@/stores/authStore';
 import { useFollowStore } from '@/stores/followStore';
+import { waitForAuth } from '@/lib/visibilityManager';
 import { GENERAL_FORUMS } from '@/lib/forumCategories';
 import ThreadView from '@/components/thread/ThreadView';
 import ReplyList from '@/components/thread/ReplyList';
@@ -27,16 +28,25 @@ export default function ThreadPage() {
   const fetchReplyPage = useThreadStore((s) => s.fetchReplyPage);
   const user = useAuthStore((s) => s.user);
   const fetchThreadFollows = useFollowStore((s) => s.fetchThreadFollows);
+  const retryRef = useRef(false);
 
   const replies = replyData?.items || [];
   const hasMoreReplies = replyData?.hasMore || false;
   const totalReplies = replyData?.totalCount || 0;
   const loading = !thread && !replyData;
 
-  // Waterfall loading: thread first, then replies, then follows
+  // Load thread — await global auth readiness first (handles stale JWT)
   useEffect(() => {
     if (!threadId) return;
-    fetchThread(threadId);
+    let cancelled = false;
+
+    (async () => {
+      // Wait for auth to be ready (resolves instantly if tab wasn't stale)
+      await waitForAuth();
+      if (!cancelled) fetchThread(threadId);
+    })();
+
+    return () => { cancelled = true; };
   }, [threadId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Load replies only after thread data exists (waterfall)
@@ -57,6 +67,30 @@ export default function ThreadPage() {
   useEffect(() => {
     if (user?.id && thread) fetchThreadFollows(user.id);
   }, [user?.id, !!thread]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Re-fetch thread when tab becomes visible (stale tab recovery)
+  useEffect(() => {
+    if (!threadId) return;
+    const handler = async () => {
+      if (document.hidden) return;
+      await waitForAuth();
+      useThreadStore.getState().fetchThread(threadId);
+    };
+    document.addEventListener('visibilitychange', handler);
+    return () => document.removeEventListener('visibilitychange', handler);
+  }, [threadId]);
+
+  // Safety net: if still loading after 5 seconds, retry
+  useEffect(() => {
+    if (!threadId) return;
+    const timer = setTimeout(() => {
+      if (!useThreadStore.getState().threads[threadId] && !retryRef.current) {
+        retryRef.current = true;
+        useThreadStore.getState().fetchThread(threadId);
+      }
+    }, 5000);
+    return () => clearTimeout(timer);
+  }, [threadId]);
 
   if (loading) return <PageLoading />;
 

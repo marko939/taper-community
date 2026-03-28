@@ -6,7 +6,7 @@ import { useForumStore } from '@/stores/forumStore';
 import { useAuthStore } from '@/stores/authStore';
 import { useFollowStore } from '@/stores/followStore';
 import { useBlogStore } from '@/stores/blogStore';
-import { createClient } from '@/lib/supabase/client';
+import { waitForAuth } from '@/lib/visibilityManager';
 import { GENERAL_FORUMS } from '@/lib/forumCategories';
 import FollowButton from '@/components/shared/FollowButton';
 import { usePullToRefresh, PullIndicator } from '@/hooks/usePullToRefresh';
@@ -180,27 +180,12 @@ export default function FeedTabs({ activeTab: controlledTab, onTabChange, useUrl
     useBlogStore.getState().fetchPosts();
   }, []);
 
-  // CRITICAL: Direct visibilitychange listener inside FeedTabs.
-  // When the tab comes back from background, refresh auth token first
-  // (JWT may have expired), then force-fetch all feed data.
-  // This is independent of the visibility manager — belt AND suspenders.
+  // Direct visibilitychange listener — force-fetch when tab comes back.
+  // Uses global waitForAuth() to ensure JWT is refreshed first.
   useEffect(() => {
     const handleVisible = async () => {
       if (document.hidden) return;
-
-      // Wait a beat for the visibility manager's cancelAll to settle,
-      // then refresh auth and force-fetch
-      await new Promise((r) => setTimeout(r, 500));
-
-      // Refresh auth token (may have expired while tab was in background)
-      try {
-        const supabase = createClient();
-        await supabase.auth.getSession();
-      } catch (e) {
-        // Auth refresh failed — try fetching anyway
-      }
-
-      // Force-fetch fresh data regardless of loaded flags
+      await waitForAuth(); // global auth refresh (runs once, shared)
       useForumStore.getState().fetchHotThreads(10, { force: true });
       useForumStore.getState().fetchNewThreads(10, { force: true });
       useBlogStore.getState().fetchPosts();

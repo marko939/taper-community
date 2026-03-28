@@ -10,7 +10,7 @@ import { useNotificationStore } from '@/stores/notificationStore';
 import { useMessageStore } from '@/stores/messageStore';
 import { useProfileStore } from '@/stores/profileStore';
 import { useBlogStore } from '@/stores/blogStore';
-import { cancelVisibilityDebounce } from '@/lib/visibilityManager';
+import { cancelVisibilityDebounce, waitForAuth } from '@/lib/visibilityManager';
 
 /**
  * Cancels all pending store fetches on unmount and on route change.
