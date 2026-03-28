@@ -13,6 +13,31 @@ export const useJournalStore = create((set, get) => ({
   shareToken: null,
   sharedEntries: {},   // keyed by shareToken: { entries, loading }
   publicEntries: {},   // keyed by userId: { entries, loading }
+  _abortControllers: {},
+
+  cancelPending: (opName) => {
+    const ctrl = get()._abortControllers[opName];
+    if (ctrl) {
+      ctrl.abort();
+      set((state) => {
+        const controllers = { ...state._abortControllers };
+        delete controllers[opName];
+        return { _abortControllers: controllers };
+      });
+    }
+  },
+
+  cancelAll: () => {
+    const controllers = get()._abortControllers;
+    for (const ctrl of Object.values(controllers)) {
+      ctrl.abort();
+    }
+    set({ _abortControllers: {} });
+  },
+
+  pruneSharedState: () => {
+    set({ sharedEntries: {}, publicEntries: {} });
+  },
 
   invalidate: () => {
     set({ entriesLoaded: false, loading: true });
@@ -23,16 +48,24 @@ export const useJournalStore = create((set, get) => ({
     const userId = useAuthStore.getState().user?.id;
     if (!userId) { set({ loading: false }); return; }
 
+    get().cancelPending('fetchEntries');
+    const controller = new AbortController();
+    set((state) => ({
+      _abortControllers: { ...state._abortControllers, fetchEntries: controller },
+    }));
+
     try {
       const supabase = createClient();
       const { data } = await supabase
         .from('journal_entries')
         .select('*')
         .eq('user_id', userId)
-        .order('date', { ascending: false });
+        .order('date', { ascending: false })
+        .abortSignal(controller.signal);
 
       set({ entries: data || [], entriesLoaded: true, loading: false });
     } catch (err) {
+      if (err.name === 'AbortError') return;
       console.error('[journalStore] fetchEntries error:', err);
       set({ loading: false });
     }
@@ -168,7 +201,10 @@ export const useJournalStore = create((set, get) => ({
     if (!shareToken) return;
     if (get().sharedEntries[shareToken]?.entries?.length > 0) return;
 
+    get().cancelPending('fetchSharedEntries');
+    const controller = new AbortController();
     set((state) => ({
+      _abortControllers: { ...state._abortControllers, fetchSharedEntries: controller },
       sharedEntries: { ...state.sharedEntries, [shareToken]: { entries: [], loading: true } },
     }));
 
@@ -179,6 +215,7 @@ export const useJournalStore = create((set, get) => ({
         .from('journal_shares')
         .select('user_id')
         .eq('share_token', shareToken)
+        .abortSignal(controller.signal)
         .single();
 
       if (!share) {
@@ -192,12 +229,14 @@ export const useJournalStore = create((set, get) => ({
         .from('journal_entries')
         .select('*')
         .eq('user_id', share.user_id)
-        .order('date', { ascending: true });
+        .order('date', { ascending: true })
+        .abortSignal(controller.signal);
 
       set((state) => ({
         sharedEntries: { ...state.sharedEntries, [shareToken]: { entries: data || [], loading: false } },
       }));
     } catch (err) {
+      if (err.name === 'AbortError') return;
       console.error('[journalStore] fetchSharedEntries error:', err);
       set((state) => ({
         sharedEntries: { ...state.sharedEntries, [shareToken]: { entries: [], loading: false } },
@@ -248,15 +287,27 @@ export const useJournalStore = create((set, get) => ({
     const userId = useAuthStore.getState().user?.id;
     if (!userId) return;
 
-    const supabase = createClient();
-    const { data } = await supabase
-      .from('shared_journeys')
-      .select('*')
-      .eq('user_id', userId)
-      .eq('is_active', true)
-      .order('created_at', { ascending: false });
+    get().cancelPending('fetchUserShares');
+    const controller = new AbortController();
+    set((state) => ({
+      _abortControllers: { ...state._abortControllers, fetchUserShares: controller },
+    }));
 
-    set({ sharedJourneys: data || [], sharedJourneysLoaded: true });
+    try {
+      const supabase = createClient();
+      const { data } = await supabase
+        .from('shared_journeys')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('is_active', true)
+        .order('created_at', { ascending: false })
+        .abortSignal(controller.signal);
+
+      set({ sharedJourneys: data || [], sharedJourneysLoaded: true });
+    } catch (err) {
+      if (err.name === 'AbortError') return;
+      console.error('[journalStore] fetchUserShares error:', err);
+    }
   },
 
   revokeShare: async (id) => {
@@ -279,7 +330,10 @@ export const useJournalStore = create((set, get) => ({
     if (!userId) return;
     if (get().publicEntries[userId] && !get().publicEntries[userId].loading) return;
 
+    get().cancelPending('fetchPublicEntries');
+    const controller = new AbortController();
     set((state) => ({
+      _abortControllers: { ...state._abortControllers, fetchPublicEntries: controller },
       publicEntries: { ...state.publicEntries, [userId]: { entries: [], loading: true } },
     }));
 
@@ -290,12 +344,14 @@ export const useJournalStore = create((set, get) => ({
         .select('*')
         .eq('user_id', userId)
         .eq('is_public', true)
-        .order('date', { ascending: false });
+        .order('date', { ascending: false })
+        .abortSignal(controller.signal);
 
       set((state) => ({
         publicEntries: { ...state.publicEntries, [userId]: { entries: data || [], loading: false } },
       }));
     } catch (err) {
+      if (err.name === 'AbortError') return;
       console.error('[journalStore] fetchPublicEntries error:', err);
       set((state) => ({
         publicEntries: { ...state.publicEntries, [userId]: { entries: [], loading: false } },

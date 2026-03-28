@@ -28,27 +28,35 @@ export default function ForumPage() {
 
   useEffect(() => {
     setForumLoading(true);
+    const controller = new AbortController();
     const fetchForum = async () => {
       const supabase = createClient();
       let { data } = await supabase
         .from('forums')
         .select('*')
         .eq('drug_slug', drugSlug)
+        .abortSignal(controller.signal)
         .maybeSingle();
 
-      if (!data) {
+      if (!data && !controller.signal.aborted) {
         const result = await supabase
           .from('forums')
           .select('*')
           .eq('slug', drugSlug)
+          .abortSignal(controller.signal)
           .maybeSingle();
         data = result.data;
       }
 
-      setForum(data);
-      setForumLoading(false);
+      if (!controller.signal.aborted) {
+        setForum(data);
+        setForumLoading(false);
+      }
     };
-    fetchForum();
+    fetchForum().catch((err) => {
+      if (err.name !== 'AbortError') console.error('[ForumPage] fetchForum error:', err);
+    });
+    return () => controller.abort();
   }, [drugSlug]);
 
   const [blogPosts, setBlogPosts] = useState([]);
@@ -64,14 +72,16 @@ export default function ForumPage() {
     if (!forum) return;
     const forumSlug = forum.drug_slug || forum.slug;
     if (!forumSlug) return;
+    const controller = new AbortController();
     const supabase = createClient();
     supabase
       .from('blog_posts')
       .select('id, title, slug, excerpt, tags, cover_image_url, created_at, author_id, comment_count, forum_slugs')
       .eq('published', true)
       .order('created_at', { ascending: false })
+      .abortSignal(controller.signal)
       .then(({ data }) => {
-        if (!data) return;
+        if (controller.signal.aborted || !data) return;
         // Filter client-side for posts assigned to this forum
         const matched = data.filter((p) => p.forum_slugs && p.forum_slugs.includes(forumSlug));
         // Shape blog posts to look like threads for ThreadCard
@@ -90,6 +100,7 @@ export default function ForumPage() {
           profiles: { display_name: 'Based Psychiatrist', avatar_url: 'https://aygtqzhccqmglkvtvish.supabase.co/storage/v1/object/public/avatars/8572637a-2109-4471-bcb4-3163d04094d0/avatar.jpg', is_peer_advisor: false, is_founding_member: false },
         })));
       });
+    return () => controller.abort();
   }, [forum]);
 
   if (forumLoading) return <PageLoading />;

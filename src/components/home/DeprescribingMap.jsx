@@ -25,6 +25,7 @@ function loadCSS(href) {
 export default function DeprescribingMap({ compact = false }) {
   const mapRef = useRef(null);
   const mapInstanceRef = useRef(null);
+  const mapClickHandlerRef = useRef(null);
   const timersRef = useRef([]);
   const [loaded, setLoaded] = useState(false);
   const user = useAuthStore((s) => s.user);
@@ -128,7 +129,7 @@ export default function DeprescribingMap({ compact = false }) {
       setLoaded(true);
 
       // Delegated click handler for Contact buttons in Leaflet popups
-      map.getContainer().addEventListener('click', (e) => {
+      const mapClickHandler = (e) => {
         const btn = e.target.closest('[data-clinician-id]');
         if (!btn) return;
         const clinicianId = btn.getAttribute('data-clinician-id');
@@ -147,7 +148,9 @@ export default function DeprescribingMap({ compact = false }) {
           // Scroll to top so modal is fully visible
           window.scrollTo({ top: 0, behavior: 'smooth' });
         }
-      });
+      };
+      mapClickHandlerRef.current = mapClickHandler;
+      map.getContainer().addEventListener('click', mapClickHandler);
 
       // Invalidate size multiple times to ensure tiles render after visibility change
       const t1 = setTimeout(() => map.invalidateSize(), 100);
@@ -165,6 +168,10 @@ export default function DeprescribingMap({ compact = false }) {
       timersRef.current.forEach(clearTimeout);
       timersRef.current = [];
       if (mapInstanceRef.current) {
+        if (mapClickHandlerRef.current) {
+          mapInstanceRef.current.getContainer()?.removeEventListener('click', mapClickHandlerRef.current);
+          mapClickHandlerRef.current = null;
+        }
         mapInstanceRef.current.remove();
         mapInstanceRef.current = null;
       }

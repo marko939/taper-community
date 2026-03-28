@@ -67,6 +67,16 @@ export const useThreadStore = create((set, get) => ({
     set({ threads, replies, voteState, helpfulState });
   },
 
+  getSnapshot: () => {
+    const s = get();
+    return {
+      threadKeys: Object.keys(s.threads).length,
+      replyKeys: Object.keys(s.replies).length,
+      voteKeys: Object.keys(s.voteState).length,
+      pendingAborts: Object.keys(s._abortControllers).length,
+    };
+  },
+
   updateThread: (threadId, partial) => {
     set((state) => ({
       threads: {

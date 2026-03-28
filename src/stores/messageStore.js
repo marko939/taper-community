@@ -21,10 +21,37 @@ export const useMessageStore = create((set, get) => ({
   conversationsLoaded: false,
   _realtimeChannel: null,
   _refetchTimer: null,
+  _abortControllers: {},
+
+  cancelPending: (opName) => {
+    const ctrl = get()._abortControllers[opName];
+    if (ctrl) {
+      ctrl.abort();
+      set((state) => {
+        const controllers = { ...state._abortControllers };
+        delete controllers[opName];
+        return { _abortControllers: controllers };
+      });
+    }
+  },
+
+  cancelAll: () => {
+    const controllers = get()._abortControllers;
+    for (const ctrl of Object.values(controllers)) {
+      ctrl.abort();
+    }
+    set({ _abortControllers: {} });
+  },
 
   fetchConversations: async () => {
     const userId = useAuthStore.getState().user?.id;
     if (!userId) return;
+
+    get().cancelPending('fetchConversations');
+    const controller = new AbortController();
+    set((state) => ({
+      _abortControllers: { ...state._abortControllers, fetchConversations: controller },
+    }));
 
     const isStaff = STAFF_IDS.includes(userId);
     set({ loading: true });
@@ -36,7 +63,8 @@ export const useMessageStore = create((set, get) => ({
         .from('direct_messages')
         .select('id, from_user_id, to_user_id, body, read, created_at')
         .or(`from_user_id.eq.${userId},to_user_id.eq.${userId}`)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .abortSignal(controller.signal);
 
       // Group by conversation partner
       const byPartner = {};
@@ -74,7 +102,7 @@ export const useMessageStore = create((set, get) => ({
       // Fetch partner profiles
       const partnerIds = [...allPartnerIds];
       const { data: profiles } = partnerIds.length > 0
-        ? await supabase.from('profiles').select('id, display_name, avatar_url').in('id', partnerIds)
+        ? await supabase.from('profiles').select('id, display_name, avatar_url').in('id', partnerIds).abortSignal(controller.signal)
         : { data: [] };
 
       const profileMap = {};
@@ -118,6 +146,7 @@ export const useMessageStore = create((set, get) => ({
 
       set({ conversations, loading: false, conversationsLoaded: true });
     } catch (err) {
+      if (err.name === 'AbortError') return;
       console.error('[messageStore] fetchConversations error:', err);
       set({ loading: false });
     }
@@ -127,7 +156,13 @@ export const useMessageStore = create((set, get) => ({
     const userId = useAuthStore.getState().user?.id;
     if (!userId || !otherUserId) return;
 
-    set({ messagesLoading: true });
+    get().cancelPending('fetchMessages');
+    const controller = new AbortController();
+    set((state) => ({
+      _abortControllers: { ...state._abortControllers, fetchMessages: controller },
+      messagesLoading: true,
+    }));
+
     try {
       const supabase = createClient();
 
@@ -137,10 +172,12 @@ export const useMessageStore = create((set, get) => ({
         .or(
           `and(from_user_id.eq.${userId},to_user_id.eq.${otherUserId}),and(from_user_id.eq.${otherUserId},to_user_id.eq.${userId})`
         )
-        .order('created_at', { ascending: true });
+        .order('created_at', { ascending: true })
+        .abortSignal(controller.signal);
 
       set({ messages: data || [], messagesLoading: false });
     } catch (err) {
+      if (err.name === 'AbortError') return;
       console.error('[messageStore] fetchMessages error:', err);
       set({ messagesLoading: false });
     }
@@ -220,16 +257,24 @@ export const useMessageStore = create((set, get) => ({
     const userId = useAuthStore.getState().user?.id;
     if (!userId) return;
 
+    get().cancelPending('fetchUnreadTotal');
+    const controller = new AbortController();
+    set((state) => ({
+      _abortControllers: { ...state._abortControllers, fetchUnreadTotal: controller },
+    }));
+
     try {
       const supabase = createClient();
       const { count } = await supabase
         .from('direct_messages')
         .select('id', { count: 'exact', head: true })
         .eq('to_user_id', userId)
-        .eq('read', false);
+        .eq('read', false)
+        .abortSignal(controller.signal);
 
       set({ unreadTotal: count || 0 });
     } catch (err) {
+      if (err.name === 'AbortError') return;
       console.error('[messageStore] fetchUnreadTotal error:', err);
     }
   },

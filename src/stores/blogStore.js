@@ -24,17 +24,67 @@ export const useBlogStore = create((set, get) => ({
   currentPostLoading: false,
   comments: {},        // keyed by blogPostId: { items, totalCount }
   commentsLoading: false,
+  _abortControllers: {},
+
+  cancelPending: (opName) => {
+    const ctrl = get()._abortControllers[opName];
+    if (ctrl) {
+      ctrl.abort();
+      set((state) => {
+        const controllers = { ...state._abortControllers };
+        delete controllers[opName];
+        return { _abortControllers: controllers };
+      });
+    }
+  },
+
+  cancelAll: () => {
+    const controllers = get()._abortControllers;
+    for (const ctrl of Object.values(controllers)) {
+      ctrl.abort();
+    }
+    set({ _abortControllers: {} });
+  },
+
+  pruneComments: (keepPostId) => {
+    const comments = get().comments;
+    const keys = Object.keys(comments);
+    const MAX_CACHED = 5;
+    if (keys.length <= MAX_CACHED) return;
+    const pruned = { ...comments };
+    const toRemove = keys.filter((k) => k !== keepPostId).slice(0, keys.length - MAX_CACHED);
+    for (const k of toRemove) delete pruned[k];
+    set({ comments: pruned });
+  },
+
+  getSnapshot: () => {
+    const s = get();
+    return {
+      postsCount: s.posts.length,
+      postsLoaded: s.postsLoaded,
+      commentKeys: Object.keys(s.comments).length,
+      currentPost: s.currentPost?.slug ?? null,
+      pendingAborts: Object.keys(s._abortControllers).length,
+    };
+  },
 
   fetchPosts: async (includeUnpublished = false) => {
     if (get().postsLoaded && !includeUnpublished) return get().posts;
-    set({ postsLoading: true });
+
+    get().cancelPending('fetchPosts');
+    const controller = new AbortController();
+    set((state) => ({
+      _abortControllers: { ...state._abortControllers, fetchPosts: controller },
+      postsLoading: true,
+    }));
 
     try {
       const supabase = createClient();
       let query = supabase
         .from('blog_posts')
         .select('id, title, slug, excerpt, body, cover_image_url, tags, published, meta_description, forum_thread_id, forum_slugs, created_at, updated_at')
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .abortSignal(controller.signal);
 
       if (!includeUnpublished) {
         query = query.eq('published', true);
@@ -47,6 +97,7 @@ export const useBlogStore = create((set, get) => ({
       set({ posts, postsLoaded: !includeUnpublished, postsLoading: false });
       return posts;
     } catch (err) {
+      if (err.name === 'AbortError') return [];
       console.error('[blogStore] fetchPosts error:', err);
       set({ postsLoading: false });
       return [];
@@ -54,7 +105,12 @@ export const useBlogStore = create((set, get) => ({
   },
 
   fetchPost: async (slug) => {
-    set({ currentPostLoading: true });
+    get().cancelPending('fetchPost');
+    const controller = new AbortController();
+    set((state) => ({
+      _abortControllers: { ...state._abortControllers, fetchPost: controller },
+      currentPostLoading: true,
+    }));
 
     try {
       const supabase = createClient();
@@ -62,12 +118,14 @@ export const useBlogStore = create((set, get) => ({
         .from('blog_posts')
         .select('*')
         .eq('slug', slug)
+        .abortSignal(controller.signal)
         .single();
 
       if (error) throw error;
       set({ currentPost: data, currentPostLoading: false });
       return data;
     } catch (err) {
+      if (err.name === 'AbortError') return null;
       console.error('[blogStore] fetchPost error:', err);
       set({ currentPost: null, currentPostLoading: false });
       return null;
@@ -147,14 +205,21 @@ export const useBlogStore = create((set, get) => ({
   // ─── Blog Comments ───
 
   fetchComments: async (blogPostId) => {
-    set({ commentsLoading: true });
+    get().cancelPending('fetchComments');
+    const controller = new AbortController();
+    set((state) => ({
+      _abortControllers: { ...state._abortControllers, fetchComments: controller },
+      commentsLoading: true,
+    }));
+
     try {
       const supabase = createClient();
       const { data, count } = await supabase
         .from('blog_comments')
         .select('*, profiles:user_id(display_name, avatar_url, is_peer_advisor, drug, taper_stage, is_founding_member)', { count: 'exact' })
         .eq('blog_post_id', blogPostId)
-        .order('created_at');
+        .order('created_at')
+        .abortSignal(controller.signal);
 
       const rows = data || [];
       set((state) => ({
@@ -162,6 +227,7 @@ export const useBlogStore = create((set, get) => ({
         commentsLoading: false,
       }));
     } catch (err) {
+      if (err.name === 'AbortError') return;
       console.error('[blogStore] fetchComments error:', err);
       set((state) => ({
         comments: { ...state.comments, [blogPostId]: { items: [], totalCount: 0 } },

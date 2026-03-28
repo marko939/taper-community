@@ -1,0 +1,54 @@
+'use client';
+
+import { useEffect, useRef } from 'react';
+import { usePathname } from 'next/navigation';
+import { releaseNavigationLock } from '@/lib/navigationLock';
+import { useProfileStore } from '@/stores/profileStore';
+import { useBlogStore } from '@/stores/blogStore';
+import { useJournalStore } from '@/stores/journalStore';
+import { createClient } from '@/lib/supabase/client';
+
+/**
+ * Mounted once in layout.js. On every route change:
+ * - Releases navigation lock (Fix 7)
+ * - Prunes accumulated store state (Fix 4)
+ * - Logs diagnostics (Phase 1B)
+ */
+export default function NavigationObserver() {
+  const pathname = usePathname();
+  const prevPathname = useRef(pathname);
+  const mountTime = useRef(Date.now());
+
+  useEffect(() => {
+    if (prevPathname.current === pathname) return;
+
+    // Release navigation lock on successful route change
+    releaseNavigationLock();
+
+    // Prune accumulated state in stores
+    useProfileStore.getState().pruneCache?.();
+    useBlogStore.getState().pruneComments?.();
+    useJournalStore.getState().pruneSharedState?.();
+
+    // Diagnostic logging
+    if (process.env.NEXT_PUBLIC_DIAG_MODE === 'true') {
+      const supabase = createClient();
+      const channels = supabase.getChannels?.()?.length ?? 'N/A';
+      const now = Date.now();
+      const delta = now - mountTime.current;
+      mountTime.current = now;
+
+      const leaks = [];
+      if (typeof channels === 'number' && channels > 5) leaks.push(`channels=${channels}`);
+
+      const status = leaks.length === 0 ? 'CLEAN' : `LEAK DETECTED [${leaks.join(', ')}]`;
+      console.log(
+        `[TaperDiag] HEALTH: ${status} | ${prevPathname.current} -> ${pathname} | ${delta}ms since last nav | channels=${channels}`
+      );
+    }
+
+    prevPathname.current = pathname;
+  }, [pathname]);
+
+  return null;
+}

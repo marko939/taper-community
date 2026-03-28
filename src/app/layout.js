@@ -7,6 +7,7 @@ import NotificationFab from '@/components/layout/NotificationFab';
 import BottomNav from '@/components/layout/BottomNav';
 import PageViewTracker from '@/components/layout/PageViewTracker';
 import ErrorBoundary from '@/components/layout/ErrorBoundary';
+import NavigationObserver from '@/components/layout/NavigationObserver';
 import BraveBanner from '@/components/layout/BraveBanner';
 import SwipeBackWrapper from '@/components/layout/SwipeBackWrapper';
 import { FontSizeProvider } from '@/lib/fontSizeContext';
@@ -106,6 +107,7 @@ export default function RootLayout({ children }) {
       <body className="min-h-screen antialiased">
         <FontSizeProvider>
           <StoreInitializer />
+          <NavigationObserver />
           <div className="lg:flex">
             <Sidebar />
             <SwipeBackWrapper>

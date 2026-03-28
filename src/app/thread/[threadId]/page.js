@@ -33,25 +33,30 @@ export default function ThreadPage() {
   const totalReplies = replyData?.totalCount || 0;
   const loading = !thread && !replyData;
 
+  // Waterfall loading: thread first, then replies, then follows
   useEffect(() => {
     if (!threadId) return;
     fetchThread(threadId);
+  }, [threadId]); // eslint-disable-line react-hooks/exhaustive-deps
 
-    // If URL has a reply hash anchor, fetch the page containing that reply
+  // Load replies only after thread data exists (waterfall)
+  useEffect(() => {
+    if (!threadId || !thread) return;
+
     const hash = typeof window !== 'undefined' ? window.location.hash : '';
     const replyId = hash.startsWith('#reply-') ? hash.replace('#reply-', '') : null;
 
     if (replyId) {
-      // Fetch all pages up to the one containing the target reply
       fetchReplyPage(threadId, replyId);
     } else {
       fetchReplies(threadId);
     }
-  }, [threadId]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [threadId, !!thread]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Load follows last (lowest priority)
   useEffect(() => {
-    if (user?.id) fetchThreadFollows(user.id);
-  }, [user?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+    if (user?.id && thread) fetchThreadFollows(user.id);
+  }, [user?.id, !!thread]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (loading) return <PageLoading />;
 

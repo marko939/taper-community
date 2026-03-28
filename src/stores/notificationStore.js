@@ -11,12 +11,40 @@ export const useNotificationStore = create((set, get) => ({
   fetchError: false,
   _realtimeChannel: null,
   _refetchTimer: null,
+  _abortControllers: {},
+
+  cancelPending: (opName) => {
+    const ctrl = get()._abortControllers[opName];
+    if (ctrl) {
+      ctrl.abort();
+      set((state) => {
+        const controllers = { ...state._abortControllers };
+        delete controllers[opName];
+        return { _abortControllers: controllers };
+      });
+    }
+  },
+
+  cancelAll: () => {
+    const controllers = get()._abortControllers;
+    for (const ctrl of Object.values(controllers)) {
+      ctrl.abort();
+    }
+    set({ _abortControllers: {} });
+  },
 
   fetchNotifications: async () => {
     const userId = useAuthStore.getState().user?.id;
     if (!userId) return;
 
-    set({ loading: true, fetchError: false });
+    get().cancelPending('fetchNotifications');
+    const controller = new AbortController();
+    set((state) => ({
+      _abortControllers: { ...state._abortControllers, fetchNotifications: controller },
+      loading: true,
+      fetchError: false,
+    }));
+
     try {
       const supabase = createClient();
 
@@ -26,11 +54,13 @@ export const useNotificationStore = create((set, get) => ({
         .eq('user_id', userId)
         .in('type', ['thread_reply', 'reply_mention', 'badge', 'forum_new_thread'])
         .order('created_at', { ascending: false })
+        .abortSignal(controller.signal)
         .limit(50);
 
       if (error) throw error;
       set({ notifications: data || [], loading: false, fetchError: false });
     } catch (err) {
+      if (err.name === 'AbortError') return;
       console.error('[notificationStore] fetchNotifications error:', err);
       set({ loading: false, fetchError: true });
     }
@@ -40,6 +70,12 @@ export const useNotificationStore = create((set, get) => ({
     const userId = useAuthStore.getState().user?.id;
     if (!userId) return;
 
+    get().cancelPending('fetchUnreadCount');
+    const controller = new AbortController();
+    set((state) => ({
+      _abortControllers: { ...state._abortControllers, fetchUnreadCount: controller },
+    }));
+
     try {
       const supabase = createClient();
 
@@ -48,10 +84,12 @@ export const useNotificationStore = create((set, get) => ({
         .select('id', { count: 'exact', head: true })
         .eq('user_id', userId)
         .eq('read', false)
-        .in('type', ['thread_reply', 'reply_mention', 'badge', 'forum_new_thread']);
+        .in('type', ['thread_reply', 'reply_mention', 'badge', 'forum_new_thread'])
+        .abortSignal(controller.signal);
 
       set({ unreadCount: count || 0 });
     } catch (err) {
+      if (err.name === 'AbortError') return;
       console.error('[notificationStore] fetchUnreadCount error:', err);
     }
   },

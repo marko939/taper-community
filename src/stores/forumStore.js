@@ -43,6 +43,17 @@ export const useForumStore = create((set, get) => ({
     set({ _abortControllers: {} });
   },
 
+  getSnapshot: () => {
+    const s = get();
+    return {
+      forumPages: Object.keys(s.threadPages).length,
+      searchKeys: Object.keys(s.searchState).length,
+      hotLoaded: s.hotThreadsLoaded,
+      newLoaded: s.newThreadsLoaded,
+      pendingAborts: Object.keys(s._abortControllers).length,
+    };
+  },
+
   // Reset cached flags so next fetch actually hits the DB
   invalidate: () => {
     set({

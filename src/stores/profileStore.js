@@ -6,13 +6,59 @@ import { useAuthStore } from './authStore';
 
 export const useProfileStore = create((set, get) => ({
   profiles: {}, // keyed by userId: { data, threads, replies, loading }
+  _abortControllers: {},
+
+  cancelPending: (opName) => {
+    const ctrl = get()._abortControllers[opName];
+    if (ctrl) {
+      ctrl.abort();
+      set((state) => {
+        const controllers = { ...state._abortControllers };
+        delete controllers[opName];
+        return { _abortControllers: controllers };
+      });
+    }
+  },
+
+  cancelAll: () => {
+    const controllers = get()._abortControllers;
+    for (const ctrl of Object.values(controllers)) {
+      ctrl.abort();
+    }
+    set({ _abortControllers: {} });
+  },
+
+  pruneCache: (keepUserId) => {
+    const profiles = get().profiles;
+    const keys = Object.keys(profiles);
+    const MAX_CACHED = 10;
+    if (keys.length <= MAX_CACHED) return;
+    const currentUserId = useAuthStore.getState().user?.id;
+    const pruned = { ...profiles };
+    const toRemove = keys
+      .filter((k) => k !== keepUserId && k !== currentUserId)
+      .slice(0, keys.length - MAX_CACHED);
+    for (const k of toRemove) delete pruned[k];
+    set({ profiles: pruned });
+  },
+
+  getSnapshot: () => {
+    const s = get();
+    return {
+      profileKeys: Object.keys(s.profiles).length,
+      pendingAborts: Object.keys(s._abortControllers).length,
+    };
+  },
 
   fetchProfile: async (userId) => {
     if (!userId) return;
     const existing = get().profiles[userId];
     if (existing && !existing.loading) return; // skip only if fully loaded
 
+    get().cancelPending('fetchProfile');
+    const controller = new AbortController();
     set((state) => ({
+      _abortControllers: { ...state._abortControllers, fetchProfile: controller },
       profiles: { ...state.profiles, [userId]: { data: null, threads: [], replies: [], loading: true } },
     }));
 
@@ -21,18 +67,20 @@ export const useProfileStore = create((set, get) => ({
     const isOwn = currentUserId === userId;
 
     const promises = [
-      supabase.from('profiles').select('*').eq('id', userId).single(),
+      supabase.from('profiles').select('*').eq('id', userId).abortSignal(controller.signal).single(),
       supabase
         .from('threads')
         .select('*, forums:forum_id(name, drug_slug, slug)')
         .eq('user_id', userId)
         .order('created_at', { ascending: false })
+        .abortSignal(controller.signal)
         .limit(20),
       supabase
         .from('replies')
         .select('*, threads:thread_id(id, title)')
         .eq('user_id', userId)
         .order('created_at', { ascending: false })
+        .abortSignal(controller.signal)
         .limit(20),
     ];
 
@@ -43,6 +91,7 @@ export const useProfileStore = create((set, get) => ({
           .select('*')
           .eq('user_id', userId)
           .order('date', { ascending: false })
+          .abortSignal(controller.signal)
       );
     }
 
@@ -62,6 +111,7 @@ export const useProfileStore = create((set, get) => ({
         },
       }));
     } catch (err) {
+      if (err.name === 'AbortError') return;
       console.error('[profileStore] fetchProfile error:', err);
       set((state) => ({
         profiles: {

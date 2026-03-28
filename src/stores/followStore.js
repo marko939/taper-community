@@ -18,6 +18,27 @@ export const useFollowStore = create((set, get) => ({
   followedForumsLoaded: false,
   threadFollows: new Set(),
   threadFollowsLoaded: false,
+  _abortControllers: {},
+
+  cancelPending: (opName) => {
+    const ctrl = get()._abortControllers[opName];
+    if (ctrl) {
+      ctrl.abort();
+      set((state) => {
+        const controllers = { ...state._abortControllers };
+        delete controllers[opName];
+        return { _abortControllers: controllers };
+      });
+    }
+  },
+
+  cancelAll: () => {
+    const controllers = get()._abortControllers;
+    for (const ctrl of Object.values(controllers)) {
+      ctrl.abort();
+    }
+    set({ _abortControllers: {} });
+  },
 
   invalidateFeeds: () => {
     set({ followedThreadsLoaded: false });
@@ -26,16 +47,24 @@ export const useFollowStore = create((set, get) => ({
   fetchFollowing: async (userId) => {
     if (!userId || get().followingLoaded) return;
 
+    get().cancelPending('fetchFollowing');
+    const controller = new AbortController();
+    set((state) => ({
+      _abortControllers: { ...state._abortControllers, fetchFollowing: controller },
+    }));
+
     try {
       const supabase = createClient();
       const { data } = await supabase
         .from('user_follows')
         .select('followed_id')
-        .eq('follower_id', userId);
+        .eq('follower_id', userId)
+        .abortSignal(controller.signal);
 
       const ids = new Set((data || []).map((r) => r.followed_id));
       set({ following: ids, followingLoaded: true });
     } catch (err) {
+      if (err.name === 'AbortError') return;
       console.error('[followStore] fetchFollowing error:', err);
       set({ followingLoaded: true });
     }
@@ -43,11 +72,18 @@ export const useFollowStore = create((set, get) => ({
 
   fetchFollowCounts: async (userId) => {
     if (!userId) return;
+
+    get().cancelPending('fetchFollowCounts');
+    const controller = new AbortController();
+    set((state) => ({
+      _abortControllers: { ...state._abortControllers, fetchFollowCounts: controller },
+    }));
+
     try {
       const supabase = createClient();
       const [followersRes, followingRes] = await Promise.all([
-        supabase.from('user_follows').select('follower_id', { count: 'exact', head: true }).eq('followed_id', userId),
-        supabase.from('user_follows').select('followed_id', { count: 'exact', head: true }).eq('follower_id', userId),
+        supabase.from('user_follows').select('follower_id', { count: 'exact', head: true }).eq('followed_id', userId).abortSignal(controller.signal),
+        supabase.from('user_follows').select('followed_id', { count: 'exact', head: true }).eq('follower_id', userId).abortSignal(controller.signal),
       ]);
 
       set((state) => ({
@@ -60,6 +96,7 @@ export const useFollowStore = create((set, get) => ({
         },
       }));
     } catch (err) {
+      if (err.name === 'AbortError') return;
       console.error('[followStore] fetchFollowCounts error:', err);
     }
   },
@@ -73,6 +110,11 @@ export const useFollowStore = create((set, get) => ({
       return;
     }
 
+    get().cancelPending('fetchFollowedThreads');
+    const controller = new AbortController();
+    set((state) => ({
+      _abortControllers: { ...state._abortControllers, fetchFollowedThreads: controller },
+    }));
     set({ followedThreads: { items: get().followedThreads.items, loading: true } });
 
     try {
@@ -84,6 +126,7 @@ export const useFollowStore = create((set, get) => ({
         .select('*, profiles:user_id(display_name, is_peer_advisor, avatar_url, is_founding_member), thread_forums(forum_id, forums:forum_id(name, slug, drug_slug))')
         .in('user_id', followedIds)
         .order('created_at', { ascending: false })
+        .abortSignal(controller.signal)
         .limit(20);
 
       // Stale response — a newer request was fired, ignore this one
@@ -107,6 +150,7 @@ export const useFollowStore = create((set, get) => ({
 
       set({ followedThreads: { items: threads, loading: false }, followedThreadsLoaded: true });
     } catch (err) {
+      if (err.name === 'AbortError') return;
       if (requestId !== _followedThreadsRequestId) return;
       console.error('[followStore] fetchFollowedThreads error:', err);
       set({ followedThreads: { items: [], loading: false }, followedThreadsLoaded: true });
@@ -171,16 +215,24 @@ export const useFollowStore = create((set, get) => ({
   fetchFollowedForums: async (userId) => {
     if (!userId || get().followedForumsLoaded) return;
 
+    get().cancelPending('fetchFollowedForums');
+    const controller = new AbortController();
+    set((state) => ({
+      _abortControllers: { ...state._abortControllers, fetchFollowedForums: controller },
+    }));
+
     try {
       const supabase = createClient();
       const { data } = await supabase
         .from('forum_follows')
         .select('forum_id')
-        .eq('follower_id', userId);
+        .eq('follower_id', userId)
+        .abortSignal(controller.signal);
 
       const ids = new Set((data || []).map((r) => r.forum_id));
       set({ followedForums: ids, followedForumsLoaded: true });
     } catch (err) {
+      if (err.name === 'AbortError') return;
       console.error('[followStore] fetchFollowedForums error:', err);
       set({ followedForumsLoaded: true });
     }
@@ -227,16 +279,24 @@ export const useFollowStore = create((set, get) => ({
   fetchThreadFollows: async (userId) => {
     if (!userId || get().threadFollowsLoaded) return;
 
+    get().cancelPending('fetchThreadFollows');
+    const controller = new AbortController();
+    set((state) => ({
+      _abortControllers: { ...state._abortControllers, fetchThreadFollows: controller },
+    }));
+
     try {
       const supabase = createClient();
       const { data } = await supabase
         .from('thread_follows')
         .select('thread_id')
-        .eq('user_id', userId);
+        .eq('user_id', userId)
+        .abortSignal(controller.signal);
 
       const ids = new Set((data || []).map((r) => r.thread_id));
       set({ threadFollows: ids, threadFollowsLoaded: true });
     } catch (err) {
+      if (err.name === 'AbortError') return;
       console.error('[followStore] fetchThreadFollows error:', err);
       set({ threadFollowsLoaded: true });
     }
