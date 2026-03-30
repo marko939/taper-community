@@ -2,6 +2,7 @@
 
 import { create } from 'zustand';
 import { createClient } from '@/lib/supabase/client';
+import { fireAndForget } from '@/lib/fireAndForget';
 
 const ADMIN_ID = '8572637a-2109-4471-bcb4-3163d04094d0';
 
@@ -194,11 +195,40 @@ export const useFollowStore = create((set, get) => ({
           .eq('follower_id', currentUserId)
           .eq('followed_id', targetUserId);
         if (error) throw error;
+
+        // Clean up unread follow notification
+        fireAndForget('unfollow-notification-cleanup', async () => {
+          await supabase
+            .from('notifications')
+            .delete()
+            .eq('actor_id', currentUserId)
+            .eq('user_id', targetUserId)
+            .eq('type', 'new_follower')
+            .eq('read', false);
+        });
       } else {
         const { error } = await supabase
           .from('user_follows')
           .insert({ follower_id: currentUserId, followed_id: targetUserId });
         if (error) throw error;
+
+        // Create follow notification
+        fireAndForget('follow-notification', async () => {
+          const { data: actor } = await supabase
+            .from('profiles')
+            .select('display_name')
+            .eq('id', currentUserId)
+            .single();
+
+          await supabase.from('notifications').insert({
+            user_id: targetUserId,
+            type: 'new_follower',
+            thread_id: null,
+            reply_id: null,
+            actor_id: currentUserId,
+            title: `${actor?.display_name || 'Someone'} started following you`,
+          });
+        });
       }
     } catch (err) {
       console.error('[followStore] toggleFollow error:', err);

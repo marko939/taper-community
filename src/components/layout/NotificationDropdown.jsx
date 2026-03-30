@@ -39,7 +39,10 @@ export default function NotificationDropdown({ onClose }) {
     if (!notification.read) {
       markAsRead(notification.id);
     }
-    if (notification.thread_id) {
+    if (notification.type === 'new_follower' && notification.actor_id) {
+      onClose();
+      router.push(`/profile/${notification.actor_id}`);
+    } else if (notification.thread_id) {
       onClose();
       const hash = notification.reply_id ? `#reply-${notification.reply_id}` : '';
       router.push(`/thread/${notification.thread_id}${hash}`);
@@ -101,8 +104,14 @@ export default function NotificationDropdown({ onClose }) {
                     <>
                       <p className="text-sm leading-snug" style={{ color: 'var(--foreground)' }}>
                         <span className="font-semibold">{n.actor?.display_name || 'Someone'}</span>
-                        {n.type === 'reply_mention' ? ' mentioned you in ' : ' replied to '}
-                        <span className="font-medium">&ldquo;{(n.thread?.title || '').slice(0, 50)}{(n.thread?.title || '').length > 50 ? '...' : ''}&rdquo;</span>
+                        {n.type === 'reply_mention' ? ' mentioned you in '
+                          : n.type === 'post_like' ? ' liked your post in '
+                          : n.type === 'new_follower' ? ' started following you'
+                          : n.type === 'forum_new_thread' ? ' posted in '
+                          : ' replied to '}
+                        {n.thread?.title && (
+                          <span className="font-medium">&ldquo;{(n.thread.title).slice(0, 50)}{(n.thread.title).length > 50 ? '...' : ''}&rdquo;</span>
+                        )}
                       </p>
                       {n.body && (
                         <p className="mt-0.5 text-xs truncate" style={{ color: 'var(--text-muted)' }}>

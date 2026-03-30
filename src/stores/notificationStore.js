@@ -4,6 +4,10 @@ import { create } from 'zustand';
 import { createClient } from '@/lib/supabase/client';
 import { useAuthStore } from './authStore';
 
+const NOTIFICATION_TYPES = [
+  'thread_reply', 'reply_mention', 'badge', 'forum_new_thread', 'post_like', 'new_follower',
+];
+
 export const useNotificationStore = create((set, get) => ({
   notifications: [],
   unreadCount: 0,
@@ -52,7 +56,7 @@ export const useNotificationStore = create((set, get) => ({
         .from('notifications')
         .select('*, actor:actor_id(display_name, avatar_url), thread:thread_id(title), reply_id')
         .eq('user_id', userId)
-        .in('type', ['thread_reply', 'reply_mention', 'badge', 'forum_new_thread'])
+        .in('type', NOTIFICATION_TYPES)
         .order('created_at', { ascending: false })
         .abortSignal(controller.signal)
         .limit(50);
@@ -84,7 +88,7 @@ export const useNotificationStore = create((set, get) => ({
         .select('id', { count: 'exact', head: true })
         .eq('user_id', userId)
         .eq('read', false)
-        .in('type', ['thread_reply', 'reply_mention', 'badge', 'forum_new_thread'])
+        .in('type', NOTIFICATION_TYPES)
         .abortSignal(controller.signal);
 
       set({ unreadCount: count || 0 });

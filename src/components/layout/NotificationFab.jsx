@@ -56,7 +56,10 @@ export default function NotificationFab() {
 
   const handleNotifClick = useCallback((n) => {
     if (!n.read) useNotificationStore.getState().markAsRead(n.id);
-    if (n.thread_id) {
+    if (n.type === 'new_follower' && n.actor_id) {
+      setOpen(false);
+      router.push(`/profile/${n.actor_id}`);
+    } else if (n.thread_id) {
       setOpen(false);
       const hash = n.reply_id ? `#reply-${n.reply_id}` : '';
       router.push(`/thread/${n.thread_id}${hash}`);
@@ -142,11 +145,17 @@ export default function NotificationFab() {
                         <>
                           <p className="text-sm leading-snug" style={{ color: 'var(--foreground)' }}>
                             <span className="font-semibold">{n.actor?.display_name || 'Someone'}</span>
-                            {n.type === 'reply_mention' ? ' mentioned you in ' : ' replied to '}
-                            <span className="font-medium">
-                              &ldquo;{(n.thread?.title || '').slice(0, 50)}
-                              {(n.thread?.title || '').length > 50 ? '...' : ''}&rdquo;
-                            </span>
+                            {n.type === 'reply_mention' ? ' mentioned you in '
+                              : n.type === 'post_like' ? ' liked your post in '
+                              : n.type === 'new_follower' ? ' started following you'
+                              : n.type === 'forum_new_thread' ? ' posted in '
+                              : ' replied to '}
+                            {n.thread?.title && (
+                              <span className="font-medium">
+                                &ldquo;{(n.thread.title).slice(0, 50)}
+                                {(n.thread.title).length > 50 ? '...' : ''}&rdquo;
+                              </span>
+                            )}
                           </p>
                           {n.body && (
                             <p

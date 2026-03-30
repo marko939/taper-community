@@ -52,6 +52,14 @@ export async function POST(request) {
       const newScore = count ?? 0;
       await supabase.from('replies').update({ helpful_count: newScore }).eq('id', targetId);
 
+      // Create / clean up like notification for helpful votes
+      await handleLikeNotification(supabase, {
+        action,
+        userId,
+        targetType: 'reply',
+        targetId,
+      });
+
       return NextResponse.json({ action, score: newScore });
     }
 
@@ -96,9 +104,90 @@ export async function POST(request) {
       .update({ vote_score: newScore })
       .eq('id', targetId);
 
+    // Create / clean up like notification
+    await handleLikeNotification(supabase, {
+      action,
+      userId,
+      targetType: type,
+      targetId,
+    });
+
     return NextResponse.json({ action, score: newScore });
   } catch (err) {
     console.error('[api/vote] error:', err);
     return NextResponse.json({ error: err.message || 'Vote failed' }, { status: 500 });
+  }
+}
+
+/**
+ * Creates a post_like notification when a vote is added,
+ * or deletes the unread notification when a vote is removed.
+ * Errors are logged but never block the vote response.
+ */
+async function handleLikeNotification(supabase, { action, userId, targetType, targetId }) {
+  try {
+    // Look up content owner and thread context
+    let ownerId, threadId, threadTitle;
+
+    if (targetType === 'thread') {
+      const { data: thread } = await supabase
+        .from('threads')
+        .select('user_id, title')
+        .eq('id', targetId)
+        .single();
+      if (!thread) return;
+      ownerId = thread.user_id;
+      threadId = targetId;
+      threadTitle = thread.title;
+    } else {
+      // reply or helpful — look up reply owner + parent thread
+      const { data: reply } = await supabase
+        .from('replies')
+        .select('user_id, thread_id, threads(title)')
+        .eq('id', targetId)
+        .single();
+      if (!reply) return;
+      ownerId = reply.user_id;
+      threadId = reply.thread_id;
+      threadTitle = reply.threads?.title;
+    }
+
+    // Don't notify yourself
+    if (ownerId === userId) return;
+
+    if (action === 'added') {
+      // Look up actor display name
+      const { data: actor } = await supabase
+        .from('profiles')
+        .select('display_name')
+        .eq('id', userId)
+        .single();
+
+      const actorName = actor?.display_name || 'Someone';
+      const contentLabel = targetType === 'thread' ? 'post' : 'reply';
+      const title = `${actorName} liked your ${contentLabel} in "${(threadTitle || '').slice(0, 80)}"`;
+
+      await supabase.from('notifications').insert({
+        user_id: ownerId,
+        type: 'post_like',
+        thread_id: threadId,
+        reply_id: targetType !== 'thread' ? targetId : null,
+        actor_id: userId,
+        title,
+      });
+    } else if (action === 'removed') {
+      // Clean up unread notification on unlike
+      await supabase
+        .from('notifications')
+        .delete()
+        .eq('actor_id', userId)
+        .eq('user_id', ownerId)
+        .eq('type', 'post_like')
+        .eq('thread_id', threadId)
+        .eq('read', false);
+    }
+  } catch (err) {
+    // Notification creation is non-critical — never block the vote response
+    console.error('[api/vote] notification error:', err);
   }
 }

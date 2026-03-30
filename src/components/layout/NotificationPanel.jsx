@@ -42,13 +42,21 @@ export function NotificationItem({ notification, onClick }) {
               {' '}
               {notification.type === 'reply_mention'
                 ? 'mentioned you in'
-                : notification.type === 'forum_new_thread'
-                  ? 'posted in'
-                  : 'replied to'}
-              {' '}
-              <span className="font-medium" style={{ color: 'var(--purple)' }}>
-                &ldquo;{notification.thread?.title || 'a thread'}&rdquo;
-              </span>
+                : notification.type === 'post_like'
+                  ? 'liked your post in'
+                  : notification.type === 'new_follower'
+                    ? 'started following you'
+                    : notification.type === 'forum_new_thread'
+                      ? 'posted in'
+                      : 'replied to'}
+              {notification.thread?.title && (
+                <>
+                  {' '}
+                  <span className="font-medium" style={{ color: 'var(--purple)' }}>
+                    &ldquo;{notification.thread.title}&rdquo;
+                  </span>
+                </>
+              )}
             </p>
             {notification.body && (
               <p className="mt-1 line-clamp-2 text-xs text-text-muted">{notification.body}</p>
@@ -114,7 +122,10 @@ export default function NotificationPanel({ onClose }) {
 
   const handleNotifClick = useCallback((n) => {
     if (!n.read) useNotificationStore.getState().markAsRead(n.id);
-    if (n.thread_id) {
+    if (n.type === 'new_follower' && n.actor_id) {
+      onClose();
+      router.push(`/profile/${n.actor_id}`);
+    } else if (n.thread_id) {
       onClose();
       const hash = n.reply_id ? `#reply-${n.reply_id}` : '';
       router.push(`/thread/${n.thread_id}${hash}`);
