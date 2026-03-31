@@ -35,7 +35,7 @@ export default function MetabolicNav() {
             <Link
               key={link.href}
               href={link.href}
-              className="relative flex-shrink-0 px-4 py-3 text-sm font-medium no-underline transition"
+              className="relative flex-shrink-0 px-3 py-3 text-sm font-medium no-underline transition sm:px-4"
               style={{
                 color: active ? '#ffffff' : 'rgba(255,255,255,0.65)',
               }}

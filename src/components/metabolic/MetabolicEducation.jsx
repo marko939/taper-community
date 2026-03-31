@@ -407,7 +407,7 @@ export default function MetabolicEducation() {
   );
 
   return (
-    <div style={{ display: 'flex', gap: 24, alignItems: 'flex-start', padding: '0 32px 32px' }}>
+    <div style={{ display: 'flex', gap: 24, alignItems: 'flex-start', padding: isSmall ? '0 16px 24px' : '0 32px 32px' }}>
       {/* Sticky module sidebar */}
       {!isSmall && (
         <div style={{

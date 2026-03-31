@@ -32,12 +32,12 @@ export default function MetabolicLanding() {
       <div className="my-8 flex justify-center">
         <div
           className="rounded-2xl border px-6 py-5"
-          style={{ background: 'var(--surface-strong)', borderColor: 'var(--border-subtle)' }}
+          style={{ background: 'var(--surface-strong)', borderColor: 'var(--border-subtle)', overflowX: 'auto' }}
         >
           <p className="mb-5 text-center text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-subtle)' }}>
             The brain–energy connection
           </p>
-          <div className="flex items-center">
+          <div className="flex items-center" style={{ flexWrap: 'nowrap', minWidth: 'max-content' }}>
             {[
               { emoji: '🥗', label: 'Diet' },
               { emoji: '⚡', label: 'Mitochondria' },

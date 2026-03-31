@@ -37,16 +37,16 @@ export default function DietComparison() {
           return (
             <div key={rowIdx}>
               {/* Row of 2 tiles */}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 {row.map((diet) => {
                   const isActive = selected === diet.slug;
                   return (
                     <button
                       key={diet.slug}
                       onClick={() => setSelected(isActive ? null : diet.slug)}
-                      className="flex flex-col items-center justify-center rounded-2xl border p-6 text-center transition"
+                      className="flex flex-col items-center justify-center rounded-2xl border p-4 text-center transition sm:p-6"
                       style={{
-                        aspectRatio: '1 / 1',
+                        minHeight: 180,
                         background: isActive ? 'var(--purple-ghost)' : 'var(--surface-strong)',
                         borderColor: isActive ? 'var(--purple)' : 'var(--border-subtle)',
                         borderWidth: isActive ? 2 : 1,
