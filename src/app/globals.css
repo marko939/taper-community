@@ -38,6 +38,16 @@
   --accent-red: #D64545;
   --accent-warn: #E8A838;
 
+  /* ── Metabolic Health Section ── */
+  --metabolic-green: #0D9488;
+  --metabolic-green-light: #CCFBF1;
+  --metabolic-green-ghost: #F0FDFA;
+  --metabolic-green-dark: #0F766E;
+  --metabolic-amber: #D97706;
+  --metabolic-amber-light: #FEF3C7;
+  --metabolic-indigo: #6366F1;
+  --metabolic-indigo-light: #E0E7FF;
+
   /* Text */
   --text-muted: #6B6580;
   --text-subtle: #9B95A8;

@@ -2,19 +2,27 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
+import { usePathname } from 'next/navigation';
 import Avatar from '@/components/shared/Avatar';
 
 export default function Navbar() {
   const { user, profile, loading, signOut } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const pathname = usePathname();
+
+  // Close mobile menu on route change
+  useEffect(() => {
+    setMobileOpen(false);
+  }, [pathname]);
 
   const navLinks = [
     { href: '/forums', label: 'Forums' },
     { href: '/journal', label: 'Journal' },
     { href: '/education', label: 'Education' },
+    { href: '/metabolic', label: 'Metabolic Health' },
     { href: '/deprescribers', label: 'Find a Provider' },
     { href: '/resources', label: 'Resources' },
   ];
