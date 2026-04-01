@@ -9,8 +9,8 @@ export const FORUM_CATEGORY_ORDER = [
   { key: 'admin', label: 'Admin' },
   { key: 'community', label: 'Community' },
   { key: 'tapering', label: 'Hyperbolic Tapering' },
+  { key: 'metabolic', label: 'Metabolic Health' },
   { key: 'research', label: 'Research & News' },
-  { key: 'lifestyle', label: 'Relationships & Lifestyle' },
   { key: 'drug', label: 'Drug-Specific Forums' },
   { key: 'feedback', label: 'Feedback' },
 ];
@@ -32,11 +32,6 @@ export const CATEGORY_ICONS = {
       <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
     </svg>
   ),
-  lifestyle: (
-    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-      <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" />
-    </svg>
-  ),
   feedback: (
     <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
       <path strokeLinecap="round" strokeLinejoin="round" d="M11.42 15.17l-5.645 3.182a.535.535 0 01-.779-.596l1.06-6.277L.856 6.447a.535.535 0 01.295-.917l6.263-.914L10.21.516a.536.536 0 01.962 0l2.796 5.1 6.263.914a.535.535 0 01.295.917l-5.2 5.032 1.06 6.277a.535.535 0 01-.779.596L11.42 15.17z" />
@@ -45,6 +40,11 @@ export const CATEGORY_ICONS = {
   admin: (
     <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
       <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
+    </svg>
+  ),
+  metabolic: (
+    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
     </svg>
   ),
   drug: (
@@ -65,7 +65,8 @@ export const GENERAL_FORUMS = [
   { category: 'tapering', slug: 'tapering', name: 'Tapering Protocols', description: 'Dose reduction strategies, taper rates, schedules, dose calculations, holds, and hyperbolic tapering.' },
   { category: 'tapering', slug: 'symptoms-self-care', name: 'Symptoms & Self-Care', description: 'Withdrawal symptoms, coping strategies, sleep, anxiety, supplements, and wellbeing during your taper.' },
   { category: 'research', slug: 'research-and-news', name: 'Research & News', description: 'Scientific papers, news articles, advocacy, and media about psychiatric drug withdrawal.' },
-  { category: 'lifestyle', slug: 'lifestyle', name: 'Relationships & Lifestyle', description: 'Diet, exercise, sleep, relationships, and lifestyle during tapering.' },
+  { category: 'metabolic', slug: 'metabolic-diet-research', name: 'Diet & Research', description: 'Compare dietary approaches, discuss scientific papers, and explore emerging research on metabolic psychiatry.' },
+  { category: 'metabolic', slug: 'metabolic-food-supplements', name: 'Food, Recipes & Supplements', description: 'Meal ideas, recipes, electrolytes, supplements, and practical nutrition tips for brain health during your taper.' },
   { category: 'feedback', slug: 'feature-requests-and-bugs', name: 'Feature Requests & Bug Fixes', description: 'Suggest new features, report bugs, and help us improve TaperCommunity.' },
   { category: 'admin', slug: 'community-rules', name: 'Community Rules & Guidelines', description: 'Community rules, staff introductions, and how TaperCommunity works.' },
   { category: 'admin', slug: 'staff-who-we-are', name: 'Staff \u2013 Who We Are', description: 'Meet the team behind TaperCommunity.' },

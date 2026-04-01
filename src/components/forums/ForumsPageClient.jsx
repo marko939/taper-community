@@ -150,6 +150,20 @@ function ForumsContent() {
                   </Link>
                 ))}
               </div>
+
+              {section.key === 'metabolic' && (
+                <div
+                  className="flex flex-wrap items-center gap-x-3 gap-y-1 border-t px-6 py-3"
+                  style={{ borderColor: 'var(--border-subtle)', background: 'var(--purple-ghost)' }}
+                >
+                  <span className="text-xs text-text-muted">Explore our Metabolic Health Hub:</span>
+                  <Link href="/metabolic" className="text-xs font-medium text-purple hover:underline">Overview</Link>
+                  <Link href="/metabolic/diets" className="text-xs font-medium text-purple hover:underline">Diet Approaches</Link>
+                  <Link href="/metabolic/food-guides" className="text-xs font-medium text-purple hover:underline">Food Guides</Link>
+                  <Link href="/metabolic/education" className="text-xs font-medium text-purple hover:underline">Education</Link>
+                  <Link href="/metabolic/videos" className="text-xs font-medium text-purple hover:underline">Videos</Link>
+                </div>
+              )}
             </section>
           ))}
 
