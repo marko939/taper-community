@@ -35,7 +35,16 @@ export default function DeprescribingMap({ compact = false }) {
   const [selectedClinician, setSelectedClinician] = useState(null);
 
   // Use Supabase clinicians if loaded, fallback to hardcoded
-  const providers = cliniciansLoaded && clinicians.length > 0 ? clinicians : DEPRESCRIBERS;
+  // Always merge in featured providers (those with photos) from hardcoded data
+  // Filter out removed providers by name+location
+  const REMOVED = [
+    { name: 'Field Trip Health Nurse Practitioner Services', location: 'Toronto' },
+    { name: 'Monica Mina, RN(EC), MN, NP-Adult', location: 'Ontario' },
+  ];
+  const isRemoved = (d) => REMOVED.some((r) => d.name?.includes(r.name) && d.location?.includes(r.location));
+  const base = (cliniciansLoaded && clinicians.length > 0 ? clinicians : DEPRESCRIBERS).filter((d) => !isRemoved(d));
+  const featured = DEPRESCRIBERS.filter((d) => d.photo && !base.some((b) => b.name === d.name));
+  const providers = featured.length > 0 ? [...base, ...featured] : base;
   const providerCount = new Set(providers.map((d) => d.name)).size;
 
   // Fetch clinicians from Supabase
@@ -102,12 +111,20 @@ export default function DeprescribingMap({ compact = false }) {
       for (const item of providers) {
         const marker = L.marker([item.latitude, item.longitude], { icon: purpleIcon });
         const escapedName = (item.name || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+        const photoHtml = item.photo
+          ? `<div style="display: flex; gap: 12px; align-items: flex-start;">
+              <img src="${item.photo}" alt="${item.name}" style="width: 64px; height: 64px; border-radius: 50%; object-fit: cover; flex-shrink: 0; border: 2px solid #5B2E91;" />
+              <div>`
+          : '<div>';
+        const photoClose = item.photo ? '</div></div>' : '';
         marker.bindPopup(`
-          <div style="font-family: 'DM Sans', system-ui, sans-serif; max-width: 280px;">
+          <div style="font-family: 'DM Sans', system-ui, sans-serif; max-width: 320px;">
+            ${photoHtml}
             <p style="margin: 0 0 2px; font-size: 14px; font-weight: 700; color: #1E1B2E;">${item.name}</p>
             <p style="margin: 0 0 8px; font-size: 12px; color: #6B6580;">${item.role}</p>
             <p style="margin: 0 0 4px; font-size: 12px;"><strong style="color: #5B2E91;">Clinic:</strong> <span style="color: #1E1B2E;">${item.clinic}</span></p>
             <p style="margin: 0 0 8px; font-size: 12px;"><strong style="color: #5B2E91;">Location:</strong> <span style="color: #1E1B2E;">${item.location}</span></p>
+            ${photoClose}
             <p style="margin: 0 0 10px; font-size: 11px; line-height: 1.5; color: #6B6580;">${item.description}</p>
             <button
               data-clinician-id="${item.id || ''}"
