@@ -61,18 +61,6 @@ export default function ThreadPage() {
     if (user?.id && thread) fetchThreadFollows(user.id);
   }, [user?.id, !!thread]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Re-fetch thread when tab becomes visible (stale tab recovery)
-  useEffect(() => {
-    if (!threadId) return;
-    const handler = () => {
-      if (!document.hidden) {
-        useThreadStore.getState().fetchThread(threadId);
-      }
-    };
-    document.addEventListener('visibilitychange', handler);
-    return () => document.removeEventListener('visibilitychange', handler);
-  }, [threadId]);
-
   if (loading) return <PageLoading />;
 
   if (!thread) {

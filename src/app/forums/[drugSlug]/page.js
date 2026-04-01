@@ -91,12 +91,13 @@ export default function ForumPage() {
       .from('blog_posts')
       .select('id, title, slug, excerpt, tags, cover_image_url, created_at, author_id, comment_count, forum_slugs')
       .eq('published', true)
+      .contains('forum_slugs', [forumSlug])
       .order('created_at', { ascending: false })
+      .limit(20)
       .abortSignal(controller.signal)
       .then(({ data }) => {
         if (controller.signal.aborted || !data) return;
-        // Filter client-side for posts assigned to this forum
-        const matched = data.filter((p) => p.forum_slugs && p.forum_slugs.includes(forumSlug));
+        const matched = data;
         // Shape blog posts to look like threads for ThreadCard
         setBlogPosts(matched.map((p) => ({
           id: p.id,

@@ -13,6 +13,7 @@ import DrugSignature from '@/components/shared/DrugSignature';
 import JournalEntryCard from '@/components/journal/JournalEntryCard';
 import { PageLoading } from '@/components/shared/LoadingSpinner';
 import { ADMIN_USER_ID, isMod } from '@/lib/blog';
+import { useRouteCleanup } from '@/hooks/useRouteCleanup';
 import { useState } from 'react';
 
 function timeAgo(dateStr) {
@@ -28,6 +29,7 @@ function timeAgo(dateStr) {
 }
 
 export default function ProfilePage() {
+  useRouteCleanup();
   const { userId } = useParams();
   const router = useRouter();
   const currentUser = useAuthStore((s) => s.user);

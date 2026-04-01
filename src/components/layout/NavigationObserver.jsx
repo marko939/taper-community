@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import { releaseNavigationLock } from '@/lib/navigationLock';
 import { cancelVisibilityDebounce } from '@/lib/visibilityManager';
 import { useProfileStore } from '@/stores/profileStore';
+import { useThreadStore } from '@/stores/threadStore';
 import { useBlogStore } from '@/stores/blogStore';
 import { useJournalStore } from '@/stores/journalStore';
 import { createClient } from '@/lib/supabase/client';
@@ -30,8 +31,11 @@ export default function NavigationObserver() {
     // data that the new page just fetched
     cancelVisibilityDebounce();
 
-    // Prune accumulated state in stores
-    useProfileStore.getState().pruneCache?.();
+    // Prune accumulated state in stores (pass current IDs to protect active data)
+    const profileMatch = pathname.match(/^\/profile\/([^/]+)/);
+    const threadMatch = pathname.match(/^\/thread\/([^/]+)/);
+    useProfileStore.getState().pruneCache?.(profileMatch?.[1]);
+    useThreadStore.getState().pruneCache?.(threadMatch?.[1]);
     useBlogStore.getState().pruneComments?.();
     useJournalStore.getState().pruneSharedState?.();
 
@@ -43,12 +47,17 @@ export default function NavigationObserver() {
       const delta = now - mountTime.current;
       mountTime.current = now;
 
+      const profileSnap = useProfileStore.getState().getSnapshot?.() || {};
+      const threadSnap = useThreadStore.getState().getSnapshot?.() || {};
+
       const leaks = [];
       if (typeof channels === 'number' && channels > 5) leaks.push(`channels=${channels}`);
+      if (profileSnap.pendingAborts > 0) leaks.push(`profileAborts=${profileSnap.pendingAborts}`);
+      if (threadSnap.pendingAborts > 0) leaks.push(`threadAborts=${threadSnap.pendingAborts}`);
 
       const status = leaks.length === 0 ? 'CLEAN' : `LEAK DETECTED [${leaks.join(', ')}]`;
       console.log(
-        `[TaperDiag] HEALTH: ${status} | ${prevPathname.current} -> ${pathname} | ${delta}ms since last nav | channels=${channels}`
+        `[TaperDiag] HEALTH: ${status} | ${prevPathname.current} -> ${pathname} | ${delta}ms since last nav | channels=${channels} | profiles=${profileSnap.profileKeys || 0} threads=${threadSnap.threadKeys || 0}`
       );
     }
 

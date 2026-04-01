@@ -5,6 +5,10 @@ import { useForumStore } from '@/stores/forumStore';
 import { useThreadStore } from '@/stores/threadStore';
 import { useProfileStore } from '@/stores/profileStore';
 import { useBlogStore } from '@/stores/blogStore';
+import { useMessageStore } from '@/stores/messageStore';
+import { useNotificationStore } from '@/stores/notificationStore';
+import { useFollowStore } from '@/stores/followStore';
+import { useJournalStore } from '@/stores/journalStore';
 
 let _interval = null;
 let _originalSetTimeout = null;
@@ -50,6 +54,21 @@ function getSnapshot() {
   const profileState = useProfileStore.getState();
   const blogState = useBlogStore.getState();
 
+  const messageState = useMessageStore.getState();
+  const notificationState = useNotificationStore.getState();
+  const followState = useFollowStore.getState();
+  const journalState = useJournalStore.getState();
+
+  const totalPendingAborts =
+    Object.keys(forumState._abortControllers).length +
+    Object.keys(threadState._abortControllers).length +
+    Object.keys(profileState._abortControllers).length +
+    Object.keys(blogState._abortControllers).length +
+    Object.keys(messageState._abortControllers).length +
+    Object.keys(notificationState._abortControllers).length +
+    Object.keys(followState._abortControllers).length +
+    Object.keys(journalState._abortControllers).length;
+
   return {
     channels,
     heap,
@@ -57,10 +76,9 @@ function getSnapshot() {
     forumPages: Object.keys(forumState.threadPages).length,
     profilesCached: Object.keys(profileState.profiles).length,
     blogComments: Object.keys(blogState.comments).length,
-    pendingAborts:
-      Object.keys(forumState._abortControllers).length +
-      Object.keys(threadState._abortControllers).length,
+    pendingAborts: totalPendingAborts,
     activeTimers: _activeTimers.size,
+    route: typeof window !== 'undefined' ? window.location.pathname : 'N/A',
   };
 }
 
@@ -78,6 +96,15 @@ export function initPerfAudit() {
     const snap = getSnapshot();
     console.table(snap);
     return snap;
+  };
+
+  window.__taperDiag.routeHealth = () => {
+    return {
+      forum: useForumStore.getState().getSnapshot(),
+      thread: useThreadStore.getState().getSnapshot(),
+      profile: useProfileStore.getState().getSnapshot(),
+      blog: useBlogStore.getState().getSnapshot?.() || {},
+    };
   };
 
   console.log('[TaperDiag] Performance audit started (5s interval). Call window.__taperDiag.dump() for manual snapshot.');

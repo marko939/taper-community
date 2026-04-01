@@ -91,6 +91,7 @@ export const useProfileStore = create((set, get) => ({
           .select('*')
           .eq('user_id', userId)
           .order('date', { ascending: false })
+          .limit(50)
           .abortSignal(controller.signal)
       );
     }

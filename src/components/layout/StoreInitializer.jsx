@@ -19,6 +19,7 @@ export default function StoreInitializer() {
       import('@/lib/diagnostics/perfAudit').then((m) => m.initPerfAudit());
       import('@/lib/diagnostics/visibilityStressTest').then((m) => m.initVisibilityStressTest());
       import('@/lib/diagnostics/threadLoadTest').then((m) => m.initThreadLoadTest());
+      import('@/lib/diagnostics/navigationStressTest').then((m) => m.initNavigationStressTest());
     }
 
     return () => {

@@ -8,6 +8,7 @@ import BottomNav from '@/components/layout/BottomNav';
 import PageViewTracker from '@/components/layout/PageViewTracker';
 import ErrorBoundary from '@/components/layout/ErrorBoundary';
 import NavigationObserver from '@/components/layout/NavigationObserver';
+import NavigationProgress from '@/components/layout/NavigationProgress';
 import BraveBanner from '@/components/layout/BraveBanner';
 import SwipeBackWrapper from '@/components/layout/SwipeBackWrapper';
 import { FontSizeProvider } from '@/lib/fontSizeContext';
@@ -105,6 +106,7 @@ export default function RootLayout({ children }) {
         `}} />
       </head>
       <body className="min-h-screen antialiased">
+        <NavigationProgress />
         <FontSizeProvider>
           <StoreInitializer />
           <NavigationObserver />

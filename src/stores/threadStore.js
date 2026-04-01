@@ -68,6 +68,16 @@ export const useThreadStore = create((set, get) => ({
     set({ threads, replies, voteState, helpfulState });
   },
 
+  // Re-fetch the most recently cached thread (the one currently on screen).
+  // Called by visibilityManager on tab-return to handle stale-tab recovery.
+  refreshVisible: () => {
+    const threadIds = Object.keys(get().threads);
+    if (threadIds.length > 0) {
+      const lastId = threadIds[threadIds.length - 1];
+      get().fetchThread(lastId);
+    }
+  },
+
   getSnapshot: () => {
     const s = get();
     return {

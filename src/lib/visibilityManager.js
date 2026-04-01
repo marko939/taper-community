@@ -78,6 +78,7 @@ function onVisibilityChange() {
       useBlogStore.getState().fetchPosts();
       useJournalStore.getState().invalidate();
       useFollowStore.getState().invalidateFeeds();
+      useThreadStore.getState().refreshVisible();
       if (user?.id) {
         useFollowStore.getState().fetchFollowedThreads({ force: true });
       }
