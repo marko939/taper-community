@@ -115,6 +115,7 @@ export default function MealGenerator() {
           type="text"
           value={ingredient}
           onChange={(e) => setIngredient(e.target.value)}
+          onKeyDown={(e) => { if (e.key === 'Enter' && selectedDiet) handleGenerate(); }}
           placeholder="e.g. chicken, eggs, salmon, spinach..."
           maxLength={60}
           className="input w-full"

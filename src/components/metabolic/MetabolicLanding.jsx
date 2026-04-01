@@ -31,13 +31,14 @@ export default function MetabolicLanding() {
       {/* Infographic */}
       <div className="my-8 flex justify-center">
         <div
-          className="rounded-2xl border px-6 py-5"
-          style={{ background: 'var(--surface-strong)', borderColor: 'var(--border-subtle)', overflowX: 'auto' }}
+          className="w-full rounded-2xl border px-6 py-5 sm:w-auto"
+          style={{ background: 'var(--surface-strong)', borderColor: 'var(--border-subtle)' }}
         >
           <p className="mb-5 text-center text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-subtle)' }}>
             The brain–energy connection
           </p>
-          <div className="flex items-center" style={{ flexWrap: 'nowrap', minWidth: 'max-content' }}>
+          {/* Desktop: horizontal row */}
+          <div className="hidden items-center sm:flex">
             {[
               { emoji: '🥗', label: 'Diet' },
               { emoji: '⚡', label: 'Mitochondria' },
@@ -47,11 +48,31 @@ export default function MetabolicLanding() {
             ].map((step, i) => (
               <div key={step.label} className="flex items-center">
                 {i > 0 && (
-                  <span className="mx-3 text-xl sm:mx-4" style={{ color: 'var(--metabolic-green)' }}>→</span>
+                  <span className="mx-4 text-xl" style={{ color: 'var(--metabolic-green)' }}>→</span>
                 )}
                 <div className="flex flex-col items-center text-center" style={{ minWidth: 72 }}>
                   <span className="text-[34px]">{step.emoji}</span>
                   <span className="mt-1 text-[13px] font-medium leading-tight" style={{ color: 'var(--foreground)' }}>{step.label}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+          {/* Mobile: vertical flow */}
+          <div className="flex flex-col items-center gap-1 sm:hidden">
+            {[
+              { emoji: '🥗', label: 'Diet' },
+              { emoji: '⚡', label: 'Mitochondria' },
+              { emoji: '🔋', label: 'Brain Energy' },
+              { emoji: '🧬', label: 'Neurotransmitters' },
+              { emoji: '🧠', label: 'Mental Health' },
+            ].map((step, i) => (
+              <div key={step.label} className="flex flex-col items-center">
+                {i > 0 && (
+                  <span className="text-lg" style={{ color: 'var(--metabolic-green)' }}>↓</span>
+                )}
+                <div className="flex items-center gap-3">
+                  <span className="text-[28px]">{step.emoji}</span>
+                  <span className="text-[14px] font-medium" style={{ color: 'var(--foreground)' }}>{step.label}</span>
                 </div>
               </div>
             ))}

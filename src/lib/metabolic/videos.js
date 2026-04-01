@@ -11,16 +11,6 @@ export const VIDEOS = [
     duration: '33 min',
   },
   {
-    id: 'metabolic-mind-intro',
-    videoId: '4PHzq0BXWNY',
-    title: 'What Is Metabolic Psychiatry?',
-    speaker: 'Metabolic Mind',
-    credential: 'Educational Nonprofit — Baszucki Group',
-    summary: 'A concise overview of metabolic psychiatry — what it is, the evidence behind it, and why it matters for mental health treatment.',
-    level: 'Beginner',
-    duration: '8 min',
-  },
-  {
     id: 'ede-phc2023',
     videoId: '23_fnung5To',
     title: 'What Is Nutritional & Metabolic Psychiatry?',
@@ -92,16 +82,6 @@ export const VIDEOS = [
     level: 'Intermediate',
     duration: '1 hr 9 min',
   },
-  {
-    id: 'horowitz-withdrawal-truth',
-    videoId: 'Z0uPRdfCpeU',
-    title: 'The Truth About Antidepressant Withdrawal Symptoms',
-    speaker: 'Mark Horowitz, MD PhD',
-    credential: 'Lead Author, Maudsley Deprescribing Guidelines',
-    summary: 'Dr. Horowitz addresses a contested JAMA study on antidepressant withdrawal — explaining why withdrawal is systematically underdiagnosed, how to distinguish it from relapse, and what the best evidence actually shows for coming off psychiatric medications safely.',
-    level: 'Intermediate',
-    duration: '37 min',
-  },
 
   // ── Deep Dive ──
   {
@@ -133,16 +113,6 @@ export const VIDEOS = [
     summary: 'Georgia Ede presents five real patient cases of serious mental illness — schizophrenia, bipolar disorder, and severe depression — treated with ketogenic therapy, including detailed outcomes and medication changes. Recorded at the first Metabolic Psychiatry Roadmap Retreat.',
     level: 'Deep Dive',
     duration: '15 min',
-  },
-  {
-    id: 'horowitz-therapeutics-initiative',
-    videoId: 'LRr09mvMEAU',
-    title: 'Antidepressant Withdrawal Effects & How to Safely Stop Them',
-    speaker: 'Mark Horowitz, MD PhD',
-    credential: 'Lead Author, Maudsley Deprescribing Guidelines',
-    summary: 'A CME-grade clinical lecture for prescribers — covers the neuroscience of antidepressant withdrawal, receptor occupancy curves, the mathematics of hyperbolic tapering, and practical prescribing guidance for supporting patients through deprescribing.',
-    level: 'Deep Dive',
-    duration: '52 min',
   },
 ];
 

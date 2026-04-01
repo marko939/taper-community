@@ -558,9 +558,14 @@ export default function MetabolicEducation() {
                   cursor: 'pointer',
                   fontSize: 13,
                   color: MUTED,
+                  textAlign: 'left',
+                  maxWidth: '45%',
                 }}
               >
-                ← Previous
+                <span style={{ fontSize: 11, color: SUBTLE, display: 'block', marginBottom: 2 }}>← Previous</span>
+                <span style={{ display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {MODULES[currentIndex - 1].title}
+                </span>
               </button>
             ) : <div />}
             {currentIndex < MODULES.length - 1 ? (
@@ -570,14 +575,19 @@ export default function MetabolicEducation() {
                   background: TEAL,
                   border: 'none',
                   borderRadius: 10,
-                  padding: '10px 20px',
+                  padding: '10px 16px',
                   cursor: 'pointer',
                   fontSize: 13,
                   fontWeight: 600,
                   color: '#fff',
+                  textAlign: 'right',
+                  maxWidth: '55%',
                 }}
               >
-                Next →
+                <span style={{ fontSize: 11, opacity: 0.8, display: 'block', marginBottom: 2 }}>Next →</span>
+                <span style={{ display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {MODULES[currentIndex + 1].title}
+                </span>
               </button>
             ) : (
               <div style={{ fontSize: 13, color: TEAL_DARK, fontWeight: 600, padding: '10px 0' }}>
