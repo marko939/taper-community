@@ -428,52 +428,130 @@ export default function MetabolicEducation() {
       {/* Main content */}
       <div style={{ flex: 1, minWidth: 0 }}>
         {/* Top bar */}
-        <div style={{
-          padding: '10px 0 10px',
-          borderBottom: `1px solid ${BORDER}`,
-          display: 'flex',
-          alignItems: 'center',
-          gap: 12,
-          marginBottom: 24,
-        }}>
-          {isSmall && (
+        {isSmall ? (
+          /* ── Mobile top bar: prominent module selector ── */
+          <div style={{ marginBottom: 20 }}>
+            {/* Module selector button — full width, prominent */}
             <button
               onClick={() => setSidebarOpen(!sidebarOpen)}
               style={{
-                background: 'none',
+                width: '100%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                background: BG,
                 border: `1px solid ${BORDER}`,
-                borderRadius: 8,
-                padding: '6px 10px',
+                borderRadius: 12,
+                padding: '12px 16px',
                 cursor: 'pointer',
-                fontSize: 12,
-                color: MUTED,
-                flexShrink: 0,
+                marginBottom: 12,
               }}
             >
-              Modules
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0, flex: 1 }}>
+                {currentTier && (
+                  <span style={{
+                    fontSize: 11,
+                    fontWeight: 700,
+                    padding: '3px 10px',
+                    borderRadius: 99,
+                    background: TIER_COLORS[currentTier.color].bg,
+                    color: TIER_COLORS[currentTier.color].color,
+                    border: `1px solid ${TIER_COLORS[currentTier.color].border}`,
+                    flexShrink: 0,
+                  }}>
+                    {currentTier.label}
+                  </span>
+                )}
+                <span style={{ fontSize: 14, fontWeight: 600, color: TEXT, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {currentModule.title}
+                </span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+                <span style={{ fontSize: 12, color: SUBTLE }}>{currentIndex + 1}/{MODULES.length}</span>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={MUTED} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ transform: sidebarOpen ? 'rotate(180deg)' : 'rotate(0)', transition: 'transform 0.2s' }}>
+                  <path d="M6 9l6 6 6-6" />
+                </svg>
+              </div>
             </button>
-          )}
-          {currentTier && (
-            <span style={{
-              fontSize: 11,
-              fontWeight: 700,
-              padding: '3px 10px',
-              borderRadius: 99,
-              background: TIER_COLORS[currentTier.color].bg,
-              color: TIER_COLORS[currentTier.color].color,
-              border: `1px solid ${TIER_COLORS[currentTier.color].border}`,
-              flexShrink: 0,
-            }}>
-              {currentTier.label}
+            {/* Quick prev/next row */}
+            <div style={{ display: 'flex', gap: 8 }}>
+              {currentIndex > 0 ? (
+                <button
+                  onClick={() => selectModule(MODULES[currentIndex - 1].id)}
+                  style={{
+                    flex: 1,
+                    background: 'none',
+                    border: `1px solid ${BORDER}`,
+                    borderRadius: 10,
+                    padding: '8px 12px',
+                    cursor: 'pointer',
+                    fontSize: 12,
+                    color: MUTED,
+                    textAlign: 'left',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  ← {MODULES[currentIndex - 1].title}
+                </button>
+              ) : <div style={{ flex: 1 }} />}
+              {currentIndex < MODULES.length - 1 && (
+                <button
+                  onClick={() => selectModule(MODULES[currentIndex + 1].id)}
+                  style={{
+                    flex: 1,
+                    background: TEAL,
+                    border: 'none',
+                    borderRadius: 10,
+                    padding: '8px 12px',
+                    cursor: 'pointer',
+                    fontSize: 12,
+                    fontWeight: 600,
+                    color: '#fff',
+                    textAlign: 'right',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  {MODULES[currentIndex + 1].title} →
+                </button>
+              )}
+            </div>
+          </div>
+        ) : (
+          /* ── Desktop top bar ── */
+          <div style={{
+            padding: '10px 0 10px',
+            borderBottom: `1px solid ${BORDER}`,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 12,
+            marginBottom: 24,
+          }}>
+            {currentTier && (
+              <span style={{
+                fontSize: 11,
+                fontWeight: 700,
+                padding: '3px 10px',
+                borderRadius: 99,
+                background: TIER_COLORS[currentTier.color].bg,
+                color: TIER_COLORS[currentTier.color].color,
+                border: `1px solid ${TIER_COLORS[currentTier.color].border}`,
+                flexShrink: 0,
+              }}>
+                {currentTier.label}
+              </span>
+            )}
+            <span style={{ fontSize: 13, color: MUTED, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {currentModule.title}
             </span>
-          )}
-          <span style={{ fontSize: 13, color: MUTED, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-            {currentModule.title}
-          </span>
-          <span style={{ fontSize: 12, color: SUBTLE, flexShrink: 0 }}>
-            {currentIndex + 1} / {MODULES.length}
-          </span>
-        </div>
+            <span style={{ fontSize: 12, color: SUBTLE, flexShrink: 0 }}>
+              {currentIndex + 1} / {MODULES.length}
+            </span>
+          </div>
+        )}
 
         {/* Mobile sidebar overlay */}
         {isSmall && sidebarOpen && (
