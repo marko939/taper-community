@@ -40,8 +40,9 @@ export default function DeprescribingMap({ compact = false }) {
   const REMOVED = [
     { name: 'Field Trip Health Nurse Practitioner Services', location: 'Toronto' },
     { name: 'Monica Mina, RN(EC), MN, NP-Adult', location: 'Ontario' },
+    { name: 'Outro Health' },
   ];
-  const isRemoved = (d) => REMOVED.some((r) => d.name?.includes(r.name) && d.location?.includes(r.location));
+  const isRemoved = (d) => REMOVED.some((r) => d.name?.includes(r.name) && (!r.location || d.location?.includes(r.location)));
   const base = (cliniciansLoaded && clinicians.length > 0 ? clinicians : DEPRESCRIBERS).filter((d) => !isRemoved(d));
   const featured = DEPRESCRIBERS.filter((d) => d.photo && !base.some((b) => b.name === d.name));
   const providers = featured.length > 0 ? [...base, ...featured] : base;
