@@ -20,16 +20,17 @@ export default function AnalyticsDashboard() {
   const [lastUpdated, setLastUpdated] = useState(null);
   const [pendingMatchCount, setPendingMatchCount] = useState(0);
 
-  const fetchData = useCallback(async () => {
+  const fetchData = useCallback(async (signal) => {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch('/api/analytics');
+      const res = await fetch('/api/analytics', { signal });
       if (!res.ok) throw new Error('Unauthorized');
       const json = await res.json();
       setData(json);
       setLastUpdated(new Date());
     } catch (err) {
+      if (err.name === 'AbortError') return;
       setError(err.message);
     } finally {
       setLoading(false);
@@ -37,7 +38,10 @@ export default function AnalyticsDashboard() {
   }, []);
 
   useEffect(() => {
-    if (isAdmin(user?.id)) fetchData();
+    if (!isAdmin(user?.id)) return;
+    const controller = new AbortController();
+    fetchData(controller.signal);
+    return () => controller.abort();
   }, [user, fetchData]);
 
   useEffect(() => {

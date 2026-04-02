@@ -11,7 +11,7 @@ export function WelcomeEmail({ userName }) {
       <div style={{ padding: "32px", background: "#ffffff", border: "1px solid #e5e7eb" }}>
         <p style={{ fontSize: "16px", color: "#374151" }}>Welcome to TaperCommunity, {userName}!</p>
         <p style={{ color: "#6B7280", lineHeight: "1.6" }}>
-          You've joined a community of people who understand what it's like to taper.
+          You&apos;ve joined a community of people who understand what it&apos;s like to taper.
           Here are three things you can do right now to get started:
         </p>
 
@@ -59,7 +59,7 @@ export function WelcomeEmail({ userName }) {
           </a>
         </div>
         <p style={{ color: "#9CA3AF", fontSize: "13px" }}>
-          The community is here for you — whenever you're ready.
+          The community is here for you — whenever you&apos;re ready.
         </p>
       </div>
       <div style={{ padding: "16px", background: "#F9FAFB", borderRadius: "0 0 8px 8px", textAlign: "center" }}>

@@ -42,9 +42,19 @@ function unpatchTimers() {
   }
 }
 
+function getBrowserInfo() {
+  const ua = navigator.userAgent;
+  if (ua.includes('Safari') && !ua.includes('Chrome')) return 'Safari';
+  if (ua.includes('Chrome')) return 'Chrome';
+  if (ua.includes('Firefox')) return 'Firefox';
+  return 'Unknown';
+}
+
 function getSnapshot() {
   const supabase = createClient();
-  const channels = supabase.getChannels?.()?.length ?? 'N/A';
+  const allChannels = supabase.getChannels?.() ?? [];
+  const channelDetails = allChannels.map((ch) => `${ch.topic}(${ch.state})`);
+  const channels = allChannels.length;
   const heap = performance.memory?.usedJSHeapSize
     ? (performance.memory.usedJSHeapSize / 1048576).toFixed(1) + 'MB'
     : 'N/A';
@@ -70,7 +80,9 @@ function getSnapshot() {
     Object.keys(journalState._abortControllers).length;
 
   return {
+    browser: getBrowserInfo(),
     channels,
+    channelDetails: channelDetails.join(', ') || 'none',
     heap,
     threadsCached: Object.keys(threadState.threads).length,
     forumPages: Object.keys(forumState.threadPages).length,

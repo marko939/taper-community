@@ -8,6 +8,8 @@ import { useProfileStore } from '@/stores/profileStore';
 import { useThreadStore } from '@/stores/threadStore';
 import { useBlogStore } from '@/stores/blogStore';
 import { useJournalStore } from '@/stores/journalStore';
+import { useForumStore } from '@/stores/forumStore';
+import { useMessageStore } from '@/stores/messageStore';
 import { createClient } from '@/lib/supabase/client';
 
 /**
@@ -30,6 +32,10 @@ export default function NavigationObserver() {
     // Cancel any pending visibility debounce to prevent it from wiping
     // data that the new page just fetched
     cancelVisibilityDebounce();
+
+    // Cancel in-flight fetches from the previous route
+    useForumStore.getState().cancelAll?.();
+    useMessageStore.getState().cancelAll?.();
 
     // Prune accumulated state in stores (pass current IDs to protect active data)
     const profileMatch = pathname.match(/^\/profile\/([^/]+)/);

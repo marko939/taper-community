@@ -11,13 +11,13 @@ export function IntroduceYourselfEmail({ userName }) {
       <div style={{ padding: "32px", background: "#ffffff", border: "1px solid #e5e7eb" }}>
         <p style={{ fontSize: "16px", color: "#374151" }}>Hi {userName},</p>
         <p style={{ color: "#6B7280", lineHeight: "1.6" }}>
-          Welcome to TaperCommunity. We noticed you haven't posted yet —
-          no pressure at all, but we'd love to hear from you when you're ready.
+          Welcome to TaperCommunity. We noticed you haven&apos;t posted yet —
+          no pressure at all, but we&apos;d love to hear from you when you&apos;re ready.
         </p>
         <p style={{ color: "#6B7280", lineHeight: "1.6" }}>
           A great place to start is the <strong>Introductions</strong> forum.
-          You don't need to share anything you're not comfortable with —
-          even just saying hello and what medication you're tapering is enough
+          You don&apos;t need to share anything you&apos;re not comfortable with —
+          even just saying hello and what medication you&apos;re tapering is enough
           to connect with people going through the same thing.
         </p>
         <div style={{ textAlign: "center", margin: "32px 0" }}>
@@ -26,7 +26,7 @@ export function IntroduceYourselfEmail({ userName }) {
           </a>
         </div>
         <p style={{ color: "#9CA3AF", fontSize: "13px" }}>
-          The community is here whenever you're ready.
+          The community is here whenever you&apos;re ready.
         </p>
       </div>
       <div style={{ padding: "16px", background: "#F9FAFB", borderRadius: "0 0 8px 8px", textAlign: "center" }}>

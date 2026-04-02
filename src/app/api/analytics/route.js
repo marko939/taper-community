@@ -26,6 +26,7 @@ export async function GET() {
   const supabase = getServiceClient();
 
   try {
+    const _t0 = Date.now();
     const results = await Promise.allSettled([
       fetchTopLineStats(supabase),
       fetchSignupSeries(supabase),
@@ -75,6 +76,7 @@ export async function GET() {
       retentionCohorts,
       newUsers,
       fetchedAt: new Date().toISOString(),
+      _responseTimeMs: Date.now() - _t0,
     });
   } catch (err) {
     console.error('Analytics fetch error:', err);
@@ -92,8 +94,9 @@ async function fetchTopLineStats(supabase) {
     supabase.from('profiles').select('id', { count: 'exact', head: true }),
     supabase.from('threads').select('id', { count: 'exact', head: true }).gte('created_at', today),
     supabase.from('replies').select('id', { count: 'exact', head: true }).gte('created_at', today),
-    supabase.from('threads').select('user_id').gte('created_at', weekAgo),
-    supabase.from('replies').select('user_id').gte('created_at', weekAgo),
+    // TODO: replace with RPC — aggregate unique active users in DB
+    supabase.from('threads').select('user_id').gte('created_at', weekAgo).limit(500),
+    supabase.from('replies').select('user_id').gte('created_at', weekAgo).limit(500),
   ]);
 
   const uniqueActive = new Set([
@@ -464,13 +467,14 @@ async function fetchEngagement(supabase) {
   const weekAgo = new Date(Date.now() - 7 * 86400000).toISOString();
   const monthAgo = new Date(Date.now() - 30 * 86400000).toISOString();
 
+  // TODO: replace with RPC — aggregate engagement metrics in DB instead of fetching all rows
   const [weekThreads, weekReplies, monthThreads, profiles, allThreads, allReplies] = await Promise.all([
-    supabase.from('threads').select('user_id').gte('created_at', weekAgo),
-    supabase.from('replies').select('user_id').gte('created_at', weekAgo),
-    supabase.from('threads').select('id, reply_count, created_at').gte('created_at', monthAgo),
-    supabase.from('profiles').select('id, joined_at'),
-    supabase.from('threads').select('user_id, created_at').order('created_at', { ascending: true }),
-    supabase.from('replies').select('user_id, created_at').order('created_at', { ascending: true }),
+    supabase.from('threads').select('user_id').gte('created_at', weekAgo).limit(500),
+    supabase.from('replies').select('user_id').gte('created_at', weekAgo).limit(500),
+    supabase.from('threads').select('id, reply_count, created_at').gte('created_at', monthAgo).limit(500),
+    supabase.from('profiles').select('id, joined_at').limit(500),
+    supabase.from('threads').select('user_id, created_at').order('created_at', { ascending: true }).limit(500),
+    supabase.from('replies').select('user_id, created_at').order('created_at', { ascending: true }).limit(500),
   ]);
 
   // Posts per active user
@@ -529,7 +533,8 @@ async function fetchForumBreakdown(supabase) {
   const { data: threads } = await supabase
     .from('threads')
     .select('forum_id, forums(name)')
-    .gte('created_at', monthAgo);
+    .gte('created_at', monthAgo)
+    .limit(500);
 
   const forumCounts = {};
   for (const t of (threads || [])) {
@@ -544,8 +549,9 @@ async function fetchForumBreakdown(supabase) {
 
 // ── Section 8: Time to First Post ──
 async function fetchTimeToFirstPost(supabase) {
-  const { data: profiles } = await supabase.from('profiles').select('id, joined_at');
-  const { data: threads } = await supabase.from('threads').select('user_id, created_at').order('created_at', { ascending: true });
+  // TODO: replace with RPC — compute time-to-first-post in DB
+  const { data: profiles } = await supabase.from('profiles').select('id, joined_at').limit(500);
+  const { data: threads } = await supabase.from('threads').select('user_id, created_at').order('created_at', { ascending: true }).limit(500);
 
   const firstPostByUser = {};
   for (const t of (threads || [])) {
@@ -571,9 +577,10 @@ async function fetchTimeToFirstPost(supabase) {
 async function fetchPeakHours(supabase) {
   const monthAgo = new Date(Date.now() - 30 * 86400000).toISOString();
 
+  // TODO: replace with RPC — aggregate hour distribution in DB
   const [threads, replies] = await Promise.all([
-    supabase.from('threads').select('created_at').gte('created_at', monthAgo),
-    supabase.from('replies').select('created_at').gte('created_at', monthAgo),
+    supabase.from('threads').select('created_at').gte('created_at', monthAgo).limit(500),
+    supabase.from('replies').select('created_at').gte('created_at', monthAgo).limit(500),
   ]);
 
   const hourCounts = new Array(24).fill(0);
@@ -630,11 +637,11 @@ async function fetchNewVsReturning(supabase) {
 async function fetchChurnRisk(supabase) {
   const fourteenDaysAgo = new Date(Date.now() - 14 * 86400000).toISOString();
 
-  // All users who posted a thread in their first 7 days
-  const { data: profiles } = await supabase.from('profiles').select('id, joined_at');
-  const { data: allThreads } = await supabase.from('threads').select('user_id, created_at');
-  const { data: recentThreads } = await supabase.from('threads').select('user_id').gte('created_at', fourteenDaysAgo);
-  const { data: recentReplies } = await supabase.from('replies').select('user_id').gte('created_at', fourteenDaysAgo);
+  // TODO: replace with RPC — compute churn risk in DB
+  const { data: profiles } = await supabase.from('profiles').select('id, joined_at').limit(500);
+  const { data: allThreads } = await supabase.from('threads').select('user_id, created_at').limit(500);
+  const { data: recentThreads } = await supabase.from('threads').select('user_id').gte('created_at', fourteenDaysAgo).limit(500);
+  const { data: recentReplies } = await supabase.from('replies').select('user_id').gte('created_at', fourteenDaysAgo).limit(500);
 
   const recentActive = new Set([
     ...(recentThreads || []).map(r => r.user_id),
@@ -664,9 +671,10 @@ async function fetchChurnRisk(supabase) {
 async function fetchTopMembers(supabase) {
   const weekAgo = new Date(Date.now() - 7 * 86400000).toISOString();
 
+  // TODO: replace with RPC — aggregate top members in DB
   const [threads, replies] = await Promise.all([
-    supabase.from('threads').select('user_id').gte('created_at', weekAgo),
-    supabase.from('replies').select('user_id').gte('created_at', weekAgo),
+    supabase.from('threads').select('user_id').gte('created_at', weekAgo).limit(500),
+    supabase.from('replies').select('user_id').gte('created_at', weekAgo).limit(500),
   ]);
 
   const activity = {};

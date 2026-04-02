@@ -3,6 +3,7 @@
 import { create } from 'zustand';
 import { createClient } from '@/lib/supabase/client';
 import { useAuthStore } from './authStore';
+import { subscribeWithFallback, unsubscribeWithFallback } from '@/lib/realtimeAdapter';
 
 // Staff user IDs in display order — always shown as pre-existing chats for regular users
 export const STAFF_IDS = [
@@ -201,7 +202,10 @@ export const useMessageStore = create((set, get) => ({
       set((state) => ({ messages: [...state.messages, data] }));
 
       // Refresh conversation list to update sidebar preview
-      setTimeout(() => get().fetchConversations(), 500);
+      const prevTimer = get()._refetchTimer;
+      if (prevTimer) clearTimeout(prevTimer);
+      const timer = setTimeout(() => get().fetchConversations(), 500);
+      set({ _refetchTimer: timer });
 
       // Fire-and-forget email notification to recipient
       fetch('/api/dm-notification', {
@@ -279,7 +283,7 @@ export const useMessageStore = create((set, get) => ({
     }
   },
 
-  subscribeRealtime: () => {
+  _subscribeRealtimeWs: () => {
     const userId = useAuthStore.getState().user?.id;
     if (!userId) return;
 
@@ -287,6 +291,14 @@ export const useMessageStore = create((set, get) => ({
     if (existing) return;
 
     const supabase = createClient();
+
+    // Remove any stale channels with this prefix before creating a new one
+    for (const ch of supabase.getChannels()) {
+      if (ch.topic.startsWith('realtime:dms:')) {
+        supabase.removeChannel(ch);
+      }
+    }
+
     const channel = supabase
       .channel(`dms:${userId}`)
       .on(
@@ -316,7 +328,7 @@ export const useMessageStore = create((set, get) => ({
     set({ _realtimeChannel: channel });
   },
 
-  unsubscribeRealtime: () => {
+  _unsubscribeRealtimeWs: () => {
     const timer = get()._refetchTimer;
     if (timer) clearTimeout(timer);
 
@@ -326,5 +338,18 @@ export const useMessageStore = create((set, get) => ({
       supabase.removeChannel(channel);
       set({ _realtimeChannel: null, _refetchTimer: null });
     }
+  },
+
+  subscribeRealtime: () => {
+    subscribeWithFallback(
+      'messages',
+      () => get()._subscribeRealtimeWs(),
+      () => get().fetchUnreadTotal(),
+      30000
+    );
+  },
+
+  unsubscribeRealtime: () => {
+    unsubscribeWithFallback('messages', () => get()._unsubscribeRealtimeWs());
   },
 }));

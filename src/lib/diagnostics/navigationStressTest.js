@@ -4,6 +4,11 @@ import { createClient } from '@/lib/supabase/client';
 import { useForumStore } from '@/stores/forumStore';
 import { useThreadStore } from '@/stores/threadStore';
 import { useProfileStore } from '@/stores/profileStore';
+import { useBlogStore } from '@/stores/blogStore';
+import { useMessageStore } from '@/stores/messageStore';
+import { useNotificationStore } from '@/stores/notificationStore';
+import { useFollowStore } from '@/stores/followStore';
+import { useJournalStore } from '@/stores/journalStore';
 
 export function initNavigationStressTest() {
   window.__taperDiag = window.__taperDiag || {};
@@ -40,25 +45,39 @@ export function initNavigationStressTest() {
       // Wait for route to settle
       await new Promise((r) => setTimeout(r, 2000));
 
-      const channels = supabase.getChannels?.()?.length ?? 0;
+      const allChannels = supabase.getChannels?.() ?? [];
+      const channels = allChannels.length;
+      const channelStates = allChannels.map((ch) => `${ch.topic}(${ch.state})`);
+      const unhealthyChannels = allChannels.filter((ch) => ch.state === 'errored' || ch.state === 'closed').length;
       const heap = performance.memory?.usedJSHeapSize ?? 0;
       const heapMB = (heap / 1048576).toFixed(1);
       const forumSnap = useForumStore.getState().getSnapshot();
       const threadSnap = useThreadStore.getState().getSnapshot();
       const profileSnap = useProfileStore.getState().getSnapshot();
 
+      // Count pending aborts across all stores
+      const allStores = [
+        useForumStore, useThreadStore, useProfileStore, useBlogStore,
+        useMessageStore, useNotificationStore, useFollowStore, useJournalStore,
+      ];
+      const totalAborts = allStores.reduce((sum, store) =>
+        sum + Object.keys(store.getState()._abortControllers || {}).length, 0
+      );
+
       results.push({
         step: i + 1,
         route,
         channels,
+        unhealthyChannels,
+        channelStates: channelStates.join(', ') || 'none',
         heapMB,
         forumPages: forumSnap.forumPages,
         threadsCached: threadSnap.threadKeys,
         profilesCached: profileSnap.profileKeys,
-        pendingAborts: forumSnap.pendingAborts + threadSnap.pendingAborts + profileSnap.pendingAborts,
+        pendingAborts: totalAborts,
       });
 
-      console.log(`[TaperDiag] Step ${i + 1}: ${route} | Channels: ${channels} | Heap: ${heapMB}MB | Aborts: ${results[i].pendingAborts}`);
+      console.log(`[TaperDiag] Step ${i + 1}: ${route} | Channels: ${channels} (dead: ${unhealthyChannels}) | Heap: ${heapMB}MB | Aborts: ${totalAborts}`);
     }
 
     const finalHeap = performance.memory?.usedJSHeapSize ?? 0;

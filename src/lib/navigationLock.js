@@ -5,10 +5,10 @@ export function acquireNavigationLock() {
   if (process.env.NEXT_PUBLIC_NAV_LOCK === 'false') return true;
   if (_navigating) return false;
   _navigating = true;
-  // Safety auto-release after 3s — prevents permanent lock from edge cases
+  // Safety auto-release after 1.5s — prevents permanent lock from edge cases
   _timer = setTimeout(() => {
     _navigating = false;
-  }, 3000);
+  }, 1500);
   return true;
 }
 

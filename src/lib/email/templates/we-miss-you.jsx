@@ -11,16 +11,16 @@ export function WeMissYouEmail({ userName }) {
       <div style={{ padding: "32px", background: "#ffffff", border: "1px solid #e5e7eb" }}>
         <p style={{ fontSize: "16px", color: "#374151" }}>Hi {userName},</p>
         <p style={{ color: "#6B7280", lineHeight: "1.6" }}>
-          We haven't seen you in a while — just wanted to check in.
+          We haven&apos;t seen you in a while — just wanted to check in.
         </p>
         <p style={{ color: "#6B7280", lineHeight: "1.6" }}>
           Tapering is a long road and it can be isolating. The community is still
-          here if you want to share where you're at, ask a question, or just
+          here if you want to share where you&apos;re at, ask a question, or just
           read how others are doing.
         </p>
         <div style={{ textAlign: "center", margin: "32px 0" }}>
           <a href={`${siteUrl}/forums`} style={{ display: "inline-block", background: "#6B46C1", color: "white", padding: "12px 24px", borderRadius: "8px", textDecoration: "none", fontSize: "15px", fontWeight: "600" }}>
-            See what's new &rarr;
+            See what&apos;s new &rarr;
           </a>
         </div>
       </div>

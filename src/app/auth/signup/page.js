@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import { Suspense } from 'react';
+import { safeLocal } from '@/lib/safeStorage';
 
 function SignUpForm() {
   const [displayName, setDisplayName] = useState('');
@@ -28,7 +29,7 @@ function SignUpForm() {
   useEffect(() => {
     const ref = searchParams.get('ref');
     if (ref) {
-      localStorage.setItem('taper_ref', ref);
+      safeLocal.set('taper_ref', ref);
     }
   }, [searchParams]);
 

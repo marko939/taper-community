@@ -179,21 +179,8 @@ export default function FeedTabs({ activeTab: controlledTab, onTabChange, useUrl
     useBlogStore.getState().fetchPosts();
   }, []);
 
-  // Direct visibilitychange listener — force-fetch when tab comes back.
-  // fetchWithRetry inside stores auto-refreshes stale JWT on failure.
-  useEffect(() => {
-    const handleVisible = () => {
-      if (document.hidden) return;
-      // Small delay to let visibility manager's auth refresh start first
-      setTimeout(() => {
-        useForumStore.getState().fetchHotThreads(10, { force: true });
-        useForumStore.getState().fetchNewThreads(10, { force: true });
-        useBlogStore.getState().fetchPosts();
-      }, 400);
-    };
-    document.addEventListener('visibilitychange', handleVisible);
-    return () => document.removeEventListener('visibilitychange', handleVisible);
-  }, []);
+  // Visibility-based refetch is handled centrally by visibilityManager.js
+  // (lines 98-106). No duplicate listener needed here.
 
   // Safety net: if still loading after 6 seconds on mount, force re-fetch.
   useEffect(() => {

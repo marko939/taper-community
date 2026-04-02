@@ -5,14 +5,16 @@ import { usePathname } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { useAuthStore } from '@/stores/authStore';
 import { isAdmin } from '@/lib/blog';
+import { generateId } from '@/lib/compat';
+import { safeSession } from '@/lib/safeStorage';
 
 // Generate a stable session ID per browser tab (persists across navigations)
 function getSessionId() {
   if (typeof window === 'undefined') return null;
-  let sid = sessionStorage.getItem('pv_sid');
+  let sid = safeSession.get('pv_sid');
   if (!sid) {
-    sid = crypto.randomUUID();
-    sessionStorage.setItem('pv_sid', sid);
+    sid = generateId();
+    safeSession.set('pv_sid', sid);
   }
   return sid;
 }

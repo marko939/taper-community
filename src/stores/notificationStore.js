@@ -3,6 +3,7 @@
 import { create } from 'zustand';
 import { createClient } from '@/lib/supabase/client';
 import { useAuthStore } from './authStore';
+import { subscribeWithFallback, unsubscribeWithFallback } from '@/lib/realtimeAdapter';
 
 export const useNotificationStore = create((set, get) => ({
   notifications: [],
@@ -144,7 +145,7 @@ export const useNotificationStore = create((set, get) => ({
     }
   },
 
-  subscribeRealtime: () => {
+  _subscribeRealtimeWs: () => {
     const userId = useAuthStore.getState().user?.id;
     if (!userId) return;
 
@@ -152,6 +153,13 @@ export const useNotificationStore = create((set, get) => ({
     if (existing) return;
 
     const supabase = createClient();
+
+    // Remove any stale channels with this prefix before creating a new one
+    for (const ch of supabase.getChannels()) {
+      if (ch.topic.startsWith('realtime:notifications:')) {
+        supabase.removeChannel(ch);
+      }
+    }
 
     const channel = supabase
       .channel(`notifications:${userId}`)
@@ -164,13 +172,10 @@ export const useNotificationStore = create((set, get) => ({
           filter: `user_id=eq.${userId}`,
         },
         (payload) => {
-          // Bump unread count immediately for the badge
           set((state) => ({
             unreadCount: state.unreadCount + 1,
           }));
 
-          // Debounce the full list re-fetch — collapses rapid INSERT bursts
-          // into a single fetch 2s after the last event
           if (get().notifications.length > 0) {
             const prevTimer = get()._refetchTimer;
             if (prevTimer) clearTimeout(prevTimer);
@@ -184,6 +189,15 @@ export const useNotificationStore = create((set, get) => ({
       .subscribe();
 
     set({ _realtimeChannel: channel });
+  },
+
+  subscribeRealtime: () => {
+    subscribeWithFallback(
+      'notifications',
+      () => get()._subscribeRealtimeWs(),
+      () => get().fetchNotifications(),
+      30000
+    );
   },
 
   createBadgeNotification: async (milestone) => {
@@ -219,7 +233,7 @@ export const useNotificationStore = create((set, get) => ({
     }
   },
 
-  unsubscribeRealtime: () => {
+  _unsubscribeRealtimeWs: () => {
     const timer = get()._refetchTimer;
     if (timer) clearTimeout(timer);
 
@@ -229,5 +243,9 @@ export const useNotificationStore = create((set, get) => ({
       supabase.removeChannel(channel);
       set({ _realtimeChannel: null, _refetchTimer: null });
     }
+  },
+
+  unsubscribeRealtime: () => {
+    unsubscribeWithFallback('notifications', () => get()._unsubscribeRealtimeWs());
   },
 }));

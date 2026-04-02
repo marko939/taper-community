@@ -1,6 +1,7 @@
 'use client';
 
 import { createContext, useContext, useEffect, useState } from 'react';
+import { safeLocal } from '@/lib/safeStorage';
 
 const FONT_SIZE_KEY = 'tapercommunity_font_size';
 const FONT_SIZE_MAP = {
@@ -19,14 +20,14 @@ export function FontSizeProvider({ children }) {
   const [fontSize, setFontSizeState] = useState('large');
 
   useEffect(() => {
-    const saved = localStorage.getItem(FONT_SIZE_KEY);
+    const saved = safeLocal.get(FONT_SIZE_KEY);
     if (saved && FONT_SIZE_MAP[saved]) setFontSizeState(saved);
   }, []);
 
   const setFontSize = (size) => {
     setFontSizeState(size);
     document.documentElement.style.fontSize = FONT_SIZE_MAP[size] || '18px';
-    localStorage.setItem(FONT_SIZE_KEY, size);
+    safeLocal.set(FONT_SIZE_KEY, size);
   };
 
   return (

@@ -40,7 +40,7 @@ export function ForumNewPostEmail({ userName, posts }) {
       </div>
       <div style={{ padding: "16px", background: "#F9FAFB", borderRadius: "0 0 8px 8px", textAlign: "center" }}>
         <p style={{ fontSize: "12px", color: "#9CA3AF", margin: 0 }}>
-          You're receiving this because you follow this forum on TaperCommunity.
+          You&apos;re receiving this because you follow this forum on TaperCommunity.
           <br />
           <a href={`${siteUrl}/settings`} style={{ color: "#6B46C1" }}>Manage email preferences</a>
         </p>

@@ -10,6 +10,7 @@ import { useBlogStore } from '@/stores/blogStore';
 import { isPrimaryAdmin, toSlug } from '@/lib/blog';
 import { createClient } from '@/lib/supabase/client';
 import FormattingToolbar, { makeBulletKeyHandler } from '@/components/shared/FormattingToolbar';
+import { safeLocal } from '@/lib/safeStorage';
 
 export default function BlogAdminPage() {
   return (
@@ -31,17 +32,14 @@ const EMPTY_FORM = {
 const DRAFT_KEY = 'blog-admin-draft';
 
 function saveDraftToStorage(form) {
-  try {
-    localStorage.setItem(DRAFT_KEY, JSON.stringify(form));
-  } catch {}
+  safeLocal.set(DRAFT_KEY, JSON.stringify(form));
 }
 
 function loadDraftFromStorage() {
   try {
-    const raw = localStorage.getItem(DRAFT_KEY);
+    const raw = safeLocal.get(DRAFT_KEY);
     if (!raw) return null;
     const parsed = JSON.parse(raw);
-    // Only restore if there's meaningful content
     if (parsed.title || parsed.body) return parsed;
     return null;
   } catch {
@@ -50,9 +48,7 @@ function loadDraftFromStorage() {
 }
 
 function clearDraftFromStorage() {
-  try {
-    localStorage.removeItem(DRAFT_KEY);
-  } catch {}
+  safeLocal.remove(DRAFT_KEY);
 }
 
 /** Compress image client-side using canvas. Target ~800KB max. */

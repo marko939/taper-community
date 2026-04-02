@@ -12,19 +12,25 @@ export default function AISidebar({ threadId }) {
   useEffect(() => {
     if (!threadId) return;
 
+    const controller = new AbortController();
+
     const fetchSummary = async () => {
       try {
-        const res = await fetch(`/api/ai-summary?threadId=${threadId}`);
+        const res = await fetch(`/api/ai-summary?threadId=${threadId}`, {
+          signal: controller.signal,
+        });
         if (!res.ok) throw new Error('Failed to fetch');
         const json = await res.json();
         setData(json);
-      } catch {
+      } catch (err) {
+        if (err.name === 'AbortError') return;
         setError(true);
       }
       setLoading(false);
     };
 
     fetchSummary();
+    return () => controller.abort();
   }, [threadId]);
 
   if (loading) {

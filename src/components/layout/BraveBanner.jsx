@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useAuthStore } from '@/stores/authStore';
+import { safeSession } from '@/lib/safeStorage';
 
 export default function BraveBanner() {
   const [show, setShow] = useState(false);
@@ -18,7 +19,7 @@ export default function BraveBanner() {
         const isBrave = await navigator.brave?.isBrave?.();
         if (isBrave && !cancelled) {
           // Only show if user hasn't dismissed before this session
-          const dismissed = sessionStorage.getItem('brave_banner_dismissed');
+          const dismissed = safeSession.get('brave_banner_dismissed');
           if (!dismissed) setShow(true);
         }
       } catch {
@@ -33,7 +34,7 @@ export default function BraveBanner() {
 
   const handleDismiss = () => {
     setShow(false);
-    sessionStorage.setItem('brave_banner_dismissed', '1');
+    safeSession.set('brave_banner_dismissed', '1');
   };
 
   return (
@@ -49,8 +50,9 @@ export default function BraveBanner() {
       <div className="flex-1">
         <p className="font-medium text-foreground">Using Brave browser?</p>
         <p className="mt-1">
-          Brave&apos;s Shields may block sign-in or some features. If you experience issues,
-          try clicking the Shields icon in the address bar and selecting &ldquo;Allow all cookies&rdquo; for this site.
+          Brave&apos;s Shields may block sign-in or live updates. Core features still work —
+          live updates will use polling when WebSockets are blocked. If you experience other issues,
+          try clicking the Shields icon and selecting &ldquo;Allow all cookies&rdquo; for this site.
         </p>
       </div>
       <button

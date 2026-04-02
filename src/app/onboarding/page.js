@@ -9,6 +9,8 @@ import { TAPER_STAGES } from '@/lib/constants';
 import { recordReferral } from '@/lib/invites';
 import { fireAndForget } from '@/lib/fireAndForget';
 import DrugAutocomplete from '@/components/shared/DrugAutocomplete';
+import { generateId } from '@/lib/compat';
+import { safeLocal } from '@/lib/safeStorage';
 
 function buildSignature(medications, hasClinician) {
   if (medications.length === 0) return '';
@@ -44,7 +46,7 @@ const SKIPPABLE_STEPS = new Set([3, 4]); // location and introPost
 export default function OnboardingPage() {
   const [step, setStep] = useState(0);
   const [notOnMeds, setNotOnMeds] = useState(false);
-  const [medications, setMedications] = useState([{ _key: crypto.randomUUID(), drug: '', dose: '', duration: '', stage: '' }]);
+  const [medications, setMedications] = useState([{ _key: generateId(), drug: '', dose: '', duration: '', stage: '' }]);
   const [hasClinician, setHasClinician] = useState(null);
   const [wantsClinicianHelp, setWantsClinicianHelp] = useState(false);
   const [drugSignature, setDrugSignature] = useState('');
@@ -63,7 +65,7 @@ export default function OnboardingPage() {
   );
 
   const addMed = () => {
-    setMedications([...medications, { _key: crypto.randomUUID(), drug: '', dose: '', duration: '', stage: '' }]);
+    setMedications([...medications, { _key: generateId(), drug: '', dose: '', duration: '', stage: '' }]);
   };
 
   const removeMed = (idx) => {
@@ -144,11 +146,11 @@ export default function OnboardingPage() {
 
     // Fire-and-forget: referral tracking
     fireAndForget('onboarding-referral', async () => {
-      const ref = localStorage.getItem('taper_ref');
+      const ref = safeLocal.get('taper_ref');
       if (ref) {
         const userId = useAuthStore.getState().user?.id;
         if (userId) await recordReferral(ref, userId);
-        localStorage.removeItem('taper_ref');
+        safeLocal.remove('taper_ref');
       }
     });
 

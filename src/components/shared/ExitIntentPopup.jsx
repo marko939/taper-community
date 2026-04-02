@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useAuthStore } from '@/stores/authStore';
+import { safeSession } from '@/lib/safeStorage';
 
 export default function ExitIntentPopup() {
   const user = useAuthStore((s) => s.user);
@@ -13,9 +14,9 @@ export default function ExitIntentPopup() {
 
     function handleMouseLeave(e) {
       if (e.clientY > 10) return; // only trigger when mouse leaves toward top
-      if (sessionStorage.getItem('tc_exit_shown')) return; // once per session
+      if (safeSession.get('tc_exit_shown')) return; // once per session
 
-      sessionStorage.setItem('tc_exit_shown', '1');
+      safeSession.set('tc_exit_shown', '1');
       setShow(true);
     }
 
