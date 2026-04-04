@@ -86,7 +86,9 @@ function SignUpForm() {
         return;
       }
 
-      // Signup succeeded — redirect to onboarding
+      // Signup succeeded — capture IP location (fire-and-forget)
+      fetch('/api/auth/geo', { method: 'POST' }).catch(() => {});
+
       // Session should exist immediately since email confirmation is OFF
       setLoading(false);
       window.location.href = '/onboarding';

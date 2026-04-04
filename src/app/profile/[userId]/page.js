@@ -126,6 +126,9 @@ export default function ProfilePage() {
             {profile.location && (
               <p className="text-sm text-text-subtle">{profile.location}</p>
             )}
+            {isMod(currentUser?.id) && profile.ip_location && (
+              <p className="text-xs text-text-subtle">IP: {profile.ip_location}</p>
+            )}
             <div className="mt-2 flex flex-wrap gap-4 text-sm text-text-muted">
               <span>{profile.post_count} posts</span>
               <span>{karma} karma</span>

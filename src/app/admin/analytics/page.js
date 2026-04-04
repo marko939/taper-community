@@ -131,6 +131,9 @@ export default function AnalyticsDashboard() {
           {/* 2. New Signups Bar Chart */}
           <SignupBarChart series={data.signupSeries} range={signupRange} setRange={setSignupRange} />
 
+          {/* New Users — Intake Forms */}
+          <NewUsersIntake data={data.newUsers} />
+
           {/* 3. Retention */}
           <RetentionCards retention={data.retention} />
           <RetentionCohortTable cohorts={data.retentionCohorts} />
@@ -183,8 +186,6 @@ export default function AnalyticsDashboard() {
             </div>
           )}
 
-          {/* New Users — Intake Forms */}
-          <NewUsersIntake data={data.newUsers} />
         </>
       ) : null}
     </div>
@@ -826,6 +827,10 @@ function NewUsersIntake({ data }) {
                       <p className="text-[11px] text-text-subtle">
                         {u.drug || 'No drug set'} · {timeAgo(u.joined_at)}
                       </p>
+                      <p className="text-[11px] text-text-subtle">{u.email || 'No email'}</p>
+                      {u.ip_location && (
+                        <p className="text-[10px] text-text-subtle">{u.ip_location}</p>
+                      )}
                     </div>
                     <svg
                       className={`h-4 w-4 shrink-0 text-text-subtle transition ${isExpanded ? 'rotate-180' : ''}`}
@@ -859,6 +864,14 @@ function NewUsersIntake({ data }) {
                         <div>
                           <p className="font-medium text-text-subtle">Location</p>
                           <p className="text-foreground">{u.location || '—'}</p>
+                        </div>
+                        <div>
+                          <p className="font-medium text-text-subtle">Email</p>
+                          <p className="text-foreground">{u.email || '—'}</p>
+                        </div>
+                        <div>
+                          <p className="font-medium text-text-subtle">IP Location</p>
+                          <p className="text-foreground">{u.ip_location || '—'}</p>
                         </div>
                       </div>
                       {u.drug_signature && (

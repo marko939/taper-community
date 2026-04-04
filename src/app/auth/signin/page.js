@@ -68,6 +68,9 @@ function SignInForm() {
         return;
       }
 
+      // Capture IP location (fire-and-forget)
+      fetch('/api/auth/geo', { method: 'POST' }).catch(() => {});
+
       // Hard redirect to ensure fresh server-side cookie read
       window.location.href = '/';
     } catch (err) {

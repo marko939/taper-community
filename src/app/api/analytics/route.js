@@ -884,7 +884,7 @@ async function fetchNewUsers(supabase) {
   const [profilesRes, matchRes] = await Promise.all([
     supabase
       .from('profiles')
-      .select('id, display_name, avatar_url, drug, taper_stage, has_clinician, drug_signature, location, joined_at')
+      .select('id, display_name, avatar_url, drug, taper_stage, has_clinician, drug_signature, location, joined_at, email, ip_location, last_ip')
       .order('joined_at', { ascending: false }),
     supabase
       .from('match_requests')
