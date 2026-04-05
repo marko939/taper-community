@@ -361,9 +361,20 @@ export default function OnboardingPage() {
         {step === 2 && (
           <div className="space-y-4">
             <h2 className="text-lg font-semibold text-foreground">
-              Do you have clinician support?
+              Do you need help finding a clinician?
             </h2>
             <div className="grid grid-cols-2 gap-3">
+              <button
+                onClick={() => { setHasClinician(false); setWantsClinicianHelp(true); }}
+                className={`rounded-xl border p-4 text-center transition ${
+                  wantsClinicianHelp === true && hasClinician === false
+                    ? 'border-purple-300 bg-purple-50 text-foreground'
+                    : 'border-border-subtle text-text-muted hover:border-slate-300'
+                }`}
+              >
+                <span className="text-2xl">&#10003;</span>
+                <p className="mt-1 text-sm">Yes</p>
+              </button>
               <button
                 onClick={() => { setHasClinician(true); setWantsClinicianHelp(false); }}
                 className={`rounded-xl border p-4 text-center transition ${
@@ -373,65 +384,9 @@ export default function OnboardingPage() {
                 }`}
               >
                 <span className="text-2xl">&#10003;</span>
-                <p className="mt-1 text-sm">Yes</p>
-              </button>
-              <button
-                onClick={() => setHasClinician(false)}
-                className={`rounded-xl border p-4 text-center transition ${
-                  hasClinician === false
-                    ? 'border-purple-300 bg-purple-50 text-foreground'
-                    : 'border-border-subtle text-text-muted hover:border-slate-300'
-                }`}
-              >
-                <span className="text-2xl">&#10007;</span>
-                <p className="mt-1 text-sm">Not yet</p>
+                <p className="mt-1 text-sm">No, I have one</p>
               </button>
             </div>
-
-            {/* Sub-question: Would you like help finding one? */}
-            {hasClinician === false && (
-              <div className="space-y-3">
-                <p className="text-xs text-amber-600">
-                  We strongly recommend finding a clinician who understands tapering.
-                  Check our deprescriber map for informed providers.
-                </p>
-                <div
-                  className="rounded-xl border p-4 transition"
-                  style={{
-                    borderColor: wantsClinicianHelp ? 'var(--purple)' : 'var(--border-subtle)',
-                    background: wantsClinicianHelp ? 'var(--purple-ghost)' : 'transparent',
-                  }}
-                >
-                  <label className="flex cursor-pointer items-center gap-3">
-                    <input
-                      type="checkbox"
-                      checked={wantsClinicianHelp}
-                      onChange={(e) => setWantsClinicianHelp(e.target.checked)}
-                      className="sr-only"
-                    />
-                    <div
-                      className="flex h-5 w-5 shrink-0 items-center justify-center rounded-md border-2 transition"
-                      style={{
-                        borderColor: wantsClinicianHelp ? 'var(--purple)' : 'var(--border-subtle)',
-                        background: wantsClinicianHelp ? 'var(--purple)' : 'transparent',
-                      }}
-                    >
-                      {wantsClinicianHelp && (
-                        <svg className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" strokeWidth={3} stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-                        </svg>
-                      )}
-                    </div>
-                    <span className="text-sm font-medium text-foreground">
-                      Yes, I&apos;d like help finding a clinician
-                    </span>
-                  </label>
-                  <p className="mt-2 ml-8 text-xs text-text-muted">
-                    We&apos;ll connect you with someone from our network who can support your taper.
-                  </p>
-                </div>
-              </div>
-            )}
           </div>
         )}
 
