@@ -2,6 +2,9 @@ import { getDrug, DRUG_SLUGS } from '@/lib/drugs';
 import DrugProfileCard from '@/components/drugs/DrugProfileCard';
 import DeprescriberCTA from '@/components/layout/DeprescriberCTA';
 import Link from 'next/link';
+import { createClient } from '@/lib/supabase/server';
+
+export const revalidate = 86400;
 
 export async function generateStaticParams() {
   return DRUG_SLUGS.map((slug) => ({ drugSlug: slug }));
@@ -33,6 +36,23 @@ export default async function DrugProfilePage({ params }) {
   }
 
   const otherDrugs = DRUG_SLUGS.filter((s) => s !== drugSlug).slice(0, 4);
+
+  // Fetch related blog posts by drug slug, generic name, or class
+  let relatedPosts = [];
+  try {
+    const supabase = await createClient();
+    const searchTerms = [drug.slug, drug.generic, drug.class.toLowerCase()].filter(Boolean);
+    const { data } = await supabase
+      .from('blog_posts')
+      .select('title, slug, cover_image_url, created_at, excerpt')
+      .eq('published', true)
+      .or(searchTerms.map((t) => `tags.cs.{${t}}`).join(','))
+      .order('created_at', { ascending: false })
+      .limit(4);
+    if (data) relatedPosts = data;
+  } catch {
+    // Supabase unavailable — skip related posts
+  }
 
   const drugSchema = {
     '@context': 'https://schema.org',
@@ -132,6 +152,40 @@ export default async function DrugProfilePage({ params }) {
       <DrugProfileCard drug={drug} />
 
       <DeprescriberCTA />
+
+      {relatedPosts.length > 0 && (
+        <div>
+          <h2 className="mb-4 text-lg font-semibold text-foreground">
+            Related Articles About {drug.name}
+          </h2>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {relatedPosts.map((post) => (
+              <Link
+                key={post.slug}
+                href={`/resources/blog/${post.slug}`}
+                className="card flex gap-3 no-underline transition hover:shadow-lg"
+              >
+                {post.cover_image_url && (
+                  <img
+                    src={post.cover_image_url}
+                    alt=""
+                    className="h-16 w-16 shrink-0 rounded-lg object-cover"
+                  />
+                )}
+                <div className="min-w-0">
+                  <h3 className="text-sm font-semibold text-foreground line-clamp-2">{post.title}</h3>
+                  {post.excerpt && (
+                    <p className="mt-1 text-xs text-text-muted line-clamp-2">{post.excerpt}</p>
+                  )}
+                  <p className="mt-1 text-[10px] text-text-subtle">
+                    {new Date(post.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                  </p>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div>
         <h2 className="mb-4 text-lg font-semibold text-foreground">Other Drug Profiles</h2>

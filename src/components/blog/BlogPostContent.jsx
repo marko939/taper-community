@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import ReactMarkdown from 'react-markdown';
@@ -8,8 +8,18 @@ import remarkGfm from 'remark-gfm';
 import { useBlogStore } from '@/stores/blogStore';
 import { useAuth } from '@/hooks/useAuth';
 import { isPrimaryAdmin } from '@/lib/blog';
+import { DRUG_LIST } from '@/lib/drugs';
 import BlogCommentSection from '@/components/blog/BlogCommentSection';
 import ShareButtons from '@/components/shared/ShareButtons';
+
+// Build drug name → slug lookup for auto-linking
+const drugLookup = {};
+DRUG_LIST.forEach((drug) => {
+  drugLookup[drug.name.toLowerCase()] = drug.slug;
+  drugLookup[drug.generic.toLowerCase()] = drug.slug;
+});
+const drugNames = Object.keys(drugLookup).sort((a, b) => b.length - a.length);
+const drugPattern = new RegExp(`\\b(${drugNames.map((n) => n.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')})\\b`, 'gi');
 
 export default function BlogPostContent({ post }) {
   const router = useRouter();
@@ -20,6 +30,41 @@ export default function BlogPostContent({ post }) {
 
   const isAdmin = !authLoading && isPrimaryAdmin(user?.id);
   const isSignedIn = !authLoading && !!user;
+
+  // Auto-link drug names in paragraph text (first occurrence of each drug only)
+  const markdownComponents = useMemo(() => {
+    const linked = new Set();
+    return {
+      p: ({ children }) => {
+        const processNode = (node) => {
+          if (typeof node !== 'string') return node;
+          const parts = [];
+          let lastIndex = 0;
+          let match;
+          drugPattern.lastIndex = 0;
+          while ((match = drugPattern.exec(node)) !== null) {
+            const slug = drugLookup[match[1].toLowerCase()];
+            if (!slug || linked.has(slug)) continue;
+            linked.add(slug);
+            if (match.index > lastIndex) parts.push(node.slice(lastIndex, match.index));
+            parts.push(
+              <Link key={`drug-${slug}-${match.index}`} href={`/drugs/${slug}`} className="text-purple font-medium hover:underline">
+                {match[1]}
+              </Link>
+            );
+            lastIndex = match.index + match[0].length;
+          }
+          if (parts.length === 0) return node;
+          if (lastIndex < node.length) parts.push(node.slice(lastIndex));
+          return parts;
+        };
+        const processed = Array.isArray(children)
+          ? children.map((child) => processNode(child))
+          : processNode(children);
+        return <p>{processed}</p>;
+      },
+    };
+  }, []);
 
   const handleMouseUp = useCallback(() => {
     const sel = window.getSelection();
@@ -108,7 +153,7 @@ export default function BlogPostContent({ post }) {
         onMouseUp={isSignedIn ? handleMouseUp : undefined}
         className="prose prose-sm max-w-none text-text-muted prose-headings:font-serif prose-headings:text-foreground prose-a:text-purple prose-strong:text-foreground prose-img:rounded-xl"
       >
-        <ReactMarkdown remarkPlugins={[remarkGfm]}>
+        <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
           {post.body}
         </ReactMarkdown>
       </div>

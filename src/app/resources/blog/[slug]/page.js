@@ -2,6 +2,8 @@ import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
 import BlogPostContent from '@/components/blog/BlogPostContent';
 
+export const revalidate = 3600;
+
 async function getPost(slug) {
   const supabase = await createClient();
   const { data } = await supabase
@@ -53,7 +55,7 @@ export default async function BlogPostPage({ params }) {
 
   const articleSchema = {
     '@context': 'https://schema.org',
-    '@type': 'Article',
+    '@type': 'BlogPosting',
     headline: post.title,
     datePublished: post.created_at,
     dateModified: post.updated_at || post.created_at,
@@ -66,6 +68,8 @@ export default async function BlogPostPage({ params }) {
     description: post.meta_description || post.body?.slice(0, 160),
     image: post.cover_image_url || 'https://taper.community/tapercommunity-logo.png',
     mainEntityOfPage: `https://taper.community/resources/blog/${slug}`,
+    wordCount: post.body?.split(/\s+/).length || 0,
+    keywords: post.tags?.join(', ') || '',
   };
 
   const breadcrumbSchema = {

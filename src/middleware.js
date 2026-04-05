@@ -11,6 +11,14 @@ export async function middleware(request) {
     return supabaseResponse;
   }
 
+  // Skip auth refresh for unauthenticated requests (crawlers, new visitors)
+  const hasAuthCookie = request.cookies.getAll().some(
+    (c) => c.name.startsWith('sb-') && c.name.endsWith('-auth-token')
+  );
+  if (!hasAuthCookie) {
+    return supabaseResponse;
+  }
+
   const supabase = createServerClient(
     url,
     key,
@@ -36,7 +44,7 @@ export async function middleware(request) {
   try {
     await Promise.race([
       supabase.auth.getUser(),
-      new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 5000)),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 2000)),
     ]);
   } catch {
     // Auth check timed out or failed — continue without blocking navigation

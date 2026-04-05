@@ -29,14 +29,15 @@ const fraunces = Fraunces({
 });
 
 export const metadata = {
-  title: 'TaperCommunity — Peer Support for Medication Tapering',
+  title: 'Taper Off Psychiatric Meds Safely — Peer Support | TaperCommunity',
   description:
     'A peer support community for safely tapering psychiatric medications. Evidence-based guidance, shared experiences, and taper journals.',
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://taper.community'),
   openGraph: {
-    title: 'TaperCommunity — Peer Support for Medication Tapering',
+    title: 'Taper Off Psychiatric Meds Safely — Peer Support | TaperCommunity',
     description: 'A peer support community for safely tapering psychiatric medications. Evidence-based guidance, shared experiences, and taper journals.',
     siteName: 'TaperCommunity',
+    url: 'https://taper.community',
     type: 'website',
     images: [{ url: '/og-image.png', width: 1200, height: 630, alt: 'TaperCommunity — Peer Support for Medication Tapering' }],
   },
