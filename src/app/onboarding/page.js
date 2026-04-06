@@ -49,6 +49,7 @@ export default function OnboardingPage() {
   const [medications, setMedications] = useState([{ _key: generateId(), drug: '', dose: '', duration: '', stage: '' }]);
   const [hasClinician, setHasClinician] = useState(null);
   const [wantsClinicianHelp, setWantsClinicianHelp] = useState(false);
+  const [noExpanded, setNoExpanded] = useState(false);
   const [drugSignature, setDrugSignature] = useState('');
   const [signatureEdited, setSignatureEdited] = useState(false);
   const [locationInput, setLocationInput] = useState('');
@@ -365,7 +366,7 @@ export default function OnboardingPage() {
             </h2>
             <div className="grid grid-cols-2 gap-3">
               <button
-                onClick={() => { setHasClinician(false); setWantsClinicianHelp(true); }}
+                onClick={() => { setHasClinician(false); setWantsClinicianHelp(true); setNoExpanded(false); }}
                 className={`rounded-xl border p-4 text-center transition ${
                   wantsClinicianHelp === true && hasClinician === false
                     ? 'border-purple-300 bg-purple-50 text-foreground'
@@ -373,20 +374,46 @@ export default function OnboardingPage() {
                 }`}
               >
                 <span className="text-2xl">&#10003;</span>
-                <p className="mt-1 text-sm">Yes</p>
+                <p className="mt-1 text-sm">Yes, help me find one</p>
               </button>
               <button
-                onClick={() => { setHasClinician(true); setWantsClinicianHelp(false); }}
+                onClick={() => { setNoExpanded(true); }}
                 className={`rounded-xl border p-4 text-center transition ${
-                  hasClinician === true
+                  noExpanded && !wantsClinicianHelp
                     ? 'border-purple-300 bg-purple-50 text-foreground'
                     : 'border-border-subtle text-text-muted hover:border-slate-300'
                 }`}
               >
-                <span className="text-2xl">&#10003;</span>
-                <p className="mt-1 text-sm">No, I have one</p>
+                <span className="text-2xl">&#10007;</span>
+                <p className="mt-1 text-sm">No</p>
               </button>
             </div>
+            {noExpanded && (
+              <div className="grid grid-cols-2 gap-3 pl-2">
+                <button
+                  onClick={() => { setHasClinician(true); setWantsClinicianHelp(false); }}
+                  className={`rounded-xl border p-3 text-center transition ${
+                    hasClinician === true
+                      ? 'border-purple-300 bg-purple-50 text-foreground'
+                      : 'border-border-subtle text-text-muted hover:border-slate-300'
+                  }`}
+                >
+                  <span className="text-lg">🩺</span>
+                  <p className="mt-1 text-sm">I already have one</p>
+                </button>
+                <button
+                  onClick={() => { setHasClinician(false); setWantsClinicianHelp(false); }}
+                  className={`rounded-xl border p-3 text-center transition ${
+                    hasClinician === false && wantsClinicianHelp === false && noExpanded
+                      ? 'border-purple-300 bg-purple-50 text-foreground'
+                      : 'border-border-subtle text-text-muted hover:border-slate-300'
+                  }`}
+                >
+                  <span className="text-lg">🚫</span>
+                  <p className="mt-1 text-sm">I don&apos;t need one</p>
+                </button>
+              </div>
+            )}
           </div>
         )}
 

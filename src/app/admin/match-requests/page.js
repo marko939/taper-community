@@ -173,7 +173,7 @@ export default function MatchRequestsAdmin() {
       const supabase = createClient();
       const { data, error } = await supabase
         .from('match_requests')
-        .select('*, clinician:clinicians(name, role), profile:profiles(display_name, avatar_url)')
+        .select('*, clinician:clinicians(name, role), profile:profiles(display_name, avatar_url, location, ip_location)')
         .order('created_at', { ascending: false });
 
       if (error) { console.error('[match-requests] fetch error:', error); return; }
@@ -533,6 +533,13 @@ export default function MatchRequestsAdmin() {
                     )}
                   </div>
                   <p className="mt-0.5 text-xs text-text-muted">{req.patient_email}</p>
+                  {(req.profile?.location || req.profile?.ip_location) && (
+                    <p className="mt-0.5 text-xs text-text-muted">
+                      {req.profile.location && <span>📍 {req.profile.location}</span>}
+                      {req.profile.location && req.profile.ip_location && <span className="mx-1">·</span>}
+                      {req.profile.ip_location && <span className="text-text-subtle">IP: {req.profile.ip_location}</span>}
+                    </p>
+                  )}
                   <p className="mt-1 text-xs text-text-subtle">
                     &rarr; {req.clinician_id
                       ? `${req.clinician?.name || 'Unknown clinician'}${req.clinician?.role ? ` (${req.clinician.role})` : ''}`

@@ -94,6 +94,7 @@ function detectAnnotations(entries) {
 
 export default function JournalChart({ entries = [], assessments = [] }) {
   const [showAnnotations, setShowAnnotations] = useState(true);
+  const [range, setRange] = useState(10);
 
   const { chartData, annotations, assessmentDots } = useMemo(() => {
     if (entries.length === 0) return { chartData: [], annotations: [], assessmentDots: [] };
@@ -102,9 +103,8 @@ export default function JournalChart({ entries = [], assessments = [] }) {
     const annotMap = {};
     annots.forEach((a) => { annotMap[a.date] = a; });
 
-    const data = [...entries]
-      .sort((a, b) => new Date(a.date) - new Date(b.date))
-      .slice(-10) // Show only last 10 data points on chart
+    const sorted = [...entries].sort((a, b) => new Date(a.date) - new Date(b.date));
+    const data = (range === 'all' ? sorted : sorted.slice(-range))
       .map((entry) => ({
         date: new Date(entry.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
         rawDate: entry.date,
@@ -135,7 +135,7 @@ export default function JournalChart({ entries = [], assessments = [] }) {
     }
 
     return { chartData: data, annotations: annots, assessmentDots: dots };
-  }, [entries, assessments]);
+  }, [entries, assessments, range]);
 
   if (entries.length === 0) {
     return (
@@ -151,14 +151,31 @@ export default function JournalChart({ entries = [], assessments = [] }) {
 
   return (
     <div>
-      <div className="mb-3 flex items-center gap-4 px-4 sm:px-0">
-        <div className="flex items-center gap-1.5">
-          <span className="inline-block h-2 w-2 rounded-full" style={{ background: '#5B2E91' }} />
-          <span className="text-[11px] text-text-subtle">Dose (mg)</span>
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-2 px-4 sm:px-0">
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-1.5">
+            <span className="inline-block h-2 w-2 rounded-full" style={{ background: '#5B2E91' }} />
+            <span className="text-[11px] text-text-subtle">Dose (mg)</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="inline-block h-2 w-2 rounded-full" style={{ background: '#C47DB5' }} />
+            <span className="text-[11px] text-text-subtle">Mood (/10)</span>
+          </div>
         </div>
-        <div className="flex items-center gap-1.5">
-          <span className="inline-block h-2 w-2 rounded-full" style={{ background: '#C47DB5' }} />
-          <span className="text-[11px] text-text-subtle">Mood (/10)</span>
+        <div className="flex rounded-md border" style={{ borderColor: 'var(--border-subtle)' }}>
+          {[{ label: '10', value: 10 }, { label: '30', value: 30 }, { label: 'All', value: 'all' }].map((opt) => (
+            <button
+              key={opt.label}
+              onClick={() => setRange(opt.value)}
+              className="px-2.5 py-0.5 text-[11px] font-medium transition"
+              style={{
+                background: range === opt.value ? '#5B2E91' : 'transparent',
+                color: range === opt.value ? '#fff' : 'var(--text-subtle)',
+              }}
+            >
+              {opt.label}
+            </button>
+          ))}
         </div>
       </div>
       <ResponsiveContainer width="100%" height={typeof window !== 'undefined' && window.innerWidth < 640 ? 220 : 300}>

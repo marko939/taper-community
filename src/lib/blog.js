@@ -14,6 +14,7 @@ export const MOD_IDS = [
   '8572637a-2109-4471-bcb4-3163d04094d0',
   'b2fb8e00-bbd0-489b-a762-945fa811861f',
   '2cf08926-2d7e-461f-b28b-3c83f1dfd850',
+  '5da61b1a-c487-44c1-9f1e-c7d35ca9e46b',
 ];
 export const isMod = (uid) => MOD_IDS.includes(uid);
 
