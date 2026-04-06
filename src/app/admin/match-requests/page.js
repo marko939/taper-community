@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { isAdmin } from '@/lib/blog';
+import { useRouteCleanup } from '@/hooks/useRouteCleanup';
 
 const STATUSES = ['pending', 'contacted', 'onboarded', 'matched', 'declined', 'closed'];
 const STATUS_COLORS = {
@@ -136,6 +137,7 @@ function ProfileSearch({ onSelect }) {
 /* ── main component ──────────────────────────────────── */
 
 export default function MatchRequestsAdmin() {
+  useRouteCleanup();
   const { user, loading: authLoading } = useAuth();
 
   // data

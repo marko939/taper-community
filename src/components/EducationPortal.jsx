@@ -282,7 +282,7 @@ const MODULES = [
       { type: "h3", text: "Practical Strategies" },
       { type: "p", bold: "Bead counting. ", text: "Venlafaxine XR capsules contain small beads. Some clinicians count beads to remove a precise number for each reduction. A 75mg capsule typically contains ~200–250 beads." },
       { type: "p", bold: "Compounding. ", text: "Custom-dose capsules or oral suspension. The most reliable method for fine-grained control." },
-      { type: "p", bold: "Cross-taper to fluoxetine. ", text: "Some clinicians introduce fluoxetine (~20mg) at the end of the venlafaxine taper, then taper the fluoxetine. This leverages fluoxetine's long half-life to smooth the final discontinuation." },
+      { type: "p", bold: "Cross-taper to fluoxetine (use with caution). ", text: "Some clinicians introduce fluoxetine (~20mg) at the end of the venlafaxine taper, then taper the fluoxetine. This is a complex strategy that should be carefully considered — it carries its own risks and is not appropriate for everyone." },
       { type: "pearl", text: "If Priya's missed-dose experience was \"the worst 48 hours of her life,\" imagine what cold-turkey discontinuation would be like. The taper from 225mg will likely take 6–12 months. Frame this honestly from the beginning." },
     ],
   },

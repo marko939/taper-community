@@ -10,8 +10,10 @@ import {
 } from 'recharts';
 import { createClient } from '@/lib/supabase/client';
 import Avatar from '@/components/shared/Avatar';
+import { useRouteCleanup } from '@/hooks/useRouteCleanup';
 
 export default function AnalyticsDashboard() {
+  useRouteCleanup();
   const { user, loading: authLoading } = useAuth();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);

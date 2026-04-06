@@ -11,6 +11,7 @@ import { fireAndForget } from '@/lib/fireAndForget';
 import DrugAutocomplete from '@/components/shared/DrugAutocomplete';
 import { generateId } from '@/lib/compat';
 import { safeLocal } from '@/lib/safeStorage';
+import { useRouteCleanup } from '@/hooks/useRouteCleanup';
 
 function buildSignature(medications, hasClinician) {
   if (medications.length === 0) return '';
@@ -44,6 +45,7 @@ const STEPS = ['meds', 'details', 'clinician', 'location', 'introPost'];
 const SKIPPABLE_STEPS = new Set([3, 4]); // location and introPost
 
 export default function OnboardingPage() {
+  useRouteCleanup();
   const [step, setStep] = useState(0);
   const [notOnMeds, setNotOnMeds] = useState(false);
   const [medications, setMedications] = useState([{ _key: generateId(), drug: '', dose: '', duration: '', stage: '' }]);

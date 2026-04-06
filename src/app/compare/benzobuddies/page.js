@@ -133,7 +133,7 @@ export default function CompareBenzoBuddiesPage() {
         <p className="mt-3 text-sm leading-relaxed text-text-muted">
           TaperCommunity hosts dedicated forums and drug profiles for every major benzodiazepine
           including Xanax (alprazolam), Klonopin (clonazepam), Ativan (lorazepam), and Valium (diazepam).
-          Each drug profile includes Ashton Manual cross-taper guidance, Maudsley deprescribing recommendations,
+          Each drug profile includes Ashton Manual guidance, Maudsley deprescribing recommendations,
           evidence-based tapering protocols, withdrawal timelines, and community-sourced practical tips.
         </p>
         <p className="mt-3 text-sm leading-relaxed text-text-muted">

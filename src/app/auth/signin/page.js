@@ -4,8 +4,10 @@ import { Suspense, useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
+import { useRouteCleanup } from '@/hooks/useRouteCleanup';
 
 function SignInForm() {
+  useRouteCleanup();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');

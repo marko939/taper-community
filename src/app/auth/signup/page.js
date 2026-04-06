@@ -6,8 +6,10 @@ import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import { Suspense } from 'react';
 import { safeLocal } from '@/lib/safeStorage';
+import { useRouteCleanup } from '@/hooks/useRouteCleanup';
 
 function SignUpForm() {
+  useRouteCleanup();
   const [displayName, setDisplayName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');

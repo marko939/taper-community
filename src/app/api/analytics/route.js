@@ -155,8 +155,8 @@ async function fetchPeriodComparisons(supabase) {
 
   async function activeUsersInRange(start, end) {
     const [threadUsers, replyUsers] = await Promise.all([
-      supabase.from('threads').select('user_id').gte('created_at', start.toISOString()).lt('created_at', end.toISOString()),
-      supabase.from('replies').select('user_id').gte('created_at', start.toISOString()).lt('created_at', end.toISOString()),
+      supabase.from('threads').select('user_id').gte('created_at', start.toISOString()).lt('created_at', end.toISOString()).limit(2000),
+      supabase.from('replies').select('user_id').gte('created_at', start.toISOString()).lt('created_at', end.toISOString()).limit(2000),
     ]);
     const unique = new Set([
       ...(threadUsers.data || []).map(r => r.user_id),
@@ -312,9 +312,9 @@ async function fetchPeriodHistoricalSeries(supabase) {
   // Fetch all raw data for the full range (covers yearly = 3 years back)
   const rangeStart = years[0].start.toISOString();
   const [allThreads, allReplies, allProfiles] = await Promise.all([
-    supabase.from('threads').select('user_id, created_at').gte('created_at', rangeStart),
-    supabase.from('replies').select('user_id, created_at').gte('created_at', rangeStart),
-    supabase.from('profiles').select('id, joined_at').gte('joined_at', rangeStart),
+    supabase.from('threads').select('user_id, created_at').gte('created_at', rangeStart).limit(5000),
+    supabase.from('replies').select('user_id, created_at').gte('created_at', rangeStart).limit(5000),
+    supabase.from('profiles').select('id, joined_at').gte('joined_at', rangeStart).limit(5000),
   ]);
 
   function bucketize(buckets, threads, replies, profiles) {
@@ -349,8 +349,8 @@ async function fetchDailyActivity(supabase) {
   const thirtyDaysAgo = new Date(Date.now() - 30 * 86400000).toISOString();
 
   const [threads, replies] = await Promise.all([
-    supabase.from('threads').select('created_at').gte('created_at', thirtyDaysAgo),
-    supabase.from('replies').select('created_at').gte('created_at', thirtyDaysAgo),
+    supabase.from('threads').select('created_at').gte('created_at', thirtyDaysAgo).limit(2000),
+    supabase.from('replies').select('created_at').gte('created_at', thirtyDaysAgo).limit(2000),
   ]);
 
   const dayMap = {};
@@ -390,20 +390,21 @@ async function fetchRetentionCohorts(supabase) {
   const { data: profiles } = await supabase
     .from('profiles')
     .select('id, joined_at')
-    .gte('joined_at', cutoff);
+    .gte('joined_at', cutoff)
+    .limit(1000);
 
   if (!profiles || profiles.length === 0) return [];
 
   // Get all activity for these users — matches the retention SQL: page_views, threads, replies, votes, journal
   const userIds = profiles.map(p => p.id);
   const [threads, replies, pageViews, threadVotes, replyVotes, helpfulVotes, journalEntries] = await Promise.all([
-    supabase.from('threads').select('user_id, created_at').in('user_id', userIds).gte('created_at', cutoff),
-    supabase.from('replies').select('user_id, created_at').in('user_id', userIds).gte('created_at', cutoff),
-    supabase.from('page_views').select('user_id, created_at').in('user_id', userIds).gte('created_at', cutoff),
-    supabase.from('thread_votes').select('user_id, created_at').in('user_id', userIds).gte('created_at', cutoff),
-    supabase.from('reply_votes').select('user_id, created_at').in('user_id', userIds).gte('created_at', cutoff),
-    supabase.from('helpful_votes').select('user_id, created_at').in('user_id', userIds).gte('created_at', cutoff),
-    supabase.from('journal_entries').select('user_id, created_at').in('user_id', userIds).gte('created_at', cutoff),
+    supabase.from('threads').select('user_id, created_at').in('user_id', userIds).gte('created_at', cutoff).limit(5000),
+    supabase.from('replies').select('user_id, created_at').in('user_id', userIds).gte('created_at', cutoff).limit(5000),
+    supabase.from('page_views').select('user_id, created_at').in('user_id', userIds).gte('created_at', cutoff).limit(5000),
+    supabase.from('thread_votes').select('user_id, created_at').in('user_id', userIds).gte('created_at', cutoff).limit(5000),
+    supabase.from('reply_votes').select('user_id, created_at').in('user_id', userIds).gte('created_at', cutoff).limit(5000),
+    supabase.from('helpful_votes').select('user_id, created_at').in('user_id', userIds).gte('created_at', cutoff).limit(5000),
+    supabase.from('journal_entries').select('user_id, created_at').in('user_id', userIds).gte('created_at', cutoff).limit(5000),
   ]);
 
   // Build activity map: userId -> set of week numbers (weeks since signup)
@@ -613,9 +614,9 @@ async function fetchNewVsReturning(supabase) {
   const weekAgo = new Date(Date.now() - 7 * 86400000).toISOString();
 
   const [activeThreadUsers, activeReplyUsers, newProfiles] = await Promise.all([
-    supabase.from('threads').select('user_id').gte('created_at', dayAgo),
-    supabase.from('replies').select('user_id').gte('created_at', dayAgo),
-    supabase.from('profiles').select('id').gte('joined_at', weekAgo),
+    supabase.from('threads').select('user_id').gte('created_at', dayAgo).limit(1000),
+    supabase.from('replies').select('user_id').gte('created_at', dayAgo).limit(1000),
+    supabase.from('profiles').select('id').gte('joined_at', weekAgo).limit(1000),
   ]);
 
   const activeIds = new Set([
@@ -694,7 +695,7 @@ async function fetchTopMembers(supabase) {
 
   if (topIds.length === 0) return [];
 
-  const { data: profiles } = await supabase
+  const { data: profiles } = await supabase // unbounded-ok: filtered by .in() with max 5 IDs
     .from('profiles')
     .select('id, display_name')
     .in('id', topIds.map(t => t.id));
@@ -712,7 +713,8 @@ async function fetchThreadFunnel(supabase) {
   const { data: threads } = await supabase
     .from('threads')
     .select('reply_count')
-    .gte('created_at', monthAgo);
+    .gte('created_at', monthAgo)
+    .limit(2000);
 
   const all = threads || [];
   const total = all.length;
@@ -741,8 +743,8 @@ async function fetchPageViews(supabase) {
 
   // Unique visitors (by session_id)
   const [todaySessions, weekSessions] = await Promise.all([
-    supabase.from('page_views').select('session_id').gte('created_at', todayStart),
-    supabase.from('page_views').select('session_id').gte('created_at', weekAgo),
+    supabase.from('page_views').select('session_id').gte('created_at', todayStart).limit(5000),
+    supabase.from('page_views').select('session_id').gte('created_at', weekAgo).limit(5000),
   ]);
   const todayUnique = new Set((todaySessions.data || []).map(r => r.session_id).filter(Boolean)).size;
   const weekUnique = new Set((weekSessions.data || []).map(r => r.session_id).filter(Boolean)).size;
@@ -751,7 +753,8 @@ async function fetchPageViews(supabase) {
   const { data: recentViews } = await supabase
     .from('page_views')
     .select('path')
-    .gte('created_at', weekAgo);
+    .gte('created_at', weekAgo)
+    .limit(5000);
 
   const pathCounts = {};
   for (const v of (recentViews || [])) {
@@ -768,7 +771,8 @@ async function fetchPageViews(supabase) {
     .select('referrer')
     .gte('created_at', weekAgo)
     .not('referrer', 'is', null)
-    .neq('referrer', '');
+    .neq('referrer', '')
+    .limit(5000);
 
   const refCounts = {};
   for (const v of (refViews || [])) {
@@ -788,7 +792,8 @@ async function fetchPageViews(supabase) {
   const { data: dailyViews } = await supabase
     .from('page_views')
     .select('created_at')
-    .gte('created_at', monthAgo);
+    .gte('created_at', monthAgo)
+    .limit(5000);
 
   const dayMap = {};
   for (const v of (dailyViews || [])) {
@@ -885,11 +890,13 @@ async function fetchNewUsers(supabase) {
     supabase
       .from('profiles')
       .select('id, display_name, avatar_url, drug, taper_stage, has_clinician, drug_signature, location, joined_at, email, ip_location, last_ip')
-      .order('joined_at', { ascending: false }),
+      .order('joined_at', { ascending: false })
+      .limit(500),
     supabase
       .from('match_requests')
       .select('user_id')
-      .not('user_id', 'is', null),
+      .not('user_id', 'is', null)
+      .limit(500),
   ]);
 
   const users = profilesRes.data || [];
