@@ -155,6 +155,7 @@ export default function MatchRequestsAdmin() {
   const [showAddForm, setShowAddForm] = useState(false);
   const [addName, setAddName] = useState('');
   const [addEmail, setAddEmail] = useState('');
+  const [addStatus, setAddStatus] = useState('pending');
   const [addUserId, setAddUserId] = useState(null);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState(null);
@@ -221,13 +222,14 @@ export default function MatchRequestsAdmin() {
           patient_name: addName.trim(),
           patient_email: addEmail.trim() || 'N/A',
           user_id: addUserId || null,
-          status: 'pending',
+          status: addStatus,
         }),
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || 'Failed to create');
       setAddName('');
       setAddEmail('');
+      setAddStatus('pending');
       setAddUserId(null);
       setShowAddForm(false);
       // Re-fetch to get properly joined data
@@ -256,26 +258,46 @@ export default function MatchRequestsAdmin() {
 
   const updateStatus = async (id, status) => {
     setRequests(prev => prev.map(r => r.id === id ? { ...r, status } : r));
-    const supabase = createClient();
-    await supabase.from('match_requests')
-      .update({ status, updated_at: new Date().toISOString() })
-      .eq('id', id);
+    try {
+      const res = await fetch('/api/admin/match-requests', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, status }),
+      });
+      if (!res.ok) { console.error('[match-requests] status update failed'); await fetchRequests(); }
+    } catch (err) {
+      console.error('[match-requests] status update error:', err);
+      await fetchRequests();
+    }
   };
 
   const toggleFlag = async (id, flagged) => {
     setRequests(prev => prev.map(r => r.id === id ? { ...r, flagged } : r));
-    const supabase = createClient();
-    await supabase.from('match_requests')
-      .update({ flagged, updated_at: new Date().toISOString() })
-      .eq('id', id);
+    try {
+      const res = await fetch('/api/admin/match-requests', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, flagged }),
+      });
+      if (!res.ok) { console.error('[match-requests] flag update failed'); await fetchRequests(); }
+    } catch (err) {
+      console.error('[match-requests] flag update error:', err);
+      await fetchRequests();
+    }
   };
 
   const saveNotes = async (id, notes) => {
     setNotesSaving(id);
-    const supabase = createClient();
-    await supabase.from('match_requests')
-      .update({ admin_notes: notes, updated_at: new Date().toISOString() })
-      .eq('id', id);
+    try {
+      const res = await fetch('/api/admin/match-requests', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, admin_notes: notes }),
+      });
+      if (!res.ok) console.error('[match-requests] notes save failed');
+    } catch (err) {
+      console.error('[match-requests] notes save error:', err);
+    }
     setNotesSaving(null);
     setNotesSaved(id);
     setTimeout(() => setNotesSaved(prev => prev === id ? null : prev), 2000);
@@ -396,8 +418,8 @@ export default function MatchRequestsAdmin() {
             )}
           </div>
 
-          {/* name + email */}
-          <div className="grid gap-3 sm:grid-cols-2">
+          {/* name + email + status */}
+          <div className="grid gap-3 sm:grid-cols-3">
             <div>
               <span className="mb-1 block text-[11px] font-medium text-text-muted">Name *</span>
               <input
@@ -414,6 +436,15 @@ export default function MatchRequestsAdmin() {
                 className={inputClass} style={inputStyle} placeholder="email@example.com (optional)"
               />
             </div>
+            <div>
+              <span className="mb-1 block text-[11px] font-medium text-text-muted">Status</span>
+              <select
+                value={addStatus} onChange={e => setAddStatus(e.target.value)}
+                className={inputClass} style={inputStyle}
+              >
+                {STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
+              </select>
+            </div>
           </div>
 
           {saveError && <p className="mt-2 text-xs text-red-500">{saveError}</p>}
@@ -426,7 +457,7 @@ export default function MatchRequestsAdmin() {
               {saving ? 'Saving...' : 'Add Entry'}
             </button>
             <button
-              onClick={() => { setShowAddForm(false); setAddName(''); setAddEmail(''); setAddUserId(null); setSaveError(null); }}
+              onClick={() => { setShowAddForm(false); setAddName(''); setAddEmail(''); setAddStatus('pending'); setAddUserId(null); setSaveError(null); }}
               className="rounded-lg border px-4 py-2 text-xs font-medium transition hover:opacity-80"
               style={{ borderColor: 'var(--border-subtle)', color: 'var(--text-muted)' }}
             >

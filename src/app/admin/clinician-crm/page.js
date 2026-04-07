@@ -220,26 +220,46 @@ export default function ClinicianCrmAdmin() {
 
   const updateStatus = async (id, status) => {
     setEntries(prev => prev.map(r => r.id === id ? { ...r, status } : r));
-    const supabase = createClient();
-    await supabase.from('clinician_crm')
-      .update({ status, updated_at: new Date().toISOString() })
-      .eq('id', id);
+    try {
+      const res = await fetch('/api/admin/clinician-crm', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, status }),
+      });
+      if (!res.ok) { console.error('[clinician-crm] status update failed'); await fetchEntries(); }
+    } catch (err) {
+      console.error('[clinician-crm] status update error:', err);
+      await fetchEntries();
+    }
   };
 
   const toggleFlag = async (id, flagged) => {
     setEntries(prev => prev.map(r => r.id === id ? { ...r, flagged } : r));
-    const supabase = createClient();
-    await supabase.from('clinician_crm')
-      .update({ flagged, updated_at: new Date().toISOString() })
-      .eq('id', id);
+    try {
+      const res = await fetch('/api/admin/clinician-crm', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, flagged }),
+      });
+      if (!res.ok) { console.error('[clinician-crm] flag update failed'); await fetchEntries(); }
+    } catch (err) {
+      console.error('[clinician-crm] flag update error:', err);
+      await fetchEntries();
+    }
   };
 
   const saveNotes = async (id, notes) => {
     setNotesSaving(id);
-    const supabase = createClient();
-    await supabase.from('clinician_crm')
-      .update({ admin_notes: notes, updated_at: new Date().toISOString() })
-      .eq('id', id);
+    try {
+      const res = await fetch('/api/admin/clinician-crm', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, admin_notes: notes }),
+      });
+      if (!res.ok) console.error('[clinician-crm] notes save failed');
+    } catch (err) {
+      console.error('[clinician-crm] notes save error:', err);
+    }
     setNotesSaving(null);
     setNotesSaved(id);
     setTimeout(() => setNotesSaved(prev => prev === id ? null : prev), 2000);
