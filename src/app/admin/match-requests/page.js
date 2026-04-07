@@ -26,6 +26,133 @@ const SORT_OPTIONS = [
   { value: 'manual', label: 'Manual order' },
 ];
 
+/* ── location derivation ────────────────────────────── */
+
+const US_STATES = [
+  'Alabama','Alaska','Arizona','Arkansas','California','Colorado','Connecticut','Delaware',
+  'District of Columbia','Florida','Georgia','Hawaii','Idaho','Illinois','Indiana','Iowa',
+  'Kansas','Kentucky','Louisiana','Maine','Maryland','Massachusetts','Michigan','Minnesota',
+  'Mississippi','Missouri','Montana','Nebraska','Nevada','New Hampshire','New Jersey',
+  'New Mexico','New York','North Carolina','North Dakota','Ohio','Oklahoma','Oregon',
+  'Pennsylvania','Rhode Island','South Carolina','South Dakota','Tennessee','Texas','Utah',
+  'Vermont','Virginia','Washington','West Virginia','Wisconsin','Wyoming',
+];
+
+const US_ABBR_TO_STATE = {
+  'al':'Alabama','ak':'Alaska','az':'Arizona','ar':'Arkansas','ca':'California','co':'Colorado',
+  'ct':'Connecticut','de':'Delaware','dc':'District of Columbia','fl':'Florida','ga':'Georgia',
+  'hi':'Hawaii','id':'Idaho','il':'Illinois','in':'Indiana','ia':'Iowa','ks':'Kansas',
+  'ky':'Kentucky','la':'Louisiana','me':'Maine','md':'Maryland','ma':'Massachusetts',
+  'mi':'Michigan','mn':'Minnesota','ms':'Mississippi','mo':'Missouri','mt':'Montana',
+  'ne':'Nebraska','nv':'Nevada','nh':'New Hampshire','nj':'New Jersey','nm':'New Mexico',
+  'ny':'New York','nc':'North Carolina','nd':'North Dakota','oh':'Ohio','ok':'Oklahoma',
+  'or':'Oregon','pa':'Pennsylvania','ri':'Rhode Island','sc':'South Carolina','sd':'South Dakota',
+  'tn':'Tennessee','tx':'Texas','ut':'Utah','vt':'Vermont','va':'Virginia','wa':'Washington',
+  'wv':'West Virginia','wi':'Wisconsin','wy':'Wyoming',
+};
+
+const CA_PROVINCES = [
+  'Alberta','British Columbia','Manitoba','New Brunswick','Newfoundland and Labrador',
+  'Nova Scotia','Ontario','Prince Edward Island','Quebec','Saskatchewan',
+];
+const CA_ABBR = { 'ab':'Alberta','bc':'British Columbia','mb':'Manitoba','nb':'New Brunswick',
+  'nl':'Newfoundland and Labrador','ns':'Nova Scotia','on':'Ontario','pe':'Prince Edward Island',
+  'qc':'Quebec','sk':'Saskatchewan' };
+
+const COUNTRIES = ['Australia','United Kingdom','Ireland','Denmark','Norway','Sweden',
+  'Netherlands','Germany','France','Italy','Poland','Spain','Portugal','Switzerland',
+  'Austria','Belgium','Finland','Greece','Czech Republic','Romania','Hungary'];
+
+function deriveRegion(req) {
+  // Manual override takes priority
+  if (req.assigned_location) return req.assigned_location;
+
+  const loc = (req.profile?.location || '').trim();
+  const ip = (req.profile?.ip_location || '').trim();
+
+  if (!loc && !ip) return null;
+
+  // ip_location format from Vercel: "City, StateCode, CountryCode" e.g. "Los Angeles, CA, US"
+  const ipParts = ip.split(',').map(s => s.trim());
+  const combined = `${loc}, ${ip}`.toLowerCase();
+
+  // Detect country — check last part, or anywhere in text
+  const lastPart = (ipParts[ipParts.length - 1] || '').toLowerCase();
+  const isUS = lastPart === 'us' || lastPart === 'usa' || combined.includes('united states');
+  const isCA = (!isUS && (lastPart === 'ca' || combined.includes('canada')));
+
+  // For US: resolve to state
+  if (isUS) {
+    // Try every part of ip_location as a potential state abbreviation
+    for (const part of ipParts) {
+      const code = part.trim().toLowerCase();
+      if (code !== 'us' && code !== 'usa' && US_ABBR_TO_STATE[code]) return US_ABBR_TO_STATE[code];
+    }
+    // Try full state names anywhere in combined text
+    for (const st of US_STATES) {
+      if (combined.includes(st.toLowerCase())) return st;
+    }
+    // Try state abbreviations with word boundary in the full text
+    for (const [abbr, full] of Object.entries(US_ABBR_TO_STATE)) {
+      const re = new RegExp(`\\b${abbr}\\b`, 'i');
+      if (re.test(loc) || re.test(ip)) return full;
+    }
+    return 'USA (unspecified)';
+  }
+
+  // For Canada: resolve to province
+  if (isCA) {
+    for (const part of ipParts) {
+      const code = part.trim().toLowerCase();
+      if (code !== 'ca' && CA_ABBR[code]) return CA_ABBR[code];
+    }
+    for (const prov of CA_PROVINCES) {
+      if (combined.includes(prov.toLowerCase())) return prov;
+    }
+    for (const [abbr, full] of Object.entries(CA_ABBR)) {
+      const re = new RegExp(`\\b${abbr}\\b`, 'i');
+      if (re.test(loc) || re.test(ip)) return full;
+    }
+    return 'Canada (unspecified)';
+  }
+
+  // For everyone else: resolve to country
+  if (ipCountryCode === 'gb' || combined.includes('united kingdom') || combined.includes('england') || combined.includes(', uk')) return 'United Kingdom';
+  if (ipCountryCode === 'ie' || combined.includes('ireland')) return 'Ireland';
+  if (ipCountryCode === 'au' || combined.includes('australia')) return 'Australia';
+  if (ipCountryCode === 'dk' || combined.includes('denmark')) return 'Denmark';
+  if (ipCountryCode === 'no' || combined.includes('norway')) return 'Norway';
+  if (ipCountryCode === 'se' || combined.includes('sweden')) return 'Sweden';
+  if (ipCountryCode === 'nl' || combined.includes('netherlands')) return 'Netherlands';
+  if (ipCountryCode === 'de' || combined.includes('germany')) return 'Germany';
+  if (ipCountryCode === 'fr' || combined.includes('france')) return 'France';
+  if (ipCountryCode === 'it' || combined.includes('italy')) return 'Italy';
+  if (ipCountryCode === 'pl' || combined.includes('poland')) return 'Poland';
+  if (ipCountryCode === 'es' || combined.includes('spain')) return 'Spain';
+  if (ipCountryCode === 'pt' || combined.includes('portugal')) return 'Portugal';
+  if (ipCountryCode === 'ch' || combined.includes('switzerland')) return 'Switzerland';
+  if (ipCountryCode === 'at' || combined.includes('austria')) return 'Austria';
+  if (ipCountryCode === 'be' || combined.includes('belgium')) return 'Belgium';
+  if (ipCountryCode === 'fi' || combined.includes('finland')) return 'Finland';
+  if (ipCountryCode === 'gr' || combined.includes('greece')) return 'Greece';
+  if (ipCountryCode === 'cz' || combined.includes('czech')) return 'Czech Republic';
+  if (ipCountryCode === 'ro' || combined.includes('romania')) return 'Romania';
+  if (ipCountryCode === 'hu' || combined.includes('hungary')) return 'Hungary';
+  if (ipCountryCode === 'nz' || combined.includes('new zealand')) return 'New Zealand';
+  if (ipCountryCode === 'za' || combined.includes('south africa')) return 'South Africa';
+  if (ipCountryCode === 'in' || combined.includes('india')) return 'India';
+
+  // Fallback: try full state/province names in text
+  for (const st of US_STATES) {
+    if (combined.includes(st.toLowerCase())) return st;
+  }
+  for (const prov of CA_PROVINCES) {
+    if (combined.includes(prov.toLowerCase())) return prov;
+  }
+
+  return ipCountryCode ? ipCountryCode.toUpperCase() : null;
+}
+
 /* ── helpers ─────────────────────────────────────────── */
 
 function timeAgo(date) {
@@ -148,6 +275,7 @@ export default function MatchRequestsAdmin() {
 
   // filters
   const [filterStatus, setFilterStatus] = useState('all');
+  const [filterLocation, setFilterLocation] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('newest');
 
@@ -164,6 +292,8 @@ export default function MatchRequestsAdmin() {
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [notesSaving, setNotesSaving] = useState(null);
   const [notesSaved, setNotesSaved] = useState(null);
+  const [editingLocation, setEditingLocation] = useState(null);
+  const [locationSaving, setLocationSaving] = useState(null);
 
   const isFirstLoad = useRef(true);
   const intervalRef = useRef(null);
@@ -303,6 +433,24 @@ export default function MatchRequestsAdmin() {
     setTimeout(() => setNotesSaved(prev => prev === id ? null : prev), 2000);
   };
 
+  const saveLocation = async (id, location) => {
+    setLocationSaving(id);
+    const trimmed = location.trim() || null;
+    setRequests(prev => prev.map(r => r.id === id ? { ...r, assigned_location: trimmed } : r));
+    try {
+      const res = await fetch('/api/admin/match-requests', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, assigned_location: trimmed }),
+      });
+      if (!res.ok) console.error('[match-requests] location save failed');
+    } catch (err) {
+      console.error('[match-requests] location save error:', err);
+    }
+    setLocationSaving(null);
+    setEditingLocation(null);
+  };
+
   const moveEntry = async (currentIdx, direction) => {
     const swapIdx = currentIdx + direction;
     if (swapIdx < 0 || swapIdx >= filtered.length) return;
@@ -336,12 +484,21 @@ export default function MatchRequestsAdmin() {
 
   /* ── filtering & sorting ────────────────────────── */
 
-  const filtered = requests
+  // derive regions for all requests
+  const requestsWithRegion = requests.map(r => ({ ...r, _region: deriveRegion(r) }));
+  const allLocations = [...new Set(requestsWithRegion.map(r => r._region).filter(Boolean))].sort();
+
+  const filtered = requestsWithRegion
     .filter(r => filterStatus === 'all' || r.status === filterStatus)
+    .filter(r => {
+      if (filterLocation === 'all') return true;
+      if (filterLocation === 'unknown') return !r._region;
+      return r._region === filterLocation;
+    })
     .filter(r => {
       if (!searchQuery.trim()) return true;
       const q = searchQuery.toLowerCase();
-      return [r.patient_name, r.patient_email, r.medications, r.notes, r.admin_notes]
+      return [r.patient_name, r.patient_email, r.medications, r.notes, r.admin_notes, r._region]
         .some(f => f?.toLowerCase().includes(q));
     })
     .sort((a, b) => {
@@ -467,7 +624,7 @@ export default function MatchRequestsAdmin() {
         </div>
       )}
 
-      {/* ── search + sort ───────────────────────────── */}
+      {/* ── search + sort + location ─────────────────── */}
       <div className="flex flex-wrap gap-2">
         <input
           type="text" value={searchQuery}
@@ -482,6 +639,18 @@ export default function MatchRequestsAdmin() {
           style={{ borderColor: 'var(--border-subtle)' }}
         >
           {SORT_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+        </select>
+        <select
+          value={filterLocation} onChange={e => setFilterLocation(e.target.value)}
+          className="rounded-lg border px-2 py-2 text-xs"
+          style={{ borderColor: filterLocation !== 'all' ? 'var(--purple)' : 'var(--border-subtle)', color: filterLocation !== 'all' ? 'var(--purple)' : undefined }}
+        >
+          <option value="all">All locations ({requestsWithRegion.length})</option>
+          {allLocations.map(loc => {
+            const count = requestsWithRegion.filter(r => r._region === loc).length;
+            return <option key={loc} value={loc}>{loc} ({count})</option>;
+          })}
+          <option value="unknown">Unknown ({requestsWithRegion.filter(r => !r._region).length})</option>
         </select>
       </div>
 
@@ -519,6 +688,7 @@ export default function MatchRequestsAdmin() {
       {/* ── results count ───────────────────────────── */}
       <p className="text-[11px] text-text-subtle">
         Showing {filtered.length} of {requests.length} requests
+        {filterLocation !== 'all' && <> in <strong>{filterLocation === 'unknown' ? 'unknown location' : filterLocation}</strong></>}
         {searchQuery && <> matching &ldquo;{searchQuery}&rdquo;</>}
       </p>
 
@@ -566,13 +736,73 @@ export default function MatchRequestsAdmin() {
                     )}
                   </div>
                   <p className="mt-0.5 text-xs text-text-muted">{req.patient_email}</p>
-                  {(req.profile?.location || req.profile?.ip_location) && (
-                    <p className="mt-0.5 text-xs text-text-muted">
-                      {req.profile.location && <span>📍 {req.profile.location}</span>}
-                      {req.profile.location && req.profile.ip_location && <span className="mx-1">·</span>}
-                      {req.profile.ip_location && <span className="text-text-subtle">IP: {req.profile.ip_location}</span>}
-                    </p>
-                  )}
+                  <div className="mt-0.5 flex flex-wrap items-center gap-1.5 text-xs text-text-muted">
+                    {editingLocation === req.id ? (
+                      <span className="inline-flex items-center gap-1">
+                        <select
+                          defaultValue={req.assigned_location || req._region || ''}
+                          id={`loc-select-${req.id}`}
+                          className="rounded-md border px-1.5 py-1 text-[11px]"
+                          style={{ borderColor: 'var(--purple)', background: 'var(--purple-ghost)', maxWidth: 180 }}
+                        >
+                          <option value="">— Clear —</option>
+                          <optgroup label="US States">
+                            {US_STATES.map(s => <option key={s} value={s}>{s}</option>)}
+                          </optgroup>
+                          <optgroup label="Canadian Provinces">
+                            {CA_PROVINCES.map(p => <option key={p} value={p}>{p}</option>)}
+                          </optgroup>
+                          <optgroup label="Countries">
+                            {COUNTRIES.map(c => <option key={c} value={c}>{c}</option>)}
+                          </optgroup>
+                        </select>
+                        <button
+                          onClick={() => {
+                            const val = document.getElementById(`loc-select-${req.id}`)?.value;
+                            saveLocation(req.id, val || '');
+                          }}
+                          disabled={locationSaving === req.id}
+                          className="rounded-md px-2 py-1 text-[10px] font-semibold text-white"
+                          style={{ background: 'var(--purple)' }}
+                        >
+                          {locationSaving === req.id ? '...' : 'Save'}
+                        </button>
+                        <button
+                          onClick={() => setEditingLocation(null)}
+                          className="text-[10px] text-text-subtle hover:text-foreground"
+                        >
+                          Cancel
+                        </button>
+                      </span>
+                    ) : (
+                      <>
+                        {req._region ? (
+                          <span
+                            className="cursor-pointer rounded-md border px-1.5 py-0.5 text-[10px] font-medium transition hover:opacity-80"
+                            style={{
+                              borderColor: req.assigned_location ? '#34A853' : 'var(--purple)',
+                              color: req.assigned_location ? '#34A853' : 'var(--purple)',
+                              background: req.assigned_location ? '#34A85310' : 'var(--purple-pale)',
+                            }}
+                            onClick={() => setEditingLocation(req.id)}
+                            title="Click to change location"
+                          >
+                            {req._region}{req.assigned_location ? ' (manual)' : ''}
+                          </span>
+                        ) : (
+                          <button
+                            onClick={() => setEditingLocation(req.id)}
+                            className="rounded-md border border-dashed px-1.5 py-0.5 text-[10px] font-medium text-text-subtle transition hover:border-purple hover:text-purple"
+                            style={{ borderColor: 'var(--border-subtle)' }}
+                          >
+                            + Assign Location
+                          </button>
+                        )}
+                        {req.profile?.location && <span>{req.profile.location}</span>}
+                        {req.profile?.ip_location && <span className="text-text-subtle">IP: {req.profile.ip_location}</span>}
+                      </>
+                    )}
+                  </div>
                   <p className="mt-1 text-xs text-text-subtle">
                     &rarr; {req.clinician_id
                       ? `${req.clinician?.name || 'Unknown clinician'}${req.clinician?.role ? ` (${req.clinician.role})` : ''}`
