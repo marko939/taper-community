@@ -117,30 +117,30 @@ function deriveRegion(req) {
   }
 
   // For everyone else: resolve to country
-  if (ipCountryCode === 'gb' || combined.includes('united kingdom') || combined.includes('england') || combined.includes(', uk')) return 'United Kingdom';
-  if (ipCountryCode === 'ie' || combined.includes('ireland')) return 'Ireland';
-  if (ipCountryCode === 'au' || combined.includes('australia')) return 'Australia';
-  if (ipCountryCode === 'dk' || combined.includes('denmark')) return 'Denmark';
-  if (ipCountryCode === 'no' || combined.includes('norway')) return 'Norway';
-  if (ipCountryCode === 'se' || combined.includes('sweden')) return 'Sweden';
-  if (ipCountryCode === 'nl' || combined.includes('netherlands')) return 'Netherlands';
-  if (ipCountryCode === 'de' || combined.includes('germany')) return 'Germany';
-  if (ipCountryCode === 'fr' || combined.includes('france')) return 'France';
-  if (ipCountryCode === 'it' || combined.includes('italy')) return 'Italy';
-  if (ipCountryCode === 'pl' || combined.includes('poland')) return 'Poland';
-  if (ipCountryCode === 'es' || combined.includes('spain')) return 'Spain';
-  if (ipCountryCode === 'pt' || combined.includes('portugal')) return 'Portugal';
-  if (ipCountryCode === 'ch' || combined.includes('switzerland')) return 'Switzerland';
-  if (ipCountryCode === 'at' || combined.includes('austria')) return 'Austria';
-  if (ipCountryCode === 'be' || combined.includes('belgium')) return 'Belgium';
-  if (ipCountryCode === 'fi' || combined.includes('finland')) return 'Finland';
-  if (ipCountryCode === 'gr' || combined.includes('greece')) return 'Greece';
-  if (ipCountryCode === 'cz' || combined.includes('czech')) return 'Czech Republic';
-  if (ipCountryCode === 'ro' || combined.includes('romania')) return 'Romania';
-  if (ipCountryCode === 'hu' || combined.includes('hungary')) return 'Hungary';
-  if (ipCountryCode === 'nz' || combined.includes('new zealand')) return 'New Zealand';
-  if (ipCountryCode === 'za' || combined.includes('south africa')) return 'South Africa';
-  if (ipCountryCode === 'in' || combined.includes('india')) return 'India';
+  if (lastPart === 'gb' || combined.includes('united kingdom') || combined.includes('england') || combined.includes(', uk')) return 'United Kingdom';
+  if (lastPart === 'ie' || combined.includes('ireland')) return 'Ireland';
+  if (lastPart === 'au' || combined.includes('australia')) return 'Australia';
+  if (lastPart === 'dk' || combined.includes('denmark')) return 'Denmark';
+  if (lastPart === 'no' || combined.includes('norway')) return 'Norway';
+  if (lastPart === 'se' || combined.includes('sweden')) return 'Sweden';
+  if (lastPart === 'nl' || combined.includes('netherlands')) return 'Netherlands';
+  if (lastPart === 'de' || combined.includes('germany')) return 'Germany';
+  if (lastPart === 'fr' || combined.includes('france')) return 'France';
+  if (lastPart === 'it' || combined.includes('italy')) return 'Italy';
+  if (lastPart === 'pl' || combined.includes('poland')) return 'Poland';
+  if (lastPart === 'es' || combined.includes('spain')) return 'Spain';
+  if (lastPart === 'pt' || combined.includes('portugal')) return 'Portugal';
+  if (lastPart === 'ch' || combined.includes('switzerland')) return 'Switzerland';
+  if (lastPart === 'at' || combined.includes('austria')) return 'Austria';
+  if (lastPart === 'be' || combined.includes('belgium')) return 'Belgium';
+  if (lastPart === 'fi' || combined.includes('finland')) return 'Finland';
+  if (lastPart === 'gr' || combined.includes('greece')) return 'Greece';
+  if (lastPart === 'cz' || combined.includes('czech')) return 'Czech Republic';
+  if (lastPart === 'ro' || combined.includes('romania')) return 'Romania';
+  if (lastPart === 'hu' || combined.includes('hungary')) return 'Hungary';
+  if (lastPart === 'nz' || combined.includes('new zealand')) return 'New Zealand';
+  if (lastPart === 'za' || combined.includes('south africa')) return 'South Africa';
+  if (lastPart === 'in' || combined.includes('india')) return 'India';
 
   // Fallback: try full state/province names in text
   for (const st of US_STATES) {
@@ -150,7 +150,7 @@ function deriveRegion(req) {
     if (combined.includes(prov.toLowerCase())) return prov;
   }
 
-  return ipCountryCode ? ipCountryCode.toUpperCase() : null;
+  return lastPart ? lastPart.toUpperCase() : null;
 }
 
 /* ── helpers ─────────────────────────────────────────── */
