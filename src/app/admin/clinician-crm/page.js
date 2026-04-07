@@ -60,11 +60,39 @@ const US_STATES = new Set([
 const CA_PROVINCES = new Set([
   'Alberta','British Columbia','Manitoba','New Brunswick','Newfoundland and Labrador',
   'Nova Scotia','Ontario','Prince Edward Island','Quebec','Saskatchewan',
+  'Northwest Territories','Nunavut','Yukon',
 ]);
+
+const CA_ABBR_TO_PROVINCE = {
+  'ab': 'Alberta', 'bc': 'British Columbia', 'mb': 'Manitoba', 'nb': 'New Brunswick',
+  'nl': 'Newfoundland and Labrador', 'ns': 'Nova Scotia', 'on': 'Ontario',
+  'pe': 'Prince Edward Island', 'qc': 'Quebec', 'sk': 'Saskatchewan',
+  'nt': 'Northwest Territories', 'nu': 'Nunavut', 'yt': 'Yukon',
+};
+
+/** Extract Canadian province from state field or address text */
+function deriveProvince(entry) {
+  // Check state field first
+  if (entry.state && CA_PROVINCES.has(entry.state)) return entry.state;
+  // Check abbreviations in state field (e.g. "BC", "ON")
+  const stLower = (entry.state || '').toLowerCase().trim();
+  if (CA_ABBR_TO_PROVINCE[stLower]) return CA_ABBR_TO_PROVINCE[stLower];
+  // Parse province from address (e.g. "Edmonton, Alberta, Canada" or "Vancouver, BC, Canada")
+  const addr = entry.address || '';
+  for (const prov of CA_PROVINCES) {
+    if (addr.includes(prov)) return prov;
+  }
+  for (const [abbr, prov] of Object.entries(CA_ABBR_TO_PROVINCE)) {
+    // Match ", BC," or ", BC " or ending with ", BC"
+    const re = new RegExp(`[,\\s]${abbr.toUpperCase()}[,\\s]|[,\\s]${abbr.toUpperCase()}$`);
+    if (re.test(addr)) return prov;
+  }
+  return null;
+}
 
 function deriveCountry(entry) {
   const addr = (entry.address || '').toLowerCase();
-  if (addr.includes('canada') || CA_PROVINCES.has(entry.state)) return 'Canada';
+  if (addr.includes('canada') || CA_PROVINCES.has(entry.state) || CA_ABBR_TO_PROVINCE[(entry.state || '').toLowerCase().trim()]) return 'Canada';
   if (addr.includes('united kingdom') || addr.includes('england') || addr.includes(', uk')) return 'United Kingdom';
   if (addr.includes('australia')) return 'Australia';
   if (addr.includes('denmark')) return 'Denmark';
@@ -78,7 +106,7 @@ function deriveCountry(entry) {
   if (addr.includes('sweden')) return 'Sweden';
   if (entry.state && US_STATES.has(entry.state)) return 'USA';
   if (entry.state === 'Multi-State') return 'USA';
-  if (entry.state) return 'USA'; // default entries with a state to USA
+  if (entry.state) return 'USA'; // default entries with an unrecognized state to USA
   return 'Other';
 }
 
@@ -295,16 +323,21 @@ export default function ClinicianCrmAdmin() {
   /* ── filtering & sorting ────────────────────────── */
 
   // derive countries and regions
-  const entriesWithCountry = entries.map(e => ({ ...e, _country: deriveCountry(e) }));
+  const entriesWithCountry = entries.map(e => {
+    const _country = deriveCountry(e);
+    // For Canada, derive province from address if state is missing
+    const _region = _country === 'Canada' ? (deriveProvince(e) || e.state) : e.state;
+    return { ...e, _country, _region };
+  });
   const allCountries = [...new Set(entriesWithCountry.map(e => e._country))].sort();
   const allRegions = filterCountry !== 'all'
-    ? [...new Set(entriesWithCountry.filter(e => e._country === filterCountry).map(e => e.state).filter(Boolean))].sort()
+    ? [...new Set(entriesWithCountry.filter(e => e._country === filterCountry).map(e => e._region).filter(Boolean))].sort()
     : [];
 
   const filtered = entriesWithCountry
     .filter(r => filterStatus === 'all' || r.status === filterStatus)
     .filter(r => filterCountry === 'all' || r._country === filterCountry)
-    .filter(r => filterRegion === 'all' || r.state === filterRegion)
+    .filter(r => filterRegion === 'all' || r._region === filterRegion)
     .filter(r => {
       if (!searchQuery.trim()) return true;
       const q = searchQuery.toLowerCase();
