@@ -158,6 +158,75 @@ Respond with ONLY the JSON array. No markdown fences, no commentary. Return [] i
   }
 }
 
+/* ── Email scraping ─────────────────────────────────── */
+
+const EMAIL_RE = /[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}/g;
+const JUNK_EMAILS = new Set(['example@example.com', 'email@example.com', 'your@email.com', 'name@domain.com']);
+
+function extractEmails(html) {
+  // Strip scripts/styles to avoid picking up emails from JS bundles
+  const cleaned = html
+    .replace(/<script[\s\S]*?<\/script>/gi, '')
+    .replace(/<style[\s\S]*?<\/style>/gi, '')
+    .replace(/<!--[\s\S]*?-->/g, '');
+  const matches = cleaned.match(EMAIL_RE) || [];
+  return [...new Set(matches)]
+    .filter(e => !JUNK_EMAILS.has(e.toLowerCase()))
+    .filter(e => !e.endsWith('.png') && !e.endsWith('.jpg') && !e.endsWith('.gif') && !e.endsWith('.svg'))
+    .filter(e => !e.includes('sentry') && !e.includes('webpack') && !e.includes('wixpress'));
+}
+
+async function scrapeEmailFromSite(websiteUrl) {
+  if (!websiteUrl || !websiteUrl.startsWith('http')) return null;
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 8000);
+
+  try {
+    const base = new URL(websiteUrl);
+    const pagesToTry = [
+      websiteUrl,
+      new URL('/contact', base).href,
+      new URL('/contact-us', base).href,
+      new URL('/about', base).href,
+    ];
+
+    for (const url of pagesToTry) {
+      try {
+        const res = await fetch(url, {
+          signal: controller.signal,
+          headers: { 'User-Agent': 'Mozilla/5.0 (compatible; TaperCommunity/1.0)' },
+          redirect: 'follow',
+        });
+        if (!res.ok) continue;
+        const html = await res.text();
+        const emails = extractEmails(html);
+        if (emails.length > 0) return emails[0];
+      } catch { /* skip this page */ }
+    }
+    return null;
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+async function enrichWithEmails(results) {
+  console.log(`[clinician-discovery] Scraping emails for ${results.length} results...`);
+  const enriched = await Promise.all(
+    results.map(async (r) => {
+      const url = r.email_website?.startsWith('http') ? r.email_website : r.email_website ? `https://${r.email_website}` : null;
+      const email = await scrapeEmailFromSite(url);
+      if (email) console.log(`[clinician-discovery]   ${r.name}: ${email}`);
+      return { ...r, contact_email: email };
+    })
+  );
+  const found = enriched.filter(r => r.contact_email).length;
+  console.log(`[clinician-discovery] Found emails for ${found}/${results.length} clinicians`);
+  return enriched;
+}
+
 /* ── Deduplication ───────────────────────────────────── */
 
 function normalizeForMatch(name) {
@@ -222,8 +291,11 @@ export async function POST(req) {
     // Deduplicate against full CRM
     const { unique, duplicatesSkipped } = await deduplicateAgainstCRM(filtered);
 
+    // Scrape websites for contact emails
+    const enriched = await enrichWithEmails(unique);
+
     return NextResponse.json({
-      results: unique,
+      results: enriched,
       duplicatesSkipped,
       message: `Found via live web search. ${unique.length} new clinicians, ${duplicatesSkipped} already in CRM.`,
     });
@@ -253,7 +325,7 @@ export async function PUT(req) {
     state: e.state || null,
     address: e.location || e.address || null,
     phone: e.phone || null,
-    email_website: e.email_website || null,
+    email_website: [e.email_website, e.contact_email].filter(Boolean).join(' | ') || null,
     description: e.description || null,
     source: e.source || 'AI Discovery',
     category: e.category || null,

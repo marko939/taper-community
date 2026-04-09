@@ -386,6 +386,17 @@ export default function ClinicianDiscovery() {
                       {r.location || r.state || '—'}
                       {r.phone && <> &middot; {r.phone}</>}
                     </p>
+                    {r.contact_email && (
+                      <p className="mt-0.5">
+                        <a
+                          href={`mailto:${r.contact_email}`}
+                          className="text-xs font-medium no-underline hover:opacity-80"
+                          style={{ color: 'var(--purple)' }}
+                        >
+                          {r.contact_email}
+                        </a>
+                      </p>
+                    )}
                     {r.description && (
                       <p className="mt-1 text-xs text-text-muted" style={{ maxWidth: 500 }}>{r.description}</p>
                     )}
