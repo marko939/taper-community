@@ -103,6 +103,7 @@ function deriveCountry(entry) {
   if (addr.includes('france')) return 'France';
   if (addr.includes('germany')) return 'Germany';
   if (addr.includes('netherlands')) return 'Netherlands';
+  if (addr.includes('new zealand')) return 'New Zealand';
   if (addr.includes('sweden')) return 'Sweden';
   if (entry.state && US_STATES.has(entry.state)) return 'USA';
   if (entry.state === 'Multi-State') return 'USA';
