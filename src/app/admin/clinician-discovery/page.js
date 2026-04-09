@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/hooks/useAuth';
 import { isAdmin } from '@/lib/blog';
@@ -64,12 +64,13 @@ export default function ClinicianDiscovery() {
   const [region, setRegion] = useState('');
   const [selectedTiers, setSelectedTiers] = useState([1, 2, 3, 4, 5]);
 
-  // discovery state
+  // discovery state — results are pre-tagged with _id and _round
   const [results, setResults] = useState([]);
   const [duplicatesSkipped, setDuplicatesSkipped] = useState(0);
   const [discovering, setDiscovering] = useState(false);
   const [discoveryError, setDiscoveryError] = useState(null);
   const [discoveryMessage, setDiscoveryMessage] = useState(null);
+  const searchRound = useRef(0);
 
   // add-to-CRM state
   const [addingIds, setAddingIds] = useState(new Set());
@@ -89,12 +90,12 @@ export default function ClinicianDiscovery() {
     if (!region) { setDiscoveryError('Please select a region.'); return; }
     if (selectedTiers.length === 0) { setDiscoveryError('Select at least one tier.'); return; }
 
+    searchRound.current += 1;
+    const round = searchRound.current;
+
     setDiscovering(true);
     setDiscoveryError(null);
     setDiscoveryMessage(null);
-    setResults([]);
-    setAddedIds(new Set());
-    setDismissedIds(new Set());
     setDuplicatesSkipped(0);
 
     try {
@@ -106,7 +107,14 @@ export default function ClinicianDiscovery() {
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || 'Discovery failed');
 
-      setResults(json.results || []);
+      // Tag new results with stable IDs and round number, then prepend
+      const newResults = (json.results || []).map((r, i) => ({
+        ...r,
+        _id: `${r.name}-${r.source}-${round}-${i}`,
+        _round: round,
+        _roundRegion: region,
+      }));
+      setResults(prev => [...newResults, ...prev]);
       setDuplicatesSkipped(json.duplicatesSkipped || 0);
       if (json.message) setDiscoveryMessage(json.message);
     } catch (err) {
@@ -114,6 +122,15 @@ export default function ClinicianDiscovery() {
     } finally {
       setDiscovering(false);
     }
+  };
+
+  const clearAllResults = () => {
+    setResults([]);
+    setAddedIds(new Set());
+    setDismissedIds(new Set());
+    setDuplicatesSkipped(0);
+    setDiscoveryMessage(null);
+    searchRound.current = 0;
   };
 
   const addToCRM = async (entry) => {
@@ -165,9 +182,7 @@ export default function ClinicianDiscovery() {
     }
   };
 
-  // Tag each result with a stable ID
-  const taggedResults = results.map((r, i) => ({ ...r, _id: `${r.name}-${r.source}-${i}` }));
-  const visibleResults = taggedResults.filter(r => !dismissedIds.has(r._id));
+  const visibleResults = results.filter(r => !dismissedIds.has(r._id));
 
   /* ── auth guard ────────────────────────────────────── */
 
@@ -295,6 +310,13 @@ export default function ClinicianDiscovery() {
             {discoveryMessage && (
               <p className="text-xs text-text-muted">{discoveryMessage}</p>
             )}
+            <button
+              onClick={clearAllResults}
+              className="rounded-md border px-2.5 py-1 text-[11px] font-medium text-text-muted transition hover:opacity-80"
+              style={{ borderColor: 'var(--border-subtle)' }}
+            >
+              Clear All
+            </button>
 
             {/* bulk add buttons */}
             <div className="ml-auto flex flex-wrap gap-2">
@@ -320,9 +342,20 @@ export default function ClinicianDiscovery() {
 
           {/* results cards */}
           <div className="space-y-2">
-            {visibleResults.map((r) => (
+            {visibleResults.map((r, idx) => {
+              const prevRound = idx > 0 ? visibleResults[idx - 1]._round : null;
+              const showSeparator = r._round !== prevRound && prevRound !== null;
+              return (<div key={r._id}>
+              {showSeparator && (
+                <div className="flex items-center gap-3 py-2 mb-2">
+                  <div className="h-px flex-1" style={{ background: 'var(--border-subtle)' }} />
+                  <span className="text-[10px] font-medium text-text-muted">
+                    Earlier — Search #{prevRound}{visibleResults[idx - 1]?._roundRegion ? ` — ${visibleResults[idx - 1]._roundRegion}` : ''}
+                  </span>
+                  <div className="h-px flex-1" style={{ background: 'var(--border-subtle)' }} />
+                </div>
+              )}
               <div
-                key={r._id}
                 className="rounded-xl border p-4 transition"
                 style={{
                   borderColor: addedIds.has(r._id) ? '#10B981' : 'var(--border-subtle)',
@@ -416,7 +449,8 @@ export default function ClinicianDiscovery() {
                   </div>
                 </div>
               </div>
-            ))}
+            </div>);
+            })}
           </div>
         </div>
       )}
