@@ -1,0 +1,36 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "next": {
+    "entry": [
+      "src/app/**/page.{js,jsx,ts,tsx}",
+      "src/app/**/layout.{js,jsx,ts,tsx}",
+      "src/app/**/route.{js,jsx,ts,tsx}",
+      "src/app/**/loading.{js,jsx,ts,tsx}",
+      "src/app/**/error.{js,jsx,ts,tsx}",
+      "src/app/**/not-found.{js,jsx,ts,tsx}",
+      "src/app/**/template.{js,jsx,ts,tsx}",
+      "src/app/**/global-error.{js,jsx,ts,tsx}",
+      "src/app/**/default.{js,jsx,ts,tsx}",
+      "src/app/**/opengraph-image.{js,jsx,ts,tsx}",
+      "src/app/**/twitter-image.{js,jsx,ts,tsx}",
+      "src/app/**/icon.{js,jsx,ts,tsx}",
+      "src/app/**/apple-icon.{js,jsx,ts,tsx}",
+      "src/app/**/sitemap.{js,jsx,ts,tsx}",
+      "src/app/**/robots.{js,jsx,ts,tsx}",
+      "src/app/**/manifest.{js,jsx,ts,tsx}",
+      "src/middleware.{js,ts}"
+    ]
+  },
+  "ignore": [
+    "src/lib/drugs.js",
+    "src/lib/diagnostics/**",
+    "src/hooks/useSupabaseChannel.js",
+    "src/test/**",
+    "src/**/__tests__/**",
+    "scripts/**",
+    "__tests__/**",
+    "supabase/**",
+    "public/**"
+  ],
+  "ignoreDependencies": []
+}

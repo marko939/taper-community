@@ -8,7 +8,6 @@ import { DRUG_CLASS_ICONS as CATEGORY_ICONS } from '@/lib/forumCategories';
 import { useBlogStore } from '@/stores/blogStore';
 import { useAuth } from '@/hooks/useAuth';
 import { isPrimaryAdmin } from '@/lib/blog';
-// import GuideDownloadCTA from '@/components/shared/GuideDownloadCTA';
 
 const TABS = [
   {

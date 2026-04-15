@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useAuthStore } from '@/stores/authStore';
-// import GuideDownloadCTA from '@/components/shared/GuideDownloadCTA';
 
 /*
   TaperCommunity Education Portal
