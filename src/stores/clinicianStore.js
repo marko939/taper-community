@@ -9,6 +9,9 @@ export const useClinicianStore = create((set, get) => ({
   clinicians: [],
   cliniciansLoaded: false,
   loading: false,
+  // fetchError: true if the last fetch failed — consumers fall back to
+  // hardcoded DEPRESCRIBERS data, but surfacing the flag aids diagnostics
+  fetchError: false,
 
   fetchClinicians: async () => {
     if (get().cliniciansLoaded) return;
@@ -23,10 +26,10 @@ export const useClinicianStore = create((set, get) => ({
         .order('name');
 
       if (error) throw error;
-      set({ clinicians: data || [], cliniciansLoaded: true, loading: false });
+      set({ clinicians: data || [], cliniciansLoaded: true, loading: false, fetchError: false });
     } catch (err) {
       console.error('[clinicianStore] fetchClinicians error:', err);
-      set({ loading: false });
+      set({ loading: false, fetchError: true });
     }
   },
 

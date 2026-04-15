@@ -14,6 +14,7 @@ export default function AssessmentForm({ type, onComplete, onCancel }) {
   const [responses, setResponses] = useState(Array(items.length).fill(null));
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState(null);
+  const [submitError, setSubmitError] = useState('');
   const submitAssessment = useAssessmentStore((s) => s.submitAssessment);
 
   const answered = responses.filter((r) => r !== null).length;
@@ -26,14 +27,14 @@ export default function AssessmentForm({ type, onComplete, onCancel }) {
   const handleSubmit = async () => {
     if (!allAnswered) return;
     setSubmitting(true);
+    setSubmitError('');
     try {
       const score = responses.reduce((a, b) => a + b, 0);
       const data = await submitAssessment({ type, score, responses, date });
-      if (data) {
-        setResult({ score, severity: labelFn(score) });
-      }
+      setResult({ score, severity: labelFn(score) });
     } catch (err) {
       console.error('[AssessmentForm] submit error:', err);
+      setSubmitError(err?.message || 'Failed to save. Please try again.');
     } finally {
       setSubmitting(false);
     }
@@ -127,6 +128,9 @@ export default function AssessmentForm({ type, onComplete, onCancel }) {
           {submitting ? 'Submitting...' : 'Submit'}
         </button>
       </div>
+      {submitError && (
+        <p className="mt-2 text-right text-xs text-red-600">{submitError}</p>
+      )}
     </div>
   );
 }

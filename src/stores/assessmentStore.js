@@ -2,11 +2,14 @@
 
 import { create } from 'zustand';
 import { createClient } from '@/lib/supabase/client';
+import { ensureSession } from '@/lib/ensureSession';
 import { useAuthStore } from './authStore';
 
 export const useAssessmentStore = create((set, get) => ({
   assessments: [],
   loading: true,
+  // fetchError mirrors notificationStore — lets UI distinguish "no data" from "fetch failed"
+  fetchError: false,
 
   fetchAssessments: async () => {
     const userId = useAuthStore.getState().user?.id;
@@ -14,24 +17,28 @@ export const useAssessmentStore = create((set, get) => ({
 
     try {
       const supabase = createClient();
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('assessments')
         .select('*')
         .eq('user_id', userId)
         .order('date', { ascending: false });
 
-      set({ assessments: data || [], loading: false });
+      if (error) throw error;
+      set({ assessments: data || [], loading: false, fetchError: false });
     } catch (err) {
       console.error('[assessmentStore] fetchAssessments error:', err);
-      set({ loading: false });
+      set({ loading: false, fetchError: true });
     }
   },
 
+  // Throws on failure so the caller (AssessmentForm) can show the real error
+  // message. ensureSession() matches every other insert path in the codebase.
   submitAssessment: async ({ type, score, responses, date }) => {
-    const supabase = createClient();
     const userId = useAuthStore.getState().user?.id;
-    if (!userId) return null;
+    if (!userId) throw new Error('Not signed in.');
 
+    await ensureSession();
+    const supabase = createClient();
     const { data, error } = await supabase
       .from('assessments')
       .insert({
@@ -45,13 +52,11 @@ export const useAssessmentStore = create((set, get) => ({
       .single();
 
     if (error) {
-      console.error('[assessments] Insert failed:', error.message);
-      return null;
+      console.error('[assessmentStore] submitAssessment error:', error.message);
+      throw new Error(error.message || 'Failed to save assessment.');
     }
 
-    if (data) {
-      set((state) => ({ assessments: [data, ...state.assessments] }));
-    }
+    set((state) => ({ assessments: [data, ...state.assessments] }));
     return data;
   },
 }));

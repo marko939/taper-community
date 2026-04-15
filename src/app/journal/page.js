@@ -33,6 +33,7 @@ export default function JournalPage() {
   const addEntry = useJournalStore((s) => s.addEntry);
   const getShareLink = useJournalStore((s) => s.getShareLink);
   const assessments = useAssessmentStore((s) => s.assessments);
+  const assessmentsFetchError = useAssessmentStore((s) => s.fetchError);
   const fetchAssessments = useAssessmentStore((s) => s.fetchAssessments);
   const [shareUrl, setShareUrl] = useState(null);
   const [sharing, setSharing] = useState(false);
@@ -207,6 +208,8 @@ export default function JournalPage() {
                 ) : (
                   assessments.length > 0 ? (
                     <AssessmentChart assessments={assessments} entries={entries} />
+                  ) : assessmentsFetchError ? (
+                    <p className="px-4 py-8 text-center text-sm text-red-600 sm:px-0">Couldn&apos;t load your assessments. Please refresh.</p>
                   ) : (
                     <p className="px-4 py-8 text-center text-sm text-text-muted sm:px-0">No assessments yet. Take a PHQ-9 or GAD-7 to see scores here.</p>
                   )
