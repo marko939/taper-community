@@ -5,7 +5,8 @@ import { createClient } from '@/lib/supabase/client';
 import { ensureSession } from '@/lib/ensureSession';
 import { fireAndForget } from '@/lib/fireAndForget';
 import { fetchWithRetry } from '@/lib/fetchWithRetry';
-import { useAuthStore } from './authStore';
+import { PROFILE_FIELDS_DETAIL, THREAD_FORUM_RELATION } from '@/lib/supabase/queries';
+import { getCurrentUserId } from './authStore';
 import { useForumStore } from './forumStore';
 
 const REPLIES_PER_PAGE = 25;
@@ -109,7 +110,7 @@ export const useThreadStore = create((set, get) => ({
 
     try {
       const supabase = createClient();
-      const selectFields = '*, profiles:user_id(display_name, is_peer_advisor, drug, taper_stage, post_count, drug_signature, location, avatar_url, is_founding_member), thread_forums(forum_id, forums:forum_id(name, slug, drug_slug))';
+      const selectFields = `*, ${PROFILE_FIELDS_DETAIL}, ${THREAD_FORUM_RELATION}`;
 
       // fetchWithRetry: if first attempt fails (stale JWT after tab switch),
       // automatically refreshes auth token and retries once
@@ -163,7 +164,7 @@ export const useThreadStore = create((set, get) => ({
       const { data, count } = await fetchWithRetry(
         () => supabase
           .from('replies')
-          .select('*, profiles:user_id(display_name, is_peer_advisor, drug, taper_stage, post_count, drug_signature, location, avatar_url, is_founding_member)', { count: 'exact' })
+          .select(`*, ${PROFILE_FIELDS_DETAIL}`, { count: 'exact' })
           .eq('thread_id', threadId)
           .order('created_at')
           .abortSignal(controller.signal)
@@ -215,7 +216,7 @@ export const useThreadStore = create((set, get) => ({
     try {
       const { data, count } = await supabase
         .from('replies')
-        .select('*, profiles:user_id(display_name, is_peer_advisor, drug, taper_stage, post_count, drug_signature, location, avatar_url, is_founding_member)', { count: 'exact' })
+        .select(`*, ${PROFILE_FIELDS_DETAIL}`, { count: 'exact' })
         .eq('thread_id', threadId)
         .order('created_at')
         .abortSignal(controller.signal)
@@ -268,7 +269,7 @@ export const useThreadStore = create((set, get) => ({
       const totalToFetch = (targetPage + 1) * REPLIES_PER_PAGE;
       const { data, count } = await supabase
         .from('replies')
-        .select('*, profiles:user_id(display_name, is_peer_advisor, drug, taper_stage, post_count, drug_signature, location, avatar_url, is_founding_member)', { count: 'exact' })
+        .select(`*, ${PROFILE_FIELDS_DETAIL}`, { count: 'exact' })
         .eq('thread_id', threadId)
         .order('created_at')
         .range(0, totalToFetch - 1);
@@ -303,7 +304,7 @@ export const useThreadStore = create((set, get) => ({
 
     try {
     const supabase = createClient();
-    const userId = useAuthStore.getState().user?.id;
+    const userId = getCurrentUserId();
     if (!userId) throw new Error('Please sign in to reply.');
     if (!body.trim()) throw new Error('Reply cannot be empty.');
 
@@ -313,7 +314,7 @@ export const useThreadStore = create((set, get) => ({
     const { data, error } = await supabase
       .from('replies')
       .insert({ thread_id: threadId, user_id: userId, body: body.trim() })
-      .select('*, profiles:user_id(display_name, is_peer_advisor, drug, taper_stage, post_count, drug_signature, avatar_url, is_founding_member)')
+      .select(`*, ${PROFILE_FIELDS_DETAIL}`)
       .single();
 
     if (error) {
@@ -480,7 +481,7 @@ export const useThreadStore = create((set, get) => ({
 
   // Vote on thread or reply — uses server API to bypass RLS
   vote: async (type, targetId, voteType) => {
-    const userId = useAuthStore.getState().user?.id;
+    const userId = getCurrentUserId();
     if (!userId || !targetId) return;
 
     const key = `${type}_${targetId}`;
@@ -535,7 +536,7 @@ export const useThreadStore = create((set, get) => ({
       voteState: { ...state.voteState, [key]: { userVote: null, score: initialScore } },
     }));
 
-    const userId = useAuthStore.getState().user?.id;
+    const userId = getCurrentUserId();
     if (!userId) return;
 
     try {
@@ -565,7 +566,7 @@ export const useThreadStore = create((set, get) => ({
 
   // Toggle helpful on a reply — uses server API to bypass RLS
   toggleHelpful: async (replyId, initialCount) => {
-    const userId = useAuthStore.getState().user?.id;
+    const userId = getCurrentUserId();
     if (!userId) return;
 
     const current = get().helpfulState[replyId] || { hasVoted: false, count: initialCount ?? 0 };
@@ -612,7 +613,7 @@ export const useThreadStore = create((set, get) => ({
       helpfulState: { ...state.helpfulState, [replyId]: { hasVoted: false, count: initialCount ?? 0 } },
     }));
 
-    const userId = useAuthStore.getState().user?.id;
+    const userId = getCurrentUserId();
     if (!userId) return;
 
     const supabase = createClient();

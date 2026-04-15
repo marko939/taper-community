@@ -2,7 +2,7 @@
 
 import { create } from 'zustand';
 import { createClient } from '@/lib/supabase/client';
-import { useAuthStore } from './authStore';
+import { getCurrentUserId } from './authStore';
 import { subscribeWithFallback, unsubscribeWithFallback } from '@/lib/realtimeAdapter';
 
 export const useNotificationStore = create((set, get) => ({
@@ -35,7 +35,7 @@ export const useNotificationStore = create((set, get) => ({
   },
 
   fetchNotifications: async () => {
-    const userId = useAuthStore.getState().user?.id;
+    const userId = getCurrentUserId();
     if (!userId) return;
 
     get().cancelPending('fetchNotifications');
@@ -68,7 +68,7 @@ export const useNotificationStore = create((set, get) => ({
   },
 
   fetchUnreadCount: async () => {
-    const userId = useAuthStore.getState().user?.id;
+    const userId = getCurrentUserId();
     if (!userId) return;
 
     get().cancelPending('fetchUnreadCount');
@@ -120,7 +120,7 @@ export const useNotificationStore = create((set, get) => ({
   },
 
   markAllAsRead: async () => {
-    const userId = useAuthStore.getState().user?.id;
+    const userId = getCurrentUserId();
     if (!userId) return;
 
     const prev = get().notifications;
@@ -146,7 +146,7 @@ export const useNotificationStore = create((set, get) => ({
   },
 
   _subscribeRealtimeWs: () => {
-    const userId = useAuthStore.getState().user?.id;
+    const userId = getCurrentUserId();
     if (!userId) return;
 
     const existing = get()._realtimeChannel;
@@ -201,7 +201,7 @@ export const useNotificationStore = create((set, get) => ({
   },
 
   createBadgeNotification: async (milestone) => {
-    const userId = useAuthStore.getState().user?.id;
+    const userId = getCurrentUserId();
     if (!userId) return;
 
     try {

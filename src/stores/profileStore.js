@@ -2,7 +2,7 @@
 
 import { create } from 'zustand';
 import { createClient } from '@/lib/supabase/client';
-import { useAuthStore } from './authStore';
+import { useAuthStore, getCurrentUserId } from './authStore';
 
 export const useProfileStore = create((set, get) => ({
   profiles: {}, // keyed by userId: { data, threads, replies, loading }
@@ -33,7 +33,7 @@ export const useProfileStore = create((set, get) => ({
     const keys = Object.keys(profiles);
     const MAX_CACHED = 10;
     if (keys.length <= MAX_CACHED) return;
-    const currentUserId = useAuthStore.getState().user?.id;
+    const currentUserId = getCurrentUserId();
     const pruned = { ...profiles };
     const toRemove = keys
       .filter((k) => k !== keepUserId && k !== currentUserId)
@@ -63,7 +63,7 @@ export const useProfileStore = create((set, get) => ({
     }));
 
     const supabase = createClient();
-    const currentUserId = useAuthStore.getState().user?.id;
+    const currentUserId = getCurrentUserId();
     const isOwn = currentUserId === userId;
 
     const promises = [
@@ -125,7 +125,7 @@ export const useProfileStore = create((set, get) => ({
 
   updateProfile: async (partial) => {
     const supabase = createClient();
-    const userId = useAuthStore.getState().user?.id;
+    const userId = getCurrentUserId();
     if (!userId) return;
 
     const result = await supabase

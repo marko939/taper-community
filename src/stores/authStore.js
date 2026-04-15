@@ -97,3 +97,7 @@ export const useAuthStore = create((set, get) => ({
     }));
   },
 }));
+
+// Non-reactive helper — safe to call from store actions, effects, and
+// imperative handlers. NOT safe from render (doesn't subscribe).
+export const getCurrentUserId = () => useAuthStore.getState().user?.id ?? null;

@@ -3,7 +3,7 @@
 import { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useProfileStore } from '@/stores/profileStore';
-import { useAuthStore } from '@/stores/authStore';
+import { useAuthStore, getCurrentUserId } from '@/stores/authStore';
 import { DRUG_LIST } from '@/lib/drugs';
 import { TAPER_STAGES } from '@/lib/constants';
 import { recordReferral } from '@/lib/invites';
@@ -114,7 +114,7 @@ export default function OnboardingPage() {
     // Await intro post creation so it's visible immediately on home
     if (introPostBody.trim()) {
       const displayName = useAuthStore.getState().user?.user_metadata?.display_name || 'new member';
-      const userId = useAuthStore.getState().user?.id;
+      const userId = getCurrentUserId();
       try {
         await fetch('/api/intro-post', {
           method: 'POST',
@@ -151,7 +151,7 @@ export default function OnboardingPage() {
     fireAndForget('onboarding-referral', async () => {
       const ref = safeLocal.get('taper_ref');
       if (ref) {
-        const userId = useAuthStore.getState().user?.id;
+        const userId = getCurrentUserId();
         if (userId) await recordReferral(ref, userId);
         safeLocal.remove('taper_ref');
       }
@@ -161,7 +161,7 @@ export default function OnboardingPage() {
     if (wantsClinicianHelp) {
       const patientName = useAuthStore.getState().user?.user_metadata?.display_name || useAuthStore.getState().user?.email || 'New user';
       const patientEmail = useAuthStore.getState().user?.email;
-      const userId = useAuthStore.getState().user?.id;
+      const userId = getCurrentUserId();
       fireAndForget('onboarding-match-request', async () => {
         await fetch('/api/match-request', {
           method: 'POST',

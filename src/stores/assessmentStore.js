@@ -3,7 +3,7 @@
 import { create } from 'zustand';
 import { createClient } from '@/lib/supabase/client';
 import { ensureSession } from '@/lib/ensureSession';
-import { useAuthStore } from './authStore';
+import { getCurrentUserId } from './authStore';
 
 export const useAssessmentStore = create((set, get) => ({
   assessments: [],
@@ -12,7 +12,7 @@ export const useAssessmentStore = create((set, get) => ({
   fetchError: false,
 
   fetchAssessments: async () => {
-    const userId = useAuthStore.getState().user?.id;
+    const userId = getCurrentUserId();
     if (!userId) { set({ loading: false }); return; }
 
     try {
@@ -34,7 +34,7 @@ export const useAssessmentStore = create((set, get) => ({
   // Throws on failure so the caller (AssessmentForm) can show the real error
   // message. ensureSession() matches every other insert path in the codebase.
   submitAssessment: async ({ type, score, responses, date }) => {
-    const userId = useAuthStore.getState().user?.id;
+    const userId = getCurrentUserId();
     if (!userId) throw new Error('Not signed in.');
 
     await ensureSession();

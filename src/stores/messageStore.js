@@ -2,7 +2,7 @@
 
 import { create } from 'zustand';
 import { createClient } from '@/lib/supabase/client';
-import { useAuthStore } from './authStore';
+import { getCurrentUserId } from './authStore';
 import { subscribeWithFallback, unsubscribeWithFallback } from '@/lib/realtimeAdapter';
 
 // Staff user IDs in display order — always shown as pre-existing chats for regular users
@@ -45,7 +45,7 @@ export const useMessageStore = create((set, get) => ({
   },
 
   fetchConversations: async () => {
-    const userId = useAuthStore.getState().user?.id;
+    const userId = getCurrentUserId();
     if (!userId) return;
 
     get().cancelPending('fetchConversations');
@@ -154,7 +154,7 @@ export const useMessageStore = create((set, get) => ({
   },
 
   fetchMessages: async (otherUserId) => {
-    const userId = useAuthStore.getState().user?.id;
+    const userId = getCurrentUserId();
     if (!userId || !otherUserId) return;
 
     get().cancelPending('fetchMessages');
@@ -185,7 +185,7 @@ export const useMessageStore = create((set, get) => ({
   },
 
   sendMessage: async (toUserId, body) => {
-    const userId = useAuthStore.getState().user?.id;
+    const userId = getCurrentUserId();
     if (!userId || !toUserId || !body.trim()) return null;
 
     try {
@@ -226,7 +226,7 @@ export const useMessageStore = create((set, get) => ({
   },
 
   markConversationRead: async (otherUserId) => {
-    const userId = useAuthStore.getState().user?.id;
+    const userId = getCurrentUserId();
     if (!userId || !otherUserId) return;
 
     try {
@@ -258,7 +258,7 @@ export const useMessageStore = create((set, get) => ({
   },
 
   fetchUnreadTotal: async () => {
-    const userId = useAuthStore.getState().user?.id;
+    const userId = getCurrentUserId();
     if (!userId) return;
 
     get().cancelPending('fetchUnreadTotal');
@@ -284,7 +284,7 @@ export const useMessageStore = create((set, get) => ({
   },
 
   _subscribeRealtimeWs: () => {
-    const userId = useAuthStore.getState().user?.id;
+    const userId = getCurrentUserId();
     if (!userId) return;
 
     const existing = get()._realtimeChannel;

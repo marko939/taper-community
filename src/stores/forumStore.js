@@ -3,6 +3,11 @@
 import { create } from 'zustand';
 import { createClient } from '@/lib/supabase/client';
 import { fetchWithRetry } from '@/lib/fetchWithRetry';
+import {
+  PROFILE_FIELDS_COMPACT,
+  PROFILE_FIELDS_FORUM_CARD,
+  THREAD_FORUM_RELATION,
+} from '@/lib/supabase/queries';
 
 const THREADS_PER_PAGE = 20;
 
@@ -116,7 +121,7 @@ export const useForumStore = create((set, get) => ({
       const { data, count } = await fetchWithRetry(
         () => supabase
           .from('threads')
-          .select('*, profiles:user_id(display_name, is_peer_advisor, drug, taper_stage, drug_signature, avatar_url, is_founding_member), thread_forums!inner(forum_id)', { count: 'exact' })
+          .select(`*, ${PROFILE_FIELDS_FORUM_CARD}, thread_forums!inner(forum_id)`, { count: 'exact' })
           .eq('thread_forums.forum_id', forumId)
           .order('pinned', { ascending: false })
           .order('created_at', { ascending: false })
@@ -176,7 +181,7 @@ export const useForumStore = create((set, get) => ({
 
       const { data, count } = await supabase
         .from('threads')
-        .select('*, profiles:user_id(display_name, is_peer_advisor, drug, taper_stage, drug_signature, avatar_url, is_founding_member), thread_forums!inner(forum_id)', { count: 'exact' })
+        .select(`*, ${PROFILE_FIELDS_FORUM_CARD}, thread_forums!inner(forum_id)`, { count: 'exact' })
         .eq('thread_forums.forum_id', forumId)
         .order('pinned', { ascending: false })
         .order('created_at', { ascending: false })
@@ -221,7 +226,7 @@ export const useForumStore = create((set, get) => ({
     set({ recentThreads: { items: get().recentThreads.items, loading: true } });
     try {
       const supabase = createClient();
-      const selectFields = '*, profiles:user_id(display_name, is_peer_advisor, avatar_url, is_founding_member), thread_forums(forum_id, forums:forum_id(name, slug, drug_slug))';
+      const selectFields = `*, ${PROFILE_FIELDS_COMPACT}, ${THREAD_FORUM_RELATION}`;
 
       // Try recent threads from last 30 days first, then widen if needed
       const thirtyDaysAgo = new Date(Date.now() - 30 * 86400000).toISOString();
@@ -328,7 +333,7 @@ export const useForumStore = create((set, get) => ({
       const supabase = createClient();
       const { data, error } = await supabase
         .from('threads')
-        .select('*, profiles:user_id(display_name, is_peer_advisor, avatar_url, is_founding_member), thread_forums(forum_id, forums:forum_id(name, slug, drug_slug))')
+        .select(`*, ${PROFILE_FIELDS_COMPACT}, ${THREAD_FORUM_RELATION}`)
         .order('created_at', { ascending: false })
         .abortSignal(controller.signal)
         .limit(limit);

@@ -2,6 +2,7 @@
 
 import { create } from 'zustand';
 import { createClient } from '@/lib/supabase/client';
+import { PROFILE_FIELDS_COMPACT, THREAD_FORUM_RELATION } from '@/lib/supabase/queries';
 
 const ADMIN_ID = '8572637a-2109-4471-bcb4-3163d04094d0';
 
@@ -123,7 +124,7 @@ export const useFollowStore = create((set, get) => ({
 
       const { data } = await supabase
         .from('threads')
-        .select('*, profiles:user_id(display_name, is_peer_advisor, avatar_url, is_founding_member), thread_forums(forum_id, forums:forum_id(name, slug, drug_slug))')
+        .select(`*, ${PROFILE_FIELDS_COMPACT}, ${THREAD_FORUM_RELATION}`)
         .in('user_id', followedIds)
         .order('created_at', { ascending: false })
         .abortSignal(controller.signal)

@@ -4,7 +4,8 @@ import { create } from 'zustand';
 import { createClient } from '@/lib/supabase/client';
 import { ensureSession } from '@/lib/ensureSession';
 import { fireAndForget } from '@/lib/fireAndForget';
-import { useAuthStore } from './authStore';
+import { PROFILE_FIELDS_BLOG_COMMENT } from '@/lib/supabase/queries';
+import { getCurrentUserId } from './authStore';
 
 const DB_TIMEOUT_MS = 15_000;
 
@@ -220,7 +221,7 @@ export const useBlogStore = create((set, get) => ({
       const supabase = createClient();
       const { data, count } = await supabase
         .from('blog_comments')
-        .select('*, profiles:user_id(display_name, avatar_url, is_peer_advisor, drug, taper_stage, is_founding_member)', { count: 'exact' })
+        .select(`*, ${PROFILE_FIELDS_BLOG_COMMENT}`, { count: 'exact' })
         .eq('blog_post_id', blogPostId)
         .order('created_at')
         .abortSignal(controller.signal);
@@ -241,7 +242,7 @@ export const useBlogStore = create((set, get) => ({
   },
 
   addComment: async (blogPostId, body) => {
-    const userId = useAuthStore.getState().user?.id;
+    const userId = getCurrentUserId();
     if (!userId) throw new Error('Please sign in to comment.');
     if (!body.trim()) throw new Error('Comment cannot be empty.');
 
@@ -256,7 +257,7 @@ export const useBlogStore = create((set, get) => ({
     const { data, error } = await supabase
       .from('blog_comments')
       .insert({ blog_post_id: blogPostId, user_id: userId, body: body.trim() })
-      .select('*, profiles:user_id(display_name, avatar_url, is_peer_advisor, drug, taper_stage, is_founding_member)')
+      .select(`*, ${PROFILE_FIELDS_BLOG_COMMENT}`)
       .single();
 
     if (error) {
@@ -299,7 +300,7 @@ export const useBlogStore = create((set, get) => ({
         .from('blog_comments')
         .update({ body: newBody.trim() })
         .eq('id', commentId)
-        .select('*, profiles:user_id(display_name, avatar_url, is_peer_advisor, drug, taper_stage, is_founding_member)')
+        .select(`*, ${PROFILE_FIELDS_BLOG_COMMENT}`)
         .single();
 
       if (error) throw error;

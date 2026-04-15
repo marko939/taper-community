@@ -3,7 +3,7 @@
 import { create } from 'zustand';
 import { createClient } from '@/lib/supabase/client';
 import { ensureSession } from '@/lib/ensureSession';
-import { useAuthStore } from './authStore';
+import { getCurrentUserId } from './authStore';
 
 export const useClinicianStore = create((set, get) => ({
   clinicians: [],
@@ -35,7 +35,7 @@ export const useClinicianStore = create((set, get) => ({
 
   submitMatchRequest: async (requestData) => {
     const supabase = createClient();
-    const userId = useAuthStore.getState().user?.id;
+    const userId = getCurrentUserId();
     if (!userId) return { error: { message: 'Not authenticated' } };
 
     await ensureSession();

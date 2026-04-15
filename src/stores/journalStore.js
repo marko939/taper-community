@@ -4,7 +4,7 @@ import { create } from 'zustand';
 import { createClient } from '@/lib/supabase/client';
 import { ensureSession } from '@/lib/ensureSession';
 import { fireAndForget } from '@/lib/fireAndForget';
-import { useAuthStore } from './authStore';
+import { useAuthStore, getCurrentUserId } from './authStore';
 
 export const useJournalStore = create((set, get) => ({
   entries: [],
@@ -45,7 +45,7 @@ export const useJournalStore = create((set, get) => ({
 
   fetchEntries: async () => {
     if (get().entriesLoaded) return;
-    const userId = useAuthStore.getState().user?.id;
+    const userId = getCurrentUserId();
     if (!userId) { set({ loading: false }); return; }
 
     get().cancelPending('fetchEntries');
@@ -73,7 +73,7 @@ export const useJournalStore = create((set, get) => ({
 
   addEntry: async (entry) => {
     const supabase = createClient();
-    const userId = useAuthStore.getState().user?.id;
+    const userId = getCurrentUserId();
     if (!userId) return { data: null, error: { message: 'Not authenticated' } };
 
     // Ensure session is valid before inserting
@@ -170,7 +170,7 @@ export const useJournalStore = create((set, get) => ({
 
   getShareLink: async () => {
     const supabase = createClient();
-    const userId = useAuthStore.getState().user?.id;
+    const userId = getCurrentUserId();
     if (!userId) return null;
 
     // Check for existing share
@@ -250,7 +250,7 @@ export const useJournalStore = create((set, get) => ({
 
   createSharedJourney: async (context) => {
     const supabase = createClient();
-    const userId = useAuthStore.getState().user?.id;
+    const userId = getCurrentUserId();
     const profile = useAuthStore.getState().profile;
     if (!userId) return null;
 
@@ -284,7 +284,7 @@ export const useJournalStore = create((set, get) => ({
 
   fetchUserShares: async () => {
     if (get().sharedJourneysLoaded) return;
-    const userId = useAuthStore.getState().user?.id;
+    const userId = getCurrentUserId();
     if (!userId) return;
 
     get().cancelPending('fetchUserShares');
