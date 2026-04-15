@@ -21,8 +21,6 @@ async function requireAdmin() {
   return user;
 }
 
-/* ── Get existing CRM names for dedup ────────────────── */
-
 async function getExistingNames(region) {
   const supabase = getServiceClient();
   const { data } = await supabase
@@ -31,8 +29,6 @@ async function getExistingNames(region) {
     .limit(1000);
   return data || [];
 }
-
-/* ── Claude web search discovery ─────────────────────── */
 
 async function discoverWithWebSearch(region, tiers, existingNames) {
   const apiKey = process.env.ANTHROPIC_API_KEY;
@@ -158,8 +154,6 @@ Respond with ONLY the JSON array. No markdown fences, no commentary. Return [] i
   }
 }
 
-/* ── Email scraping ─────────────────────────────────── */
-
 const EMAIL_RE = /[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}/g;
 const JUNK_EMAILS = new Set(['example@example.com', 'email@example.com', 'your@email.com', 'name@domain.com']);
 
@@ -227,8 +221,6 @@ async function enrichWithEmails(results) {
   return enriched;
 }
 
-/* ── Deduplication ───────────────────────────────────── */
-
 function normalizeForMatch(name) {
   return (name || '')
     .toLowerCase()
@@ -262,8 +254,6 @@ async function deduplicateAgainstCRM(results) {
 
   return { unique, duplicatesSkipped };
 }
-
-/* ── POST: Discover clinicians ───────────────────────── */
 
 export async function POST(req) {
   const user = await requireAdmin();
@@ -304,8 +294,6 @@ export async function POST(req) {
     return NextResponse.json({ error: err.message || 'Discovery failed' }, { status: 500 });
   }
 }
-
-/* ── PUT: Bulk-insert approved entries ───────────────── */
 
 export async function PUT(req) {
   const user = await requireAdmin();

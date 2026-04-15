@@ -1,5 +1,4 @@
 export const VIDEOS = [
-  // ── Beginner ──
   {
     id: 'georgia-ede-descent',
     videoId: 'TXlVfwJ6RQU',
@@ -31,7 +30,6 @@ export const VIDEOS = [
     duration: '47 min',
   },
 
-  // ── Intermediate ──
   {
     id: 'palmer-huberman',
     videoId: 'xjEFo3a1AnI',
@@ -83,7 +81,6 @@ export const VIDEOS = [
     duration: '1 hr 9 min',
   },
 
-  // ── Deep Dive ──
   {
     id: 'palmer-huberman-2025',
     videoId: 'hCyvqRq5YmM',

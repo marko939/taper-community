@@ -6,8 +6,6 @@ import { useAuth } from '@/hooks/useAuth';
 import { isAdmin } from '@/lib/blog';
 import { useRouteCleanup } from '@/hooks/useRouteCleanup';
 
-/* ── constants ──────────────────────────────────────── */
-
 const US_STATES = [
   'Alabama','Alaska','Arizona','Arkansas','California','Colorado','Connecticut','Delaware',
   'District of Columbia','Florida','Georgia','Hawaii','Idaho','Illinois','Indiana','Iowa',
@@ -54,8 +52,6 @@ const TIERS = [
 const TIER_COLORS = Object.fromEntries(TIERS.map(t => [t.category, t.color]));
 const TIER_LABELS = Object.fromEntries(TIERS.map(t => [t.category, t.label]));
 
-/* ── main component ─────────────────────────────────── */
-
 export default function ClinicianDiscovery() {
   useRouteCleanup();
   const { user, loading: authLoading } = useAuth();
@@ -77,8 +73,6 @@ export default function ClinicianDiscovery() {
   const [addedIds, setAddedIds] = useState(new Set());
   const [dismissedIds, setDismissedIds] = useState(new Set());
   const [bulkAdding, setBulkAdding] = useState(null);
-
-  /* ── handlers ──────────────────────────────────────── */
 
   const toggleTier = (id) => {
     setSelectedTiers(prev =>
@@ -184,17 +178,12 @@ export default function ClinicianDiscovery() {
 
   const visibleResults = results.filter(r => !dismissedIds.has(r._id));
 
-  /* ── auth guard ────────────────────────────────────── */
-
   if (authLoading) return <p className="p-8 text-text-muted">Loading...</p>;
   if (!user || !isAdmin(user.id)) return <p className="p-8 text-text-muted">Not authorized.</p>;
-
-  /* ── render ────────────────────────────────────────── */
 
   return (
     <div className="space-y-5">
 
-      {/* ── header ──────────────────────────────────── */}
       <div className="flex flex-wrap items-center gap-3">
         <div className="min-w-0 flex-1">
           <h1 className="font-serif text-2xl font-semibold text-foreground">Clinician Discovery</h1>
@@ -218,7 +207,6 @@ export default function ClinicianDiscovery() {
         </Link>
       </div>
 
-      {/* ── search controls ─────────────────────────── */}
       <div className="rounded-xl border p-4" style={{ borderColor: 'var(--border-subtle)', background: 'var(--surface-strong)' }}>
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
 
@@ -295,7 +283,6 @@ export default function ClinicianDiscovery() {
         )}
       </div>
 
-      {/* ── results ─────────────────────────────────── */}
       {(visibleResults.length > 0 || discoveryMessage || duplicatesSkipped > 0) && (
         <div className="space-y-3">
 

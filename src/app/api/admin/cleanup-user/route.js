@@ -6,7 +6,6 @@ import { isAdmin } from '@/lib/blog';
 export const dynamic = 'force-dynamic';
 
 export async function POST(req) {
-  // Auth check
   const authClient = await createAuthClient();
   const { data: { user } } = await authClient.auth.getUser();
   if (!user || !isAdmin(user.id)) {

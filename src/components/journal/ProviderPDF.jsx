@@ -94,7 +94,6 @@ export default function ProviderPDF({ entries = [], profile = {}, assessments = 
   return (
     <Document>
       <Page size="A4" style={styles.page}>
-        {/* ── Branded Header ── */}
         <View style={styles.headerBar}>
           <View style={styles.logoBox}>
             <Text style={styles.logoText}>T</Text>
@@ -105,7 +104,6 @@ export default function ProviderPDF({ entries = [], profile = {}, assessments = 
           </View>
         </View>
 
-        {/* ── Patient Info Bar ── */}
         <View style={styles.infoRow}>
           <View style={styles.infoCol}>
             <Text style={styles.infoLabel}>Patient</Text>
@@ -125,7 +123,6 @@ export default function ProviderPDF({ entries = [], profile = {}, assessments = 
           </View>
         </View>
 
-        {/* ── AI Summary ── */}
         {summary ? (
           <View style={styles.summaryBox}>
             <Text style={styles.summaryLabel}>Clinical Summary (AI-Generated)</Text>
@@ -133,7 +130,6 @@ export default function ProviderPDF({ entries = [], profile = {}, assessments = 
           </View>
         ) : null}
 
-        {/* ── Drug History ── */}
         {profile.drug_signature && (
           <View>
             <Text style={styles.sectionTitle}>Drug History</Text>
@@ -141,7 +137,6 @@ export default function ProviderPDF({ entries = [], profile = {}, assessments = 
           </View>
         )}
 
-        {/* ── Dose & Mood Chart ── */}
         {moodChartImage && (
           <View style={styles.chartContainer}>
             <Text style={styles.sectionTitle}>Dose & Mood Over Time</Text>
@@ -149,7 +144,6 @@ export default function ProviderPDF({ entries = [], profile = {}, assessments = 
           </View>
         )}
 
-        {/* ── Assessment Chart ── */}
         {assessmentChartImage && (
           <View style={styles.chartContainer}>
             <Text style={styles.sectionTitle}>Mental Health Assessments</Text>
@@ -157,7 +151,6 @@ export default function ProviderPDF({ entries = [], profile = {}, assessments = 
           </View>
         )}
 
-        {/* ── Dose & Mood Log Table ── */}
         <Text style={styles.sectionTitle}>Dose & Mood Log ({sorted.length} entries)</Text>
         <View style={styles.table}>
           <View style={styles.tableHeader}>
@@ -182,7 +175,6 @@ export default function ProviderPDF({ entries = [], profile = {}, assessments = 
           ))}
         </View>
 
-        {/* ── Assessment Scores Table ── */}
         {sortedAssessments.length > 0 && (
           <View>
             <Text style={styles.sectionTitle}>Assessment Scores ({sortedAssessments.length} results)</Text>
@@ -213,7 +205,6 @@ export default function ProviderPDF({ entries = [], profile = {}, assessments = 
           </View>
         )}
 
-        {/* ── Journal Notes ── */}
         {sorted.some((e) => e.notes) && (
           <View>
             <Text style={styles.sectionTitle}>Journal Notes</Text>
@@ -229,7 +220,6 @@ export default function ProviderPDF({ entries = [], profile = {}, assessments = 
           </View>
         )}
 
-        {/* ── Disclaimer ── */}
         <View style={styles.disclaimer}>
           <Text style={styles.disclaimerTitle}>Important Notice</Text>
           <Text style={styles.disclaimerText}>
@@ -240,7 +230,6 @@ export default function ProviderPDF({ entries = [], profile = {}, assessments = 
           </Text>
         </View>
 
-        {/* ── Footer ── */}
         <View style={styles.footer}>
           <Text style={styles.footerText}>Self-reported data — not a medical record</Text>
           <Text style={styles.footerBrand}>TaperCommunity — tapercommunity.com</Text>

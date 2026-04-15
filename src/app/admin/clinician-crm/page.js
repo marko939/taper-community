@@ -27,8 +27,6 @@ const SORT_OPTIONS = [
   { value: 'manual', label: 'Manual order' },
 ];
 
-/* ── helpers ─────────────────────────────────────────── */
-
 function timeAgo(date) {
   const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
   if (seconds < 10) return 'just now';
@@ -44,8 +42,6 @@ function formatDate(iso) {
     hour: 'numeric', minute: '2-digit',
   });
 }
-
-/* ── country detection ───────────────────────────────── */
 
 const US_STATES = new Set([
   'Alabama','Alaska','Arizona','Arkansas','California','Colorado','Connecticut','Delaware',
@@ -111,12 +107,8 @@ function deriveCountry(entry) {
   return 'Other';
 }
 
-/* ── shared styles ───────────────────────────────────── */
-
 const inputClass = 'w-full rounded-lg border px-3 py-2 text-xs';
 const inputStyle = { borderColor: 'var(--border-subtle)', background: 'var(--purple-ghost)' };
-
-/* ── main component ──────────────────────────────────── */
 
 export default function ClinicianCrmAdmin() {
   useRouteCleanup();
@@ -156,8 +148,6 @@ export default function ClinicianCrmAdmin() {
   const isFirstLoad = useRef(true);
   const intervalRef = useRef(null);
 
-  /* ── fetch entries ──────────────────────────────── */
-
   const fetchEntries = useCallback(async () => {
     if (isFirstLoad.current) setLoading(true);
     try {
@@ -192,8 +182,6 @@ export default function ClinicianCrmAdmin() {
     const t = setInterval(() => setTick(n => n + 1), 10000);
     return () => clearInterval(t);
   }, []);
-
-  /* ── CRUD handlers ──────────────────────────────── */
 
   const handleAdd = async () => {
     if (!addName.trim()) {
@@ -321,8 +309,6 @@ export default function ClinicianCrmAdmin() {
     ]);
   };
 
-  /* ── filtering & sorting ────────────────────────── */
-
   // derive countries and regions
   const entriesWithCountry = entries.map(e => {
     const _country = deriveCountry(e);
@@ -355,17 +341,12 @@ export default function ClinicianCrmAdmin() {
       return new Date(b.created_at) - new Date(a.created_at);
     });
 
-  /* ── auth guard ─────────────────────────────────── */
-
   if (authLoading) return <p className="p-8 text-text-muted">Loading...</p>;
   if (!user || !isAdmin(user.id)) return <p className="p-8 text-text-muted">Not authorized.</p>;
-
-  /* ── render ─────────────────────────────────────── */
 
   return (
     <div className="space-y-5">
 
-      {/* ── header ──────────────────────────────────── */}
       <div className="flex flex-wrap items-center gap-3">
         <div className="min-w-0 flex-1">
           <h1 className="font-serif text-2xl font-semibold text-foreground">Clinician CRM</h1>
@@ -396,7 +377,6 @@ export default function ClinicianCrmAdmin() {
         </button>
       </div>
 
-      {/* ── add form ────────────────────────────────── */}
       {showAddForm && (
         <div
           className="rounded-xl border p-5"
@@ -469,7 +449,6 @@ export default function ClinicianCrmAdmin() {
         </div>
       )}
 
-      {/* ── search + sort + state filter ────────────── */}
       <div className="flex flex-wrap gap-2">
         <input
           type="text" value={searchQuery}
@@ -505,7 +484,6 @@ export default function ClinicianCrmAdmin() {
         </select>
       </div>
 
-      {/* ── status filters ──────────────────────────── */}
       <div className="flex flex-wrap gap-2">
         <button
           onClick={() => setFilterStatus('all')}
@@ -536,7 +514,6 @@ export default function ClinicianCrmAdmin() {
         })}
       </div>
 
-      {/* ── results count ───────────────────────────── */}
       <p className="text-[11px] text-text-subtle">
         Showing {filtered.length} of {entries.length} clinicians
         {searchQuery && <> matching &ldquo;{searchQuery}&rdquo;</>}
@@ -544,7 +521,6 @@ export default function ClinicianCrmAdmin() {
         {filterRegion !== 'all' && <>, {filterRegion}</>}
       </p>
 
-      {/* ── entries list ────────────────────────────── */}
       {loading ? (
         <p className="text-sm text-text-muted">Loading clinicians...</p>
       ) : filtered.length === 0 ? (
@@ -633,7 +609,6 @@ export default function ClinicianCrmAdmin() {
                   </p>
                 </div>
 
-                {/* ── actions ────────────────── */}
                 <div className="flex flex-wrap items-center gap-1.5">
                   <div className="flex flex-col gap-0.5">
                     <button onClick={() => moveEntry(idx, -1)} disabled={idx === 0}
@@ -696,7 +671,6 @@ export default function ClinicianCrmAdmin() {
                 </div>
               </div>
 
-              {/* ── admin notes with save button ── */}
               <div className="mt-3">
                 <div className="flex items-end gap-2">
                   <textarea

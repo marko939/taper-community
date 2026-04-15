@@ -445,7 +445,6 @@ function BlogAdminContent() {
             />
           </div>
 
-          {/* ─── SEO Section ─── */}
           <div className="rounded-2xl border p-5 space-y-4" style={{ borderColor: 'var(--border-subtle)', background: 'var(--surface-strong)' }}>
             <p className="text-xs font-bold text-text-muted uppercase tracking-wider">SEO Settings</p>
 

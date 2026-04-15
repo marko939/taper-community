@@ -148,7 +148,6 @@ export default function JournalPage() {
         </p>
       </div>
 
-      {/* ============ DOSE & MOOD TAB ============ */}
       {tab === 'doseMood' && (
         <>
           {entries.length === 0 ? (

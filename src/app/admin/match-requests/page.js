@@ -26,8 +26,6 @@ const SORT_OPTIONS = [
   { value: 'manual', label: 'Manual order' },
 ];
 
-/* ── location derivation ────────────────────────────── */
-
 const US_STATES = [
   'Alabama','Alaska','Arizona','Arkansas','California','Colorado','Connecticut','Delaware',
   'District of Columbia','Florida','Georgia','Hawaii','Idaho','Illinois','Indiana','Iowa',
@@ -153,8 +151,6 @@ function deriveRegion(req) {
   return lastPart ? lastPart.toUpperCase() : null;
 }
 
-/* ── helpers ─────────────────────────────────────────── */
-
 function timeAgo(date) {
   const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
   if (seconds < 10) return 'just now';
@@ -171,12 +167,8 @@ function formatDate(iso) {
   });
 }
 
-/* ── shared styles ───────────────────────────────────── */
-
 const inputClass = 'w-full rounded-lg border px-3 py-2 text-xs';
 const inputStyle = { borderColor: 'var(--border-subtle)', background: 'var(--purple-ghost)' };
-
-/* ── profile search typeahead ────────────────────────── */
 
 function ProfileSearch({ onSelect }) {
   const [query, setQuery] = useState('');
@@ -261,8 +253,6 @@ function ProfileSearch({ onSelect }) {
   );
 }
 
-/* ── main component ──────────────────────────────────── */
-
 export default function MatchRequestsAdmin() {
   useRouteCleanup();
   const { user, loading: authLoading } = useAuth();
@@ -298,8 +288,6 @@ export default function MatchRequestsAdmin() {
   const isFirstLoad = useRef(true);
   const intervalRef = useRef(null);
 
-  /* ── fetch requests ─────────────────────────────── */
-
   const fetchRequests = useCallback(async () => {
     if (isFirstLoad.current) setLoading(true);
     try {
@@ -334,8 +322,6 @@ export default function MatchRequestsAdmin() {
     const t = setInterval(() => setTick(n => n + 1), 10000);
     return () => clearInterval(t);
   }, []);
-
-  /* ── CRUD handlers ──────────────────────────────── */
 
   const handleAdd = async () => {
     if (!addName.trim()) {
@@ -482,8 +468,6 @@ export default function MatchRequestsAdmin() {
     ]);
   };
 
-  /* ── filtering & sorting ────────────────────────── */
-
   // derive regions for all requests
   const requestsWithRegion = requests.map(r => ({ ...r, _region: deriveRegion(r) }));
   const allLocations = [...new Set(requestsWithRegion.map(r => r._region).filter(Boolean))].sort();
@@ -510,17 +494,12 @@ export default function MatchRequestsAdmin() {
       return new Date(b.created_at) - new Date(a.created_at);
     });
 
-  /* ── auth guard ─────────────────────────────────── */
-
   if (authLoading) return <p className="p-8 text-text-muted">Loading...</p>;
   if (!user || !isAdmin(user.id)) return <p className="p-8 text-text-muted">Not authorized.</p>;
-
-  /* ── render ─────────────────────────────────────── */
 
   return (
     <div className="space-y-5">
 
-      {/* ── header ──────────────────────────────────── */}
       <div className="flex flex-wrap items-center gap-3">
         <div className="min-w-0 flex-1">
           <h1 className="font-serif text-2xl font-semibold text-foreground">Match Requests</h1>
@@ -544,7 +523,6 @@ export default function MatchRequestsAdmin() {
         </button>
       </div>
 
-      {/* ── add form (simplified) ───────────────────── */}
       {showAddForm && (
         <div
           className="rounded-xl border p-5"
@@ -624,7 +602,6 @@ export default function MatchRequestsAdmin() {
         </div>
       )}
 
-      {/* ── search + sort + location ─────────────────── */}
       <div className="flex flex-wrap gap-2">
         <input
           type="text" value={searchQuery}
@@ -654,7 +631,6 @@ export default function MatchRequestsAdmin() {
         </select>
       </div>
 
-      {/* ── status filters ──────────────────────────── */}
       <div className="flex flex-wrap gap-2">
         <button
           onClick={() => setFilterStatus('all')}
@@ -685,14 +661,12 @@ export default function MatchRequestsAdmin() {
         })}
       </div>
 
-      {/* ── results count ───────────────────────────── */}
       <p className="text-[11px] text-text-subtle">
         Showing {filtered.length} of {requests.length} requests
         {filterLocation !== 'all' && <> in <strong>{filterLocation === 'unknown' ? 'unknown location' : filterLocation}</strong></>}
         {searchQuery && <> matching &ldquo;{searchQuery}&rdquo;</>}
       </p>
 
-      {/* ── requests list ───────────────────────────── */}
       {loading ? (
         <p className="text-sm text-text-muted">Loading requests...</p>
       ) : filtered.length === 0 ? (
@@ -837,7 +811,6 @@ export default function MatchRequestsAdmin() {
                   </p>
                 </div>
 
-                {/* ── actions ────────────────── */}
                 <div className="flex flex-wrap items-center gap-1.5">
                   <div className="flex flex-col gap-0.5">
                     <button onClick={() => moveEntry(idx, -1)} disabled={idx === 0}
@@ -900,7 +873,6 @@ export default function MatchRequestsAdmin() {
                 </div>
               </div>
 
-              {/* ── admin notes with save button ── */}
               <div className="mt-3">
                 <div className="flex items-end gap-2">
                   <textarea

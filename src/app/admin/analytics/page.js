@@ -225,10 +225,6 @@ export default function AnalyticsDashboard() {
   );
 }
 
-// ═══════════════════════════════════════════════════════
-// Section Components
-// ═══════════════════════════════════════════════════════
-
 function TopLineCards({ stats }) {
   if (!stats) return <SectionUnavailable label="Top Line Stats" />;
 
@@ -1066,10 +1062,6 @@ function TaperTrackerSection({ tracker }) {
 }
 
 
-// ═══════════════════════════════════════════════════════
-// Plausible Analytics
-// ═══════════════════════════════════════════════════════
-
 function PlausibleSection({ plausible }) {
   if (!plausible) return <SectionUnavailable label="Site Traffic (Plausible)" />;
 
@@ -1212,10 +1204,6 @@ function PlausibleSection({ plausible }) {
     </div>
   );
 }
-
-// ═══════════════════════════════════════════════════════
-// Shared
-// ═══════════════════════════════════════════════════════
 
 const tooltipStyle = { background: 'var(--surface-strong)', border: '1px solid var(--border-subtle)', borderRadius: 12, fontSize: 12 };
 

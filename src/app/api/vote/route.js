@@ -23,7 +23,6 @@ export async function POST(request) {
 
   try {
     if (type === 'helpful') {
-      // Helpful vote on a reply
       const { data: existing } = await supabase
         .from('helpful_votes')
         .select('user_id')
@@ -55,12 +54,10 @@ export async function POST(request) {
       return NextResponse.json({ action, score: newScore });
     }
 
-    // Thread or reply vote
     const voteTable = type === 'thread' ? 'thread_votes' : 'reply_votes';
     const idColumn = type === 'thread' ? 'thread_id' : 'reply_id';
     const scoreTable = type === 'thread' ? 'threads' : 'replies';
 
-    // Check if user already voted
     const { data: existing } = await supabase
       .from(voteTable)
       .select('vote_type')
@@ -71,11 +68,9 @@ export async function POST(request) {
     let action;
 
     if (existing) {
-      // Already voted — toggle off (unlike)
       await supabase.from(voteTable).delete().eq('user_id', userId).eq(idColumn, targetId);
       action = 'removed';
     } else {
-      // New vote — insert
       const { error: insertErr } = await supabase
         .from(voteTable)
         .insert({ user_id: userId, [idColumn]: targetId, vote_type: voteType || 'up' });

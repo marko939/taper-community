@@ -211,8 +211,6 @@ export const useFollowStore = create((set, get) => ({
 
   isFollowing: (userId) => get().following.has(userId),
 
-  // ── Forum follows ──────────────────────────────────────────
-
   fetchFollowedForums: async (userId) => {
     if (!userId || get().followedForumsLoaded) return;
 
@@ -274,8 +272,6 @@ export const useFollowStore = create((set, get) => ({
   },
 
   isFollowingForum: (forumId) => get().followedForums.has(forumId),
-
-  // ── Thread follows ──────────────────────────────────────────
 
   fetchThreadFollows: async (userId) => {
     if (!userId || get().threadFollowsLoaded) return;

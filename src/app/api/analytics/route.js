@@ -84,7 +84,6 @@ export async function GET() {
   }
 }
 
-// ── Section 1: Top Line Stats ──
 async function fetchTopLineStats(supabase) {
   const now = new Date();
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
@@ -116,7 +115,6 @@ async function fetchTopLineStats(supabase) {
   };
 }
 
-// ── Section 2: Signup Growth Series ──
 async function fetchSignupSeries(supabase) {
   const [d7, d30, d90] = await Promise.all([
     supabase.rpc('analytics_signup_series', { days_back: 7 }),
@@ -131,7 +129,6 @@ async function fetchSignupSeries(supabase) {
   };
 }
 
-// ── Section 3: Period Comparisons ──
 async function fetchPeriodComparisons(supabase) {
   const now = new Date();
 
@@ -246,7 +243,6 @@ async function fetchPeriodComparisons(supabase) {
   };
 }
 
-// ── Section 3b: Historical Period Series (for drill-down charts) ──
 async function fetchPeriodHistoricalSeries(supabase) {
   const now = new Date();
 
@@ -257,8 +253,6 @@ async function fetchPeriodHistoricalSeries(supabase) {
     const diff = d.getDate() - day + (day === 0 ? -6 : 1);
     return new Date(d.getFullYear(), d.getMonth(), diff);
   }
-
-  // ── Build buckets ──
 
   // Daily: last 14 days
   const days = [];
@@ -344,7 +338,6 @@ async function fetchPeriodHistoricalSeries(supabase) {
   };
 }
 
-// ── Section 4: Daily Activity ──
 async function fetchDailyActivity(supabase) {
   const thirtyDaysAgo = new Date(Date.now() - 30 * 86400000).toISOString();
 
@@ -368,7 +361,6 @@ async function fetchDailyActivity(supabase) {
   return Object.values(dayMap).sort((a, b) => a.date.localeCompare(b.date));
 }
 
-// ── Section 5: Retention ──
 async function fetchRetention(supabase) {
   const { data } = await supabase.rpc('analytics_retention');
   if (!data) {
@@ -380,7 +372,6 @@ async function fetchRetention(supabase) {
   return { current: data, alltime: data };
 }
 
-// ── Section 5b: Retention Cohorts (weekly cohort heatmap) ──
 async function fetchRetentionCohorts(supabase) {
   const now = new Date();
   const weeksBack = 8;
@@ -463,7 +454,6 @@ async function fetchRetentionCohorts(supabase) {
   return cohorts;
 }
 
-// ── Section 6: Engagement ──
 async function fetchEngagement(supabase) {
   const weekAgo = new Date(Date.now() - 7 * 86400000).toISOString();
   const monthAgo = new Date(Date.now() - 30 * 86400000).toISOString();
@@ -526,7 +516,6 @@ async function fetchEngagement(supabase) {
   };
 }
 
-// ── Section 7: Forum Breakdown ──
 async function fetchForumBreakdown(supabase) {
   const monthAgo = new Date(Date.now() - 30 * 86400000).toISOString();
 
@@ -548,7 +537,6 @@ async function fetchForumBreakdown(supabase) {
     .sort((a, b) => b.count - a.count);
 }
 
-// ── Section 8: Time to First Post ──
 async function fetchTimeToFirstPost(supabase) {
   // TODO: replace with RPC — compute time-to-first-post in DB
   const { data: profiles } = await supabase.from('profiles').select('id, joined_at').limit(500);
@@ -574,7 +562,6 @@ async function fetchTimeToFirstPost(supabase) {
   };
 }
 
-// ── Section 9: Peak Hours ──
 async function fetchPeakHours(supabase) {
   const monthAgo = new Date(Date.now() - 30 * 86400000).toISOString();
 
@@ -592,7 +579,6 @@ async function fetchPeakHours(supabase) {
   return hourCounts.map((count, hour) => ({ hour, count }));
 }
 
-// ── Section 10: Taper Tracker ──
 async function fetchTaperTracker(supabase) {
   const { data: journalStats } = await supabase.rpc('analytics_journal_stats');
   const { count: totalMembers } = await supabase.from('profiles').select('id', { count: 'exact', head: true });
@@ -608,7 +594,6 @@ async function fetchTaperTracker(supabase) {
   };
 }
 
-// ── NEW: New vs Returning Active Users ──
 async function fetchNewVsReturning(supabase) {
   const dayAgo = new Date(Date.now() - 86400000).toISOString();
   const weekAgo = new Date(Date.now() - 7 * 86400000).toISOString();
@@ -634,7 +619,6 @@ async function fetchNewVsReturning(supabase) {
   return { newActive, returningActive };
 }
 
-// ── NEW: Churn Risk ──
 async function fetchChurnRisk(supabase) {
   const fourteenDaysAgo = new Date(Date.now() - 14 * 86400000).toISOString();
 
@@ -668,7 +652,6 @@ async function fetchChurnRisk(supabase) {
   return { atRisk, firstWeekPosters: firstWeekPosters.size };
 }
 
-// ── NEW: Top Members This Week ──
 async function fetchTopMembers(supabase) {
   const weekAgo = new Date(Date.now() - 7 * 86400000).toISOString();
 
@@ -706,7 +689,6 @@ async function fetchTopMembers(supabase) {
   return topIds.map(t => ({ ...t, name: nameMap[t.id] || 'Anonymous' }));
 }
 
-// ── NEW: Thread Engagement Funnel ──
 async function fetchThreadFunnel(supabase) {
   const monthAgo = new Date(Date.now() - 30 * 86400000).toISOString();
 
@@ -728,7 +710,6 @@ async function fetchThreadFunnel(supabase) {
   };
 }
 
-// ── NEW: Page Views ──
 async function fetchPageViews(supabase) {
   const now = new Date();
   const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
@@ -820,7 +801,6 @@ async function fetchPageViews(supabase) {
   };
 }
 
-// ── Clinician Interest (from onboarding) ──
 function getStartOfWeek(date) {
   const d = new Date(date);
   const day = d.getDay();
@@ -828,7 +808,6 @@ function getStartOfWeek(date) {
   return new Date(d.getFullYear(), d.getMonth(), diff);
 }
 
-// ── Plausible Analytics API ──
 const PLAUSIBLE_API = 'https://plausible.io/api/v1/stats';
 const PLAUSIBLE_KEY = process.env.PLAUSIBLE_API_KEY;
 const PLAUSIBLE_SITE = process.env.PLAUSIBLE_SITE_ID || 'taper.community';
@@ -884,7 +863,6 @@ async function fetchPlausibleStats() {
   };
 }
 
-// ── NEW: New Users with Intake Data ──
 async function fetchNewUsers(supabase) {
   const [profilesRes, matchRes] = await Promise.all([
     supabase

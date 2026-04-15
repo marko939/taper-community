@@ -21,7 +21,6 @@ export async function POST(request) {
 
     const supabase = getServiceClient();
 
-    // Fetch the blog post
     const { data: post, error: postErr } = await supabase
       .from('blog_posts')
       .select('id, title, slug, published, forum_slugs')
@@ -36,7 +35,6 @@ export async function POST(request) {
       return Response.json({ error: 'Blog post is not published' }, { status: 400 });
     }
 
-    // Verify forum slugs exist (check both slug and drug_slug)
     const { data: forums } = await supabase
       .from('forums')
       .select('slug, drug_slug');
@@ -52,7 +50,6 @@ export async function POST(request) {
       return Response.json({ error: 'No matching forums found for slugs: ' + forum_slugs.join(', ') }, { status: 404 });
     }
 
-    // Update blog post with forum slugs
     const { error: updateErr } = await supabase
       .from('blog_posts')
       .update({ forum_slugs: verified })

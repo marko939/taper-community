@@ -21,10 +21,6 @@ export const TIERS = [
 
 export const MODULES = [
 
-  // ─────────────────────────────────────────────
-  //  BEGINNER
-  // ─────────────────────────────────────────────
-
   {
     id: 'why-diet-tapering',
     tier: 'beginner',
@@ -681,7 +677,6 @@ export const MODULES = [
     ],
   },
 
-  // ── Beginner Assessment ──
   {
     id: 'beginner-assessment',
     tier: 'beginner',
@@ -743,10 +738,6 @@ export const MODULES = [
       },
     ],
   },
-
-  // ─────────────────────────────────────────────
-  //  INTERMEDIATE
-  // ─────────────────────────────────────────────
 
   {
     id: 'mitochondria-tapering',
@@ -1449,7 +1440,6 @@ export const MODULES = [
     ],
   },
 
-  // ── Intermediate Assessment ──
   {
     id: 'intermediate-assessment',
     tier: 'intermediate',
@@ -1511,10 +1501,6 @@ export const MODULES = [
       },
     ],
   },
-
-  // ─────────────────────────────────────────────
-  //  ADVANCED
-  // ─────────────────────────────────────────────
 
   {
     id: 'brain-energy-deprescribing',
@@ -1963,7 +1949,6 @@ export const MODULES = [
     ],
   },
 
-  // ── Advanced Assessment ──
   {
     id: 'advanced-assessment',
     tier: 'advanced',

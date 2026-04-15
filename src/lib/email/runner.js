@@ -40,8 +40,6 @@ export async function runEmailJobs() {
   console.log('[email] run complete. Emails sent to', sentToday.size, 'users');
 }
 
-// ── JOB 0: Welcome email (within 24h of signup) ──────────────────────
-
 async function runWelcome(sentToday) {
   const supabase = getServiceClient();
 
@@ -75,8 +73,6 @@ async function runWelcome(sentToday) {
     }
   }
 }
-
-// ── JOB 0b: Day 3 — Set up your taper journal ──────────────────────
 
 async function runDay3Journal(sentToday) {
   const supabase = getServiceClient();
@@ -123,8 +119,6 @@ async function runDay3Journal(sentToday) {
     }
   }
 }
-
-// ── JOB 0c: Day 7 — Explore your drug-specific forum ───────────────
 
 async function runDay7Forums(sentToday) {
   const supabase = getServiceClient();
@@ -186,8 +180,6 @@ async function runDay7Forums(sentToday) {
   }
 }
 
-// ── JOB 0d: Day 14 — Find a deprescriber ───────────────────────────
-
 async function runDay14Deprescriber(sentToday) {
   const supabase = getServiceClient();
 
@@ -224,8 +216,6 @@ async function runDay14Deprescriber(sentToday) {
     }
   }
 }
-
-// ── JOB 0e: Day 30 — Re-engage silent users ─────────────────────────
 
 async function runDay30Reengage(sentToday) {
   const supabase = getServiceClient();
@@ -276,8 +266,6 @@ async function runDay30Reengage(sentToday) {
     }
   }
 }
-
-// ── JOB 1: Daily reply digest ──────────────────────────────────────
 
 async function runDigest(sentToday) {
   const supabase = getServiceClient();
@@ -382,8 +370,6 @@ async function runDigest(sentToday) {
   }
 }
 
-// ── JOB 1b: Forum follow digest (new posts in followed forums) ──────────────
-
 async function runForumFollowDigest(sentToday) {
   const supabase = getServiceClient();
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://taper.community';
@@ -475,8 +461,6 @@ async function runForumFollowDigest(sentToday) {
   }
 }
 
-// ── JOB 2: Introduce yourself (48h no post, repeat once after 2 more days) ──
-
 async function runIntroduceYourself(sentToday) {
   const supabase = getServiceClient();
 
@@ -536,8 +520,6 @@ async function runIntroduceYourself(sentToday) {
     }
   }
 }
-
-// ── JOB 3: We miss you (10 day inactive) ───────────────────────────
 
 async function runWeMissYou(sentToday) {
   const supabase = getServiceClient();
@@ -602,8 +584,6 @@ async function runWeMissYou(sentToday) {
     }
   }
 }
-
-// ── JOB 4: Taper tracker reminder (4 day no check-in) ──────────────
 
 async function runTaperReminder(sentToday) {
   const supabase = getServiceClient();

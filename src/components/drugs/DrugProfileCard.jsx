@@ -52,7 +52,6 @@ function KeyFact({ label, value }) {
 export default function DrugProfileCard({ drug }) {
   return (
     <div className="space-y-6">
-      {/* ── Header ── */}
       <div className="glass-panel overflow-hidden">
         <div className="h-1.5 w-full" style={{ background: `linear-gradient(90deg, var(--purple), var(--purple-light))` }} />
 
@@ -99,7 +98,6 @@ export default function DrugProfileCard({ drug }) {
         </div>
       </div>
 
-      {/* ── Overview ── */}
       {drug.description && (
         <div className="glass-panel p-6 sm:p-8">
           <h2 className="section-eyebrow">Overview</h2>
@@ -107,7 +105,6 @@ export default function DrugProfileCard({ drug }) {
         </div>
       )}
 
-      {/* ── Key Facts Grid ── */}
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         <KeyFact label="Common Doses" value={drug.commonDoses} />
         <KeyFact
@@ -117,7 +114,6 @@ export default function DrugProfileCard({ drug }) {
         <KeyFact label="Pregnancy" value={drug.pregnancyCategory} />
       </div>
 
-      {/* ── Mechanism of Action ── */}
       {drug.mechanismOfAction && (
         <div className="glass-panel overflow-hidden">
           <div className="border-l-4 border-purple p-6 sm:p-8">
@@ -127,7 +123,6 @@ export default function DrugProfileCard({ drug }) {
         </div>
       )}
 
-      {/* ── Taper Notes + Maudsley ── */}
       <div className="grid gap-6 lg:grid-cols-2">
         <div className="glass-panel p-6">
           <h2 className="section-eyebrow">Taper Notes</h2>
@@ -142,7 +137,6 @@ export default function DrugProfileCard({ drug }) {
         </div>
       </div>
 
-      {/* ── Tapering Protocol ── */}
       {drug.taperProtocol && drug.taperProtocol.length > 0 && (
         <div className="glass-panel p-6 sm:p-8">
           <h2 className="section-eyebrow">Tapering Protocol</h2>
@@ -170,7 +164,6 @@ export default function DrugProfileCard({ drug }) {
         </div>
       )}
 
-      {/* ── Withdrawal Timeline ── */}
       {drug.withdrawalTimeline && (
         <div className="glass-panel p-6 sm:p-8">
           <h2 className="section-eyebrow">Withdrawal Timeline</h2>
@@ -193,7 +186,6 @@ export default function DrugProfileCard({ drug }) {
         </div>
       )}
 
-      {/* ── Community Tips ── */}
       {drug.communityTips && drug.communityTips.length > 0 && (
         <div className="glass-panel overflow-hidden">
           <div className="border-l-4 border-green-500 p-6 sm:p-8">
@@ -213,7 +205,6 @@ export default function DrugProfileCard({ drug }) {
         </div>
       )}
 
-      {/* ── Withdrawal Symptoms ── */}
       <div className="glass-panel p-6 sm:p-8">
         <h2 className="section-eyebrow">Common Withdrawal Symptoms</h2>
         <div className="mt-4 flex flex-wrap gap-2">
@@ -238,7 +229,6 @@ export default function DrugProfileCard({ drug }) {
         </div>
       </div>
 
-      {/* ── Interactions & Safety ── */}
       {(drug.drugInteractions || drug.foodInteractions || drug.contraindications) && (
         <div className="glass-panel p-6 sm:p-8">
           <h2 className="section-eyebrow">Interactions &amp; Safety</h2>
@@ -250,7 +240,6 @@ export default function DrugProfileCard({ drug }) {
         </div>
       )}
 
-      {/* ── Toxicity ── */}
       {drug.toxicity && (
         <div className="rounded-xl border border-accent-warn/30 bg-amber-50/50 p-5">
           <div className="flex items-start gap-3">
@@ -265,7 +254,6 @@ export default function DrugProfileCard({ drug }) {
         </div>
       )}
 
-      {/* ── External References ── */}
       {drug.fdaLabelUrl && (
         <div className="glass-panel p-6 sm:p-8">
           <h2 className="section-eyebrow">External References</h2>
@@ -294,9 +282,6 @@ export default function DrugProfileCard({ drug }) {
         </div>
       )}
 
-      {/* ── Guide Download CTA — temporarily removed ── */}
-
-      {/* ── Pharmacokinetics (ADME) — at bottom ── */}
       <PharmacokineticPanel drug={drug} />
     </div>
   );

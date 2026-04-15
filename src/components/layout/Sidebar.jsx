@@ -117,7 +117,6 @@ export default function Sidebar() {
 
   return (
     <>
-      {/* ── Mobile top bar ── */}
       <header
         className="sticky top-0 z-50 flex items-center justify-between border-b px-4 py-3 lg:hidden"
         style={{ borderColor: 'var(--border-subtle)', background: 'var(--surface-strong)' }}
@@ -145,7 +144,6 @@ export default function Sidebar() {
         </button>
       </header>
 
-      {/* ── Mobile dropdown menu ── */}
       {mobileOpen && (
         <div
           className="fixed inset-0 top-[57px] z-40 lg:hidden"
@@ -252,7 +250,6 @@ export default function Sidebar() {
         </div>
       )}
 
-      {/* ── Desktop sidebar ── */}
       <aside
         className="sticky top-0 hidden h-screen shrink-0 border-r transition-all duration-200 lg:block"
         style={{

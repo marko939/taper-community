@@ -25,9 +25,7 @@ const BORDER = '#E8E5F0';
 const TEXT = '#1E1B2E';
 const MUTED = '#7C7591';
 
-// ─── All curriculum content ───
 const MODULES = [
-  // ─── LAYER 1 ───
   {
     id: "intro",
     layer: 0,
@@ -192,7 +190,6 @@ const MODULES = [
       },
     ],
   },
-  // ─── LAYER 2 ───
   {
     id: "2-1",
     layer: 2,
@@ -373,7 +370,6 @@ const MODULES = [
       },
     ],
   },
-  // ─── LAYER 3 ───
   {
     id: "3-1",
     layer: 3,
@@ -508,7 +504,6 @@ const LAYERS = [
   { num: 3, title: "The Hard Stuff", color: AMBER },
 ];
 
-// ─── Quiz Component ───
 function Quiz({ questions }) {
   const [answers, setAnswers] = useState({});
   const [revealed, setRevealed] = useState({});
@@ -575,7 +570,6 @@ function Quiz({ questions }) {
   );
 }
 
-// ─── Content Renderer ───
 function ContentBlock({ block }) {
   if (block.type === "h3") return (
     <h3 style={{ fontSize: 18, fontWeight: 700, color: TEXT, margin: "32px 0 10px", fontFamily: "Georgia, 'Times New Roman', serif" }}>{block.text}</h3>
@@ -670,7 +664,6 @@ function ContentBlock({ block }) {
   return null;
 }
 
-// ─── Main App ───
 export default function TaperCommunityEducation() {
   const [activeId, setActiveId] = useState('intro');
   const [viewportWidth, setViewportWidth] = useState(1280);
@@ -720,7 +713,6 @@ export default function TaperCommunityEducation() {
           background: '#fff',
           boxShadow: isSmallScreen ? 'none' : '0 24px 72px rgba(91,46,145,0.10)',
         }}>
-        {/* ─── Sidebar ─── */}
         {!isSmallScreen && <aside style={{
           width: 290,
           minWidth: 290,
@@ -781,7 +773,6 @@ export default function TaperCommunityEducation() {
           </nav>
         </aside>}
 
-        {/* ─── Main Content ─── */}
         <main ref={contentRef} style={{ flex: 1, minHeight: 0, overflow: "auto", background: '#FEFCFF' }}>
           {/* Top bar */}
           <div style={{

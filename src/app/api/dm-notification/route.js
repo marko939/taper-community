@@ -20,7 +20,6 @@ export async function POST(request) {
 
     const supabase = getServiceClient();
 
-    // Fetch recipient + sender profiles in parallel
     const [recipientResult, senderResult] = await Promise.all([
       supabase.from('profiles').select('id, display_name, email_notifications').eq('id', recipientId).single(),
       supabase.from('profiles').select('id, display_name').eq('id', senderId).single(),
@@ -60,7 +59,6 @@ export async function POST(request) {
       return Response.json({ skipped: true, reason: 'throttled' });
     }
 
-    // Send email
     const preview = messageBody.length > 200 ? messageBody.substring(0, 200) + '...' : messageBody;
     const senderName = sender.display_name || 'Someone';
     const recipientName = recipient.display_name || 'there';

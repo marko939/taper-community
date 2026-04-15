@@ -207,8 +207,6 @@ export const useBlogStore = create((set, get) => ({
     }
   },
 
-  // ─── Blog Comments ───
-
   fetchComments: async (blogPostId) => {
     get().cancelPending('fetchComments');
     const controller = new AbortController();
