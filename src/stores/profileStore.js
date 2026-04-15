@@ -112,14 +112,20 @@ export const useProfileStore = create((set, get) => ({
         },
       }));
     } catch (err) {
-      if (err.name === 'AbortError') return;
-      console.error('[profileStore] fetchProfile error:', err);
+      // Clear loading on every exit (including abort) — otherwise any
+      // navigation that aborts fetchProfile leaves profiles[userId].loading
+      // stuck true and the profile page shows PageLoading forever when
+      // that userId is visited again.
       set((state) => ({
         profiles: {
           ...state.profiles,
-          [userId]: { data: null, threads: [], replies: [], journal: [], loading: false },
+          [userId]: state.profiles[userId]
+            ? { ...state.profiles[userId], loading: false }
+            : { data: null, threads: [], replies: [], journal: [], loading: false },
         },
       }));
+      if (err.name === 'AbortError') return;
+      console.error('[profileStore] fetchProfile error:', err);
     }
   },
 

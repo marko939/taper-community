@@ -151,10 +151,13 @@ export const useFollowStore = create((set, get) => ({
 
       set({ followedThreads: { items: threads, loading: false }, followedThreadsLoaded: true });
     } catch (err) {
+      // Clear loading on every exit (including abort) — otherwise the
+      // followed-threads feed card stays in loading state after any
+      // navigation that aborts this fetch.
+      set({ followedThreads: { items: get().followedThreads.items, loading: false } });
       if (err.name === 'AbortError') return;
       if (requestId !== _followedThreadsRequestId) return;
       console.error('[followStore] fetchFollowedThreads error:', err);
-      set({ followedThreads: { items: [], loading: false }, followedThreadsLoaded: true });
     }
   },
 

@@ -146,14 +146,17 @@ export const useForumStore = create((set, get) => ({
         },
       }));
     } catch (err) {
-      if (err.name === 'AbortError') return;
-      console.error('[forumStore] fetchThreads error:', err);
+      // Clear loading even on abort — otherwise a navigation that aborts
+      // this fetch leaves threadPages[forumId].loading stuck true, and any
+      // later render of this forum shows the spinner forever.
       set((state) => ({
         threadPages: {
           ...state.threadPages,
           [forumId]: { ...(state.threadPages[forumId] || {}), loading: false },
         },
       }));
+      if (err.name === 'AbortError') return;
+      console.error('[forumStore] fetchThreads error:', err);
     }
   },
 
@@ -204,14 +207,16 @@ export const useForumStore = create((set, get) => ({
         },
       }));
     } catch (err) {
-      if (err.name === 'AbortError') return;
-      console.error('[forumStore] loadMoreThreads error:', err);
+      // Clear loading on every exit (including abort) so a subsequent
+      // load-more click isn't blocked by stale loading state.
       set((state) => ({
         threadPages: {
           ...state.threadPages,
           [forumId]: { ...(state.threadPages[forumId] || {}), loading: false },
         },
       }));
+      if (err.name === 'AbortError') return;
+      console.error('[forumStore] loadMoreThreads error:', err);
     }
   },
 
@@ -412,11 +417,13 @@ export const useForumStore = create((set, get) => ({
         }));
       }
     } catch (err) {
-      if (err.name === 'AbortError') return;
-      console.error('[forumStore] search error:', err);
+      // Clear loading on every exit (including abort) so the search UI
+      // doesn't stay in "searching..." state after a navigation interrupt.
       set((state) => ({
         searchState: { ...state.searchState, [key]: { results: [], loading: false, query } },
       }));
+      if (err.name === 'AbortError') return;
+      console.error('[forumStore] search error:', err);
     }
   },
 }));

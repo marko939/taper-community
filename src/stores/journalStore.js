@@ -65,9 +65,12 @@ export const useJournalStore = create((set, get) => ({
 
       set({ entries: data || [], entriesLoaded: true, loading: false });
     } catch (err) {
+      // Clear loading on every exit (including abort) — invalidate() sets
+      // loading: true on tab return and we must not leave it stuck if the
+      // refetch is then aborted by a navigation.
+      set({ loading: false });
       if (err.name === 'AbortError') return;
       console.error('[journalStore] fetchEntries error:', err);
-      set({ loading: false });
     }
   },
 
@@ -236,11 +239,19 @@ export const useJournalStore = create((set, get) => ({
         sharedEntries: { ...state.sharedEntries, [shareToken]: { entries: data || [], loading: false } },
       }));
     } catch (err) {
+      // Clear loading on every exit (including abort) so the shared-journey
+      // page doesn't spin forever after a navigation interrupt.
+      set((state) => ({
+        sharedEntries: {
+          ...state.sharedEntries,
+          [shareToken]: {
+            entries: state.sharedEntries[shareToken]?.entries || [],
+            loading: false,
+          },
+        },
+      }));
       if (err.name === 'AbortError') return;
       console.error('[journalStore] fetchSharedEntries error:', err);
-      set((state) => ({
-        sharedEntries: { ...state.sharedEntries, [shareToken]: { entries: [], loading: false } },
-      }));
     }
   },
 
@@ -351,11 +362,19 @@ export const useJournalStore = create((set, get) => ({
         publicEntries: { ...state.publicEntries, [userId]: { entries: data || [], loading: false } },
       }));
     } catch (err) {
+      // Clear loading on every exit (including abort) so the public journal
+      // tab on a profile page doesn't spin forever after a nav interrupt.
+      set((state) => ({
+        publicEntries: {
+          ...state.publicEntries,
+          [userId]: {
+            entries: state.publicEntries[userId]?.entries || [],
+            loading: false,
+          },
+        },
+      }));
       if (err.name === 'AbortError') return;
       console.error('[journalStore] fetchPublicEntries error:', err);
-      set((state) => ({
-        publicEntries: { ...state.publicEntries, [userId]: { entries: [], loading: false } },
-      }));
     }
   },
 }));

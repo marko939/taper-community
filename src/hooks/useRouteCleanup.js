@@ -10,7 +10,6 @@ import { useNotificationStore } from '@/stores/notificationStore';
 import { useMessageStore } from '@/stores/messageStore';
 import { useProfileStore } from '@/stores/profileStore';
 import { useBlogStore } from '@/stores/blogStore';
-import { cancelVisibilityDebounce } from '@/lib/visibilityManager';
 
 /**
  * Cancels all pending store fetches on unmount and on route change.
@@ -24,9 +23,6 @@ export function useRouteCleanup(extraCleanup) {
   useEffect(() => {
     // On route change (soft navigation), cancel pending fetches and invalidate feeds
     if (prevPathname.current !== pathname) {
-      // Kill any pending visibility debounce so it doesn't fire invalidate()
-      // AFTER the new page's mount effects already started fetching.
-      cancelVisibilityDebounce();
       cancelAllStores();
       useForumStore.getState().invalidate();
       useJournalStore.getState().invalidate();

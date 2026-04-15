@@ -61,9 +61,12 @@ export const useNotificationStore = create((set, get) => ({
       if (error) throw error;
       set({ notifications: data || [], loading: false, fetchError: false });
     } catch (err) {
+      // Clear loading on every exit (including abort) so the notifications
+      // panel doesn't stay in loading state after a navigation interrupt.
+      set({ loading: false });
       if (err.name === 'AbortError') return;
       console.error('[notificationStore] fetchNotifications error:', err);
-      set({ loading: false, fetchError: true });
+      set({ fetchError: true });
     }
   },
 

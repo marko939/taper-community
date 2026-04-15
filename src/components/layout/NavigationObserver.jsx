@@ -2,8 +2,6 @@
 
 import { useEffect, useRef } from 'react';
 import { usePathname } from 'next/navigation';
-import { releaseNavigationLock } from '@/lib/navigationLock';
-import { cancelVisibilityDebounce } from '@/lib/visibilityManager';
 import { useProfileStore } from '@/stores/profileStore';
 import { useThreadStore } from '@/stores/threadStore';
 import { useBlogStore } from '@/stores/blogStore';
@@ -14,8 +12,8 @@ import { createClient } from '@/lib/supabase/client';
 
 /**
  * Mounted once in layout.js. On every route change:
- * - Releases navigation lock (Fix 7)
- * - Prunes accumulated store state (Fix 4)
+ * - Cancels in-flight fetches from the previous route
+ * - Prunes accumulated store state
  * - Logs diagnostics (Phase 1B)
  */
 export default function NavigationObserver() {
@@ -25,13 +23,6 @@ export default function NavigationObserver() {
 
   useEffect(() => {
     if (prevPathname.current === pathname) return;
-
-    // Release navigation lock on successful route change
-    releaseNavigationLock();
-
-    // Cancel any pending visibility debounce to prevent it from wiping
-    // data that the new page just fetched
-    cancelVisibilityDebounce();
 
     // Cancel in-flight fetches from the previous route
     useForumStore.getState().cancelAll?.();

@@ -102,9 +102,12 @@ export const useBlogStore = create((set, get) => ({
       set({ posts, postsLoaded: !includeUnpublished, postsLoading: false });
       return posts;
     } catch (err) {
+      // Clear loading on every exit (including abort) — otherwise the
+      // blog card / learn feed stays in loading state after any navigation
+      // that aborts this fetch.
+      set({ postsLoading: false });
       if (err.name === 'AbortError') return [];
       console.error('[blogStore] fetchPosts error:', err);
-      set({ postsLoading: false });
       return [];
     }
   },
@@ -130,9 +133,12 @@ export const useBlogStore = create((set, get) => ({
       set({ currentPost: data, currentPostLoading: false });
       return data;
     } catch (err) {
+      // Clear loading on every exit (including abort) so the blog post
+      // page doesn't spin forever after a navigation interrupt.
+      set({ currentPostLoading: false });
       if (err.name === 'AbortError') return null;
       console.error('[blogStore] fetchPost error:', err);
-      set({ currentPost: null, currentPostLoading: false });
+      set({ currentPost: null });
       return null;
     }
   },
@@ -230,11 +236,13 @@ export const useBlogStore = create((set, get) => ({
         commentsLoading: false,
       }));
     } catch (err) {
+      // Clear loading on every exit (including abort) so the comments
+      // section doesn't stay in loading state after a navigation interrupt.
+      set({ commentsLoading: false });
       if (err.name === 'AbortError') return;
       console.error('[blogStore] fetchComments error:', err);
       set((state) => ({
         comments: { ...state.comments, [blogPostId]: { items: [], totalCount: 0 } },
-        commentsLoading: false,
       }));
     }
   },

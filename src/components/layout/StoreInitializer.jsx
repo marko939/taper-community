@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useAuthStore } from '@/stores/authStore';
 import { useForumStore } from '@/stores/forumStore';
-import { initVisibilityManager, destroyVisibilityManager } from '@/lib/visibilityManager';
+import { initVisibilityManager } from '@/lib/visibilityManager';
 import { startHeartbeat, stopHeartbeat } from '@/lib/realtimeGuard';
 
 export default function StoreInitializer() {
@@ -31,7 +31,6 @@ export default function StoreInitializer() {
     }
 
     return () => {
-      destroyVisibilityManager();
       stopHeartbeat();
     };
   }, []);

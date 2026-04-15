@@ -179,8 +179,8 @@ export default function FeedTabs({ activeTab: controlledTab, onTabChange, useUrl
     useBlogStore.getState().fetchPosts();
   }, []);
 
-  // Visibility-based refetch is handled centrally by visibilityManager.js
-  // (lines 98-106). No duplicate listener needed here.
+  // Tab return now triggers a full page reload (see visibilityManager.js),
+  // so no duplicate refetch listener is needed here.
 
   // Safety net: if still loading after 6 seconds on mount, force re-fetch.
   useEffect(() => {

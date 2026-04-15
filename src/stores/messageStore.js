@@ -147,9 +147,11 @@ export const useMessageStore = create((set, get) => ({
 
       set({ conversations, loading: false, conversationsLoaded: true });
     } catch (err) {
+      // Clear loading on every exit (including abort) so a navigation
+      // interrupt doesn't leave the conversation list spinning forever.
+      set({ loading: false });
       if (err.name === 'AbortError') return;
       console.error('[messageStore] fetchConversations error:', err);
-      set({ loading: false });
     }
   },
 
@@ -178,9 +180,11 @@ export const useMessageStore = create((set, get) => ({
 
       set({ messages: data || [], messagesLoading: false });
     } catch (err) {
+      // Clear loading on every exit (including abort) so switching
+      // conversations mid-load doesn't leave the message pane spinning.
+      set({ messagesLoading: false });
       if (err.name === 'AbortError') return;
       console.error('[messageStore] fetchMessages error:', err);
-      set({ messagesLoading: false });
     }
   },
 
