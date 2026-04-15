@@ -954,8 +954,6 @@ export default function TaperCommunityEducation() {
                 </button>
               ) : <div />}
             </div>
-
-            {/* Guide Download CTA — temporarily removed */}
           </div>
         </main>
       </div>

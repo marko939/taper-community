@@ -260,8 +260,6 @@ export default function ResourcesPage() {
 
       {activeTab === 'resources' && (
         <div className="space-y-4">
-          {/* Taper Preparation Guide — temporarily removed */}
-
           <div className="grid gap-4 sm:grid-cols-2">
           {/* Ashton Manual */}
           <a
