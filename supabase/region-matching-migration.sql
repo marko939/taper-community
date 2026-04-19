@@ -52,6 +52,49 @@ BEGIN
 
   -- US states
   IF is_us THEN
+    -- First, try direct token extraction. Vercel sends ip_location as
+    -- "City, ST, US" — so the second-to-last comma-separated part IS the
+    -- state code. This is the strongest signal and avoids false positives
+    -- from free-text pattern matching.
+    DECLARE
+      us_parts text[] := string_to_array(t, ',');
+      us_last text := upper(trim(us_parts[array_length(us_parts, 1)]));
+      us_state text;
+      us_label text;
+    BEGIN
+      IF (us_last = 'US' OR us_last = 'USA') AND array_length(us_parts, 1) >= 2 THEN
+        us_state := upper(trim(us_parts[array_length(us_parts, 1) - 1]));
+        IF us_state ~ '^[A-Z]{2}$' THEN
+          us_label := CASE us_state
+            WHEN 'AL' THEN 'Alabama' WHEN 'AK' THEN 'Alaska' WHEN 'AZ' THEN 'Arizona'
+            WHEN 'AR' THEN 'Arkansas' WHEN 'CA' THEN 'California' WHEN 'CO' THEN 'Colorado'
+            WHEN 'CT' THEN 'Connecticut' WHEN 'DE' THEN 'Delaware' WHEN 'DC' THEN 'District of Columbia'
+            WHEN 'FL' THEN 'Florida' WHEN 'GA' THEN 'Georgia' WHEN 'HI' THEN 'Hawaii'
+            WHEN 'ID' THEN 'Idaho' WHEN 'IL' THEN 'Illinois' WHEN 'IN' THEN 'Indiana'
+            WHEN 'IA' THEN 'Iowa' WHEN 'KS' THEN 'Kansas' WHEN 'KY' THEN 'Kentucky'
+            WHEN 'LA' THEN 'Louisiana' WHEN 'ME' THEN 'Maine' WHEN 'MD' THEN 'Maryland'
+            WHEN 'MA' THEN 'Massachusetts' WHEN 'MI' THEN 'Michigan' WHEN 'MN' THEN 'Minnesota'
+            WHEN 'MS' THEN 'Mississippi' WHEN 'MO' THEN 'Missouri' WHEN 'MT' THEN 'Montana'
+            WHEN 'NE' THEN 'Nebraska' WHEN 'NV' THEN 'Nevada' WHEN 'NH' THEN 'New Hampshire'
+            WHEN 'NJ' THEN 'New Jersey' WHEN 'NM' THEN 'New Mexico' WHEN 'NY' THEN 'New York'
+            WHEN 'NC' THEN 'North Carolina' WHEN 'ND' THEN 'North Dakota' WHEN 'OH' THEN 'Ohio'
+            WHEN 'OK' THEN 'Oklahoma' WHEN 'OR' THEN 'Oregon' WHEN 'PA' THEN 'Pennsylvania'
+            WHEN 'RI' THEN 'Rhode Island' WHEN 'SC' THEN 'South Carolina' WHEN 'SD' THEN 'South Dakota'
+            WHEN 'TN' THEN 'Tennessee' WHEN 'TX' THEN 'Texas' WHEN 'UT' THEN 'Utah'
+            WHEN 'VT' THEN 'Vermont' WHEN 'VA' THEN 'Virginia' WHEN 'WA' THEN 'Washington'
+            WHEN 'WV' THEN 'West Virginia' WHEN 'WI' THEN 'Wisconsin' WHEN 'WY' THEN 'Wyoming'
+            ELSE NULL
+          END;
+          IF us_label IS NOT NULL THEN
+            RETURN QUERY SELECT 'US-' || us_state, us_label;
+            RETURN;
+          END IF;
+        END IF;
+      END IF;
+    END;
+
+    -- Fall back to free-text pattern matching (covers users with only a
+    -- manual `location` field like "Austin, Texas" and no ip_location).
     RETURN QUERY SELECT c, l FROM (VALUES
       ('US-AL','Alabama','alabama|\malabama\M|\mal\M'),
       ('US-AK','Alaska','alaska|\mak\M'),
@@ -116,6 +159,32 @@ BEGIN
 
   -- Canadian provinces
   IF is_ca THEN
+    -- Direct token extraction first, same idea as the US branch.
+    DECLARE
+      ca_parts text[] := string_to_array(t, ',');
+      ca_last text := upper(trim(ca_parts[array_length(ca_parts, 1)]));
+      ca_prov text;
+      ca_label text;
+    BEGIN
+      IF ca_last = 'CA' AND array_length(ca_parts, 1) >= 2 THEN
+        ca_prov := upper(trim(ca_parts[array_length(ca_parts, 1) - 1]));
+        IF ca_prov ~ '^[A-Z]{2}$' THEN
+          ca_label := CASE ca_prov
+            WHEN 'AB' THEN 'Alberta' WHEN 'BC' THEN 'British Columbia' WHEN 'MB' THEN 'Manitoba'
+            WHEN 'NB' THEN 'New Brunswick' WHEN 'NL' THEN 'Newfoundland and Labrador'
+            WHEN 'NS' THEN 'Nova Scotia' WHEN 'ON' THEN 'Ontario' WHEN 'PE' THEN 'Prince Edward Island'
+            WHEN 'QC' THEN 'Quebec' WHEN 'SK' THEN 'Saskatchewan'
+            WHEN 'NT' THEN 'Northwest Territories' WHEN 'NU' THEN 'Nunavut' WHEN 'YT' THEN 'Yukon'
+            ELSE NULL
+          END;
+          IF ca_label IS NOT NULL THEN
+            RETURN QUERY SELECT 'CA-' || ca_prov, ca_label;
+            RETURN;
+          END IF;
+        END IF;
+      END IF;
+    END;
+
     RETURN QUERY SELECT c, l FROM (VALUES
       ('CA-AB','Alberta','alberta|\mab\M'),
       ('CA-BC','British Columbia','british columbia|\mbc\M'),
