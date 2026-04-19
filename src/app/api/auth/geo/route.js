@@ -20,9 +20,18 @@ export async function POST(request) {
     const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
       || request.headers.get('x-real-ip')
       || null;
+    // Vercel's canonical state/region header is `x-vercel-ip-country-region`;
+    // the older `x-vercel-ip-region` is deprecated and not always populated.
+    // Try both for robustness.
     let city = request.headers.get('x-vercel-ip-city') || '';
-    let region = request.headers.get('x-vercel-ip-region') || '';
+    let region = request.headers.get('x-vercel-ip-country-region')
+      || request.headers.get('x-vercel-ip-region')
+      || '';
     let country = request.headers.get('x-vercel-ip-country') || '';
+    // URL-decode city — Vercel sends e.g. "Los%20Angeles".
+    if (city) {
+      try { city = decodeURIComponent(city); } catch { /* keep raw */ }
+    }
 
     if (!country && process.env.NODE_ENV !== 'production' && process.env.DEV_GEO) {
       const devParts = process.env.DEV_GEO.split(',').map((s) => s.trim());

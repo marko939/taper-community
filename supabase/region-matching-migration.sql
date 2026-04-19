@@ -93,6 +93,123 @@ BEGIN
       END IF;
     END;
 
+    -- City → state recovery: when Vercel only sends "City, US" (no region
+    -- token), look up the city. Handles URL-encoded spaces (%20).
+    DECLARE
+      city_parts text[] := string_to_array(t, ',');
+      city_key text;
+      city_state text;
+    BEGIN
+      IF array_length(city_parts, 1) >= 2 THEN
+        city_key := lower(trim(replace(city_parts[1], '%20', ' ')));
+        city_state := CASE city_key
+          -- Currently unmapped users
+          WHEN 'coatesville' THEN 'PA' WHEN 'murfreesboro' THEN 'TN'
+          WHEN 'los angeles' THEN 'CA' WHEN 'tiverton' THEN 'RI'
+          WHEN 'durham' THEN 'NC' WHEN 'brooklyn' THEN 'NY'
+          WHEN 'west orange' THEN 'NJ' WHEN 'san jose' THEN 'CA'
+          WHEN 'athens' THEN 'GA' WHEN 'bernardsville' THEN 'NJ'
+          WHEN 'saint paul' THEN 'MN' WHEN 'st paul' THEN 'MN' WHEN 'st. paul' THEN 'MN'
+          WHEN 'irvine' THEN 'CA' WHEN 'ballwin' THEN 'MO'
+          WHEN 'olympia' THEN 'WA' WHEN 'chicago' THEN 'IL'
+          WHEN 'storrs' THEN 'CT' WHEN 'port orange' THEN 'FL'
+          -- Top US cities (covers most future signups)
+          WHEN 'new york' THEN 'NY' WHEN 'manhattan' THEN 'NY' WHEN 'queens' THEN 'NY'
+          WHEN 'bronx' THEN 'NY' WHEN 'staten island' THEN 'NY'
+          WHEN 'houston' THEN 'TX' WHEN 'phoenix' THEN 'AZ' WHEN 'philadelphia' THEN 'PA'
+          WHEN 'san antonio' THEN 'TX' WHEN 'san diego' THEN 'CA' WHEN 'dallas' THEN 'TX'
+          WHEN 'austin' THEN 'TX' WHEN 'jacksonville' THEN 'FL' WHEN 'fort worth' THEN 'TX'
+          WHEN 'columbus' THEN 'OH' WHEN 'charlotte' THEN 'NC' WHEN 'indianapolis' THEN 'IN'
+          WHEN 'san francisco' THEN 'CA' WHEN 'seattle' THEN 'WA' WHEN 'denver' THEN 'CO'
+          WHEN 'washington' THEN 'DC' WHEN 'boston' THEN 'MA' WHEN 'el paso' THEN 'TX'
+          WHEN 'nashville' THEN 'TN' WHEN 'detroit' THEN 'MI' WHEN 'oklahoma city' THEN 'OK'
+          WHEN 'portland' THEN 'OR' WHEN 'las vegas' THEN 'NV' WHEN 'memphis' THEN 'TN'
+          WHEN 'louisville' THEN 'KY' WHEN 'baltimore' THEN 'MD' WHEN 'milwaukee' THEN 'WI'
+          WHEN 'albuquerque' THEN 'NM' WHEN 'tucson' THEN 'AZ' WHEN 'fresno' THEN 'CA'
+          WHEN 'sacramento' THEN 'CA' WHEN 'mesa' THEN 'AZ' WHEN 'kansas city' THEN 'MO'
+          WHEN 'atlanta' THEN 'GA' WHEN 'miami' THEN 'FL' WHEN 'raleigh' THEN 'NC'
+          WHEN 'omaha' THEN 'NE' WHEN 'long beach' THEN 'CA' WHEN 'virginia beach' THEN 'VA'
+          WHEN 'oakland' THEN 'CA' WHEN 'minneapolis' THEN 'MN' WHEN 'tulsa' THEN 'OK'
+          WHEN 'arlington' THEN 'TX' WHEN 'tampa' THEN 'FL' WHEN 'new orleans' THEN 'LA'
+          WHEN 'wichita' THEN 'KS' WHEN 'cleveland' THEN 'OH' WHEN 'bakersfield' THEN 'CA'
+          WHEN 'aurora' THEN 'CO' WHEN 'anaheim' THEN 'CA' WHEN 'honolulu' THEN 'HI'
+          WHEN 'santa ana' THEN 'CA' WHEN 'riverside' THEN 'CA' WHEN 'corpus christi' THEN 'TX'
+          WHEN 'lexington' THEN 'KY' WHEN 'stockton' THEN 'CA' WHEN 'henderson' THEN 'NV'
+          WHEN 'st louis' THEN 'MO' WHEN 'st. louis' THEN 'MO' WHEN 'saint louis' THEN 'MO'
+          WHEN 'pittsburgh' THEN 'PA' WHEN 'cincinnati' THEN 'OH' WHEN 'anchorage' THEN 'AK'
+          WHEN 'greensboro' THEN 'NC' WHEN 'plano' THEN 'TX' WHEN 'newark' THEN 'NJ'
+          WHEN 'lincoln' THEN 'NE' WHEN 'toledo' THEN 'OH' WHEN 'orlando' THEN 'FL'
+          WHEN 'chula vista' THEN 'CA' WHEN 'jersey city' THEN 'NJ' WHEN 'chandler' THEN 'AZ'
+          WHEN 'fort wayne' THEN 'IN' WHEN 'buffalo' THEN 'NY' WHEN 'st petersburg' THEN 'FL'
+          WHEN 'st. petersburg' THEN 'FL' WHEN 'saint petersburg' THEN 'FL' WHEN 'laredo' THEN 'TX'
+          WHEN 'lubbock' THEN 'TX' WHEN 'madison' THEN 'WI' WHEN 'norfolk' THEN 'VA'
+          WHEN 'reno' THEN 'NV' WHEN 'winston-salem' THEN 'NC' WHEN 'glendale' THEN 'AZ'
+          WHEN 'hialeah' THEN 'FL' WHEN 'garland' THEN 'TX' WHEN 'scottsdale' THEN 'AZ'
+          WHEN 'irving' THEN 'TX' WHEN 'chesapeake' THEN 'VA' WHEN 'north las vegas' THEN 'NV'
+          WHEN 'fremont' THEN 'CA' WHEN 'boise' THEN 'ID' WHEN 'richmond' THEN 'VA'
+          WHEN 'baton rouge' THEN 'LA' WHEN 'spokane' THEN 'WA' WHEN 'des moines' THEN 'IA'
+          WHEN 'tacoma' THEN 'WA' WHEN 'san bernardino' THEN 'CA' WHEN 'modesto' THEN 'CA'
+          WHEN 'fontana' THEN 'CA' WHEN 'santa clarita' THEN 'CA' WHEN 'birmingham' THEN 'AL'
+          WHEN 'rochester' THEN 'NY' WHEN 'grand rapids' THEN 'MI' WHEN 'salt lake city' THEN 'UT'
+          WHEN 'huntsville' THEN 'AL' WHEN 'frisco' THEN 'TX' WHEN 'yonkers' THEN 'NY'
+          WHEN 'amarillo' THEN 'TX' WHEN 'huntington beach' THEN 'CA' WHEN 'mckinney' THEN 'TX'
+          WHEN 'montgomery' THEN 'AL'
+          -- State capitals not yet covered
+          WHEN 'juneau' THEN 'AK' WHEN 'little rock' THEN 'AR' WHEN 'hartford' THEN 'CT'
+          WHEN 'dover' THEN 'DE' WHEN 'tallahassee' THEN 'FL' WHEN 'frankfort' THEN 'KY'
+          WHEN 'augusta' THEN 'ME' WHEN 'annapolis' THEN 'MD' WHEN 'lansing' THEN 'MI'
+          WHEN 'jackson' THEN 'MS' WHEN 'jefferson city' THEN 'MO' WHEN 'helena' THEN 'MT'
+          WHEN 'carson city' THEN 'NV' WHEN 'concord' THEN 'NH' WHEN 'trenton' THEN 'NJ'
+          WHEN 'santa fe' THEN 'NM' WHEN 'albany' THEN 'NY' WHEN 'bismarck' THEN 'ND'
+          WHEN 'salem' THEN 'OR' WHEN 'columbia' THEN 'SC' WHEN 'pierre' THEN 'SD'
+          WHEN 'montpelier' THEN 'VT' WHEN 'charleston' THEN 'WV' WHEN 'cheyenne' THEN 'WY'
+          WHEN 'topeka' THEN 'KS' WHEN 'providence' THEN 'RI' WHEN 'harrisburg' THEN 'PA'
+          -- University towns and other notable smaller cities
+          WHEN 'cambridge' THEN 'MA' WHEN 'berkeley' THEN 'CA' WHEN 'gainesville' THEN 'FL'
+          WHEN 'ann arbor' THEN 'MI' WHEN 'tuscaloosa' THEN 'AL' WHEN 'boulder' THEN 'CO'
+          WHEN 'princeton' THEN 'NJ' WHEN 'new haven' THEN 'CT' WHEN 'iowa city' THEN 'IA'
+          WHEN 'lawrence' THEN 'KS' WHEN 'college station' THEN 'TX' WHEN 'auburn' THEN 'AL'
+          WHEN 'norman' THEN 'OK' WHEN 'fayetteville' THEN 'AR' WHEN 'state college' THEN 'PA'
+          WHEN 'tempe' THEN 'AZ' WHEN 'ithaca' THEN 'NY' WHEN 'east lansing' THEN 'MI'
+          WHEN 'provo' THEN 'UT'
+          WHEN 'palo alto' THEN 'CA' WHEN 'mountain view' THEN 'CA' WHEN 'sunnyvale' THEN 'CA'
+          WHEN 'santa monica' THEN 'CA' WHEN 'pasadena' THEN 'CA' WHEN 'beverly hills' THEN 'CA'
+          WHEN 'santa barbara' THEN 'CA' WHEN 'santa cruz' THEN 'CA' WHEN 'santa rosa' THEN 'CA'
+          WHEN 'boca raton' THEN 'FL' WHEN 'fort lauderdale' THEN 'FL' WHEN 'west palm beach' THEN 'FL'
+          WHEN 'sarasota' THEN 'FL' WHEN 'naples' THEN 'FL' WHEN 'clearwater' THEN 'FL'
+          WHEN 'pensacola' THEN 'FL' WHEN 'daytona beach' THEN 'FL'
+          WHEN 'asheville' THEN 'NC' WHEN 'wilmington' THEN 'NC' WHEN 'greenville' THEN 'SC'
+          WHEN 'cary' THEN 'NC' WHEN 'chapel hill' THEN 'NC' WHEN 'high point' THEN 'NC'
+          WHEN 'savannah' THEN 'GA' WHEN 'macon' THEN 'GA' WHEN 'mobile' THEN 'AL'
+          ELSE NULL
+        END;
+        IF city_state IS NOT NULL THEN
+          RETURN QUERY SELECT 'US-' || city_state,
+            CASE city_state
+              WHEN 'AL' THEN 'Alabama' WHEN 'AK' THEN 'Alaska' WHEN 'AZ' THEN 'Arizona'
+              WHEN 'AR' THEN 'Arkansas' WHEN 'CA' THEN 'California' WHEN 'CO' THEN 'Colorado'
+              WHEN 'CT' THEN 'Connecticut' WHEN 'DE' THEN 'Delaware' WHEN 'DC' THEN 'District of Columbia'
+              WHEN 'FL' THEN 'Florida' WHEN 'GA' THEN 'Georgia' WHEN 'HI' THEN 'Hawaii'
+              WHEN 'ID' THEN 'Idaho' WHEN 'IL' THEN 'Illinois' WHEN 'IN' THEN 'Indiana'
+              WHEN 'IA' THEN 'Iowa' WHEN 'KS' THEN 'Kansas' WHEN 'KY' THEN 'Kentucky'
+              WHEN 'LA' THEN 'Louisiana' WHEN 'ME' THEN 'Maine' WHEN 'MD' THEN 'Maryland'
+              WHEN 'MA' THEN 'Massachusetts' WHEN 'MI' THEN 'Michigan' WHEN 'MN' THEN 'Minnesota'
+              WHEN 'MS' THEN 'Mississippi' WHEN 'MO' THEN 'Missouri' WHEN 'MT' THEN 'Montana'
+              WHEN 'NE' THEN 'Nebraska' WHEN 'NV' THEN 'Nevada' WHEN 'NH' THEN 'New Hampshire'
+              WHEN 'NJ' THEN 'New Jersey' WHEN 'NM' THEN 'New Mexico' WHEN 'NY' THEN 'New York'
+              WHEN 'NC' THEN 'North Carolina' WHEN 'ND' THEN 'North Dakota' WHEN 'OH' THEN 'Ohio'
+              WHEN 'OK' THEN 'Oklahoma' WHEN 'OR' THEN 'Oregon' WHEN 'PA' THEN 'Pennsylvania'
+              WHEN 'RI' THEN 'Rhode Island' WHEN 'SC' THEN 'South Carolina' WHEN 'SD' THEN 'South Dakota'
+              WHEN 'TN' THEN 'Tennessee' WHEN 'TX' THEN 'Texas' WHEN 'UT' THEN 'Utah'
+              WHEN 'VT' THEN 'Vermont' WHEN 'VA' THEN 'Virginia' WHEN 'WA' THEN 'Washington'
+              WHEN 'WV' THEN 'West Virginia' WHEN 'WI' THEN 'Wisconsin' WHEN 'WY' THEN 'Wyoming'
+              ELSE city_state
+            END;
+          RETURN;
+        END IF;
+      END IF;
+    END;
+
     -- Fall back to free-text pattern matching (covers users with only a
     -- manual `location` field like "Austin, Texas" and no ip_location).
     RETURN QUERY SELECT c, l FROM (VALUES

@@ -55,6 +55,81 @@ const CA_PROVINCE_TO_ABBR = Object.fromEntries(
   Object.entries(CA_ABBR).map(([abbr, name]) => [name.toLowerCase(), abbr.toUpperCase()])
 );
 
+// City → state for US cities. Used when Vercel sends `City, US` with no
+// region token (smaller cities, certain ISPs). Disambiguates by largest
+// population for cases like "Athens" (GA) or "Springfield" (MO).
+// Keys lower-cased and URL-decoded for direct lookup.
+export const US_CITY_TO_STATE = {
+  // Cities seen in production that hit "USA (unspecified)"
+  'coatesville':'PA','murfreesboro':'TN','los angeles':'CA','tiverton':'RI',
+  'durham':'NC','brooklyn':'NY','west orange':'NJ','san jose':'CA','athens':'GA',
+  'bernardsville':'NJ','saint paul':'MN','st paul':'MN','st. paul':'MN','irvine':'CA',
+  'ballwin':'MO','olympia':'WA','chicago':'IL','storrs':'CT','port orange':'FL',
+  // Top 100 US cities by population (covers most future signups)
+  'new york':'NY','manhattan':'NY','queens':'NY','bronx':'NY','staten island':'NY',
+  'houston':'TX','phoenix':'AZ','philadelphia':'PA','san antonio':'TX','san diego':'CA',
+  'dallas':'TX','austin':'TX','jacksonville':'FL','fort worth':'TX','columbus':'OH',
+  'charlotte':'NC','indianapolis':'IN','san francisco':'CA','seattle':'WA','denver':'CO',
+  'washington':'DC','boston':'MA','el paso':'TX','nashville':'TN','detroit':'MI',
+  'oklahoma city':'OK','portland':'OR','las vegas':'NV','memphis':'TN','louisville':'KY',
+  'baltimore':'MD','milwaukee':'WI','albuquerque':'NM','tucson':'AZ','fresno':'CA',
+  'sacramento':'CA','mesa':'AZ','kansas city':'MO','atlanta':'GA','miami':'FL',
+  'raleigh':'NC','omaha':'NE','long beach':'CA','virginia beach':'VA','oakland':'CA',
+  'minneapolis':'MN','tulsa':'OK','arlington':'TX','tampa':'FL','new orleans':'LA',
+  'wichita':'KS','cleveland':'OH','bakersfield':'CA','aurora':'CO','anaheim':'CA',
+  'honolulu':'HI','santa ana':'CA','riverside':'CA','corpus christi':'TX','lexington':'KY',
+  'stockton':'CA','henderson':'NV','st louis':'MO','st. louis':'MO','saint louis':'MO',
+  'pittsburgh':'PA','cincinnati':'OH','anchorage':'AK','greensboro':'NC','plano':'TX',
+  'newark':'NJ','lincoln':'NE','toledo':'OH','orlando':'FL','chula vista':'CA',
+  'jersey city':'NJ','chandler':'AZ','fort wayne':'IN','buffalo':'NY','st petersburg':'FL',
+  'st. petersburg':'FL','saint petersburg':'FL','laredo':'TX','lubbock':'TX','madison':'WI',
+  'norfolk':'VA','reno':'NV','winston-salem':'NC','glendale':'AZ','hialeah':'FL',
+  'garland':'TX','scottsdale':'AZ','irving':'TX','chesapeake':'VA','north las vegas':'NV',
+  'fremont':'CA','boise':'ID','richmond':'VA','baton rouge':'LA','spokane':'WA',
+  'des moines':'IA','tacoma':'WA','san bernardino':'CA','modesto':'CA','fontana':'CA',
+  'santa clarita':'CA','birmingham':'AL','rochester':'NY','grand rapids':'MI',
+  'salt lake city':'UT','huntsville':'AL','frisco':'TX','yonkers':'NY',
+  'amarillo':'TX','glendale':'AZ','huntington beach':'CA','mckinney':'TX','montgomery':'AL',
+  // State capitals not yet covered
+  'juneau':'AK','little rock':'AR','hartford':'CT','dover':'DE','tallahassee':'FL',
+  'frankfort':'KY','augusta':'ME','annapolis':'MD','lansing':'MI','jackson':'MS',
+  'jefferson city':'MO','helena':'MT','carson city':'NV','concord':'NH','trenton':'NJ',
+  'santa fe':'NM','albany':'NY','bismarck':'ND','salem':'OR','columbia':'SC',
+  'pierre':'SD','montpelier':'VT','charleston':'WV','cheyenne':'WY','topeka':'KS',
+  'olympia':'WA','providence':'RI','harrisburg':'PA',
+  // Notable university towns and other small cities
+  'cambridge':'MA','berkeley':'CA','gainesville':'FL','ann arbor':'MI','tuscaloosa':'AL',
+  'boulder':'CO','princeton':'NJ','new haven':'CT','iowa city':'IA','lawrence':'KS',
+  'college station':'TX','auburn':'AL','norman':'OK','fayetteville':'AR','state college':'PA',
+  'tempe':'AZ','ithaca':'NY','east lansing':'MI','provo':'UT','manhattan ks':'KS',
+  'palo alto':'CA','mountain view':'CA','sunnyvale':'CA','santa monica':'CA','pasadena':'CA',
+  'beverly hills':'CA','santa barbara':'CA','santa cruz':'CA','santa rosa':'CA',
+  'boca raton':'FL','fort lauderdale':'FL','west palm beach':'FL','sarasota':'FL',
+  'naples':'FL','tampa bay':'FL','clearwater':'FL','pensacola':'FL','daytona beach':'FL',
+  'asheville':'NC','wilmington':'NC','greenville':'SC',
+  'cary':'NC','chapel hill':'NC','high point':'NC',
+  'savannah':'GA','macon':'GA','augusta ga':'GA',
+  'mobile':'AL',
+};
+
+// CA province → city (similar idea, used when only "City, CA" is reported)
+export const CA_CITY_TO_PROVINCE = {
+  'toronto':'ON','ottawa':'ON','mississauga':'ON','brampton':'ON','hamilton':'ON',
+  'london':'ON','markham':'ON','vaughan':'ON','kitchener':'ON','windsor':'ON',
+  'montreal':'QC','quebec city':'QC','quebec':'QC','laval':'QC','gatineau':'QC',
+  'longueuil':'QC','sherbrooke':'QC','saguenay':'QC','levis':'QC','trois-rivieres':'QC',
+  'vancouver':'BC','surrey':'BC','burnaby':'BC','richmond':'BC','victoria':'BC',
+  'kelowna':'BC','nanaimo':'BC',
+  'calgary':'AB','edmonton':'AB','red deer':'AB','lethbridge':'AB',
+  'winnipeg':'MB','brandon':'MB',
+  'saskatoon':'SK','regina':'SK',
+  'halifax':'NS','sydney':'NS',
+  'st johns':'NL',"st. john's":'NL',"saint john's":'NL',
+  'fredericton':'NB','moncton':'NB','saint john':'NB',
+  'charlottetown':'PE',
+  'whitehorse':'YT','yellowknife':'NT','iqaluit':'NU',
+};
+
 // ISO-3166-1 alpha-2 code → canonical display name. Full ISO list (249 codes)
 // so nothing gets dropped. The resolver also has a raw-2-letter-code fallback
 // for future codes we miss.
@@ -165,6 +240,19 @@ export function resolveRegion({ ipLocation, location } = {}) {
         return { code: `US-${code.toUpperCase()}`, label };
       }
     }
+    // City → state lookup. Vercel sometimes sends `City, US` with no region
+    // token; recover the state from the city name. URL-decode first because
+    // Vercel emits e.g. `Los%20Angeles`.
+    for (const part of ipParts) {
+      let cityKey;
+      try { cityKey = decodeURIComponent(part).toLowerCase().trim(); }
+      catch { cityKey = part.toLowerCase().trim(); }
+      if (cityKey === 'us' || cityKey === 'usa') continue;
+      const stateCode = US_CITY_TO_STATE[cityKey];
+      if (stateCode) {
+        return { code: `US-${stateCode}`, label: US_ABBR_TO_STATE[stateCode.toLowerCase()] };
+      }
+    }
     // Try full state names anywhere in the combined text.
     for (const st of US_STATES) {
       if (combined.includes(st.toLowerCase())) {
@@ -187,6 +275,17 @@ export function resolveRegion({ ipLocation, location } = {}) {
       const code = part.toLowerCase();
       if (code !== 'ca' && CA_ABBR[code]) {
         return { code: `CA-${code.toUpperCase()}`, label: CA_ABBR[code] };
+      }
+    }
+    // City → province lookup for Vercel `City, CA` short format.
+    for (const part of ipParts) {
+      let cityKey;
+      try { cityKey = decodeURIComponent(part).toLowerCase().trim(); }
+      catch { cityKey = part.toLowerCase().trim(); }
+      if (cityKey === 'ca') continue;
+      const provCode = CA_CITY_TO_PROVINCE[cityKey];
+      if (provCode) {
+        return { code: `CA-${provCode}`, label: CA_ABBR[provCode.toLowerCase()] };
       }
     }
     for (const prov of CA_PROVINCES) {
