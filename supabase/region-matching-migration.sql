@@ -139,32 +139,157 @@ BEGIN
     RETURN;
   END IF;
 
-  -- Other countries (ISO-3166-1 alpha-2)
+  -- Other countries: prefer the trailing 2-letter code from ip_location
+  -- (Vercel sends ISO-3166-1 alpha-2 in `x-vercel-ip-country`). Fall back to
+  -- free-text country-name matching for users whose only signal is the manual
+  -- `location` field.
+  DECLARE
+    parts text[];
+    last_tok text;
+    pretty text;
+  BEGIN
+    parts := string_to_array(t, ',');
+    last_tok := upper(trim(parts[array_length(parts, 1)]));
+
+    IF last_tok ~ '^[A-Z]{2}$' AND last_tok NOT IN ('US', 'CA') THEN
+      pretty := CASE last_tok
+        WHEN 'AD' THEN 'Andorra' WHEN 'AE' THEN 'United Arab Emirates' WHEN 'AF' THEN 'Afghanistan'
+        WHEN 'AG' THEN 'Antigua and Barbuda' WHEN 'AI' THEN 'Anguilla' WHEN 'AL' THEN 'Albania'
+        WHEN 'AM' THEN 'Armenia' WHEN 'AO' THEN 'Angola' WHEN 'AQ' THEN 'Antarctica' WHEN 'AR' THEN 'Argentina'
+        WHEN 'AS' THEN 'American Samoa' WHEN 'AT' THEN 'Austria' WHEN 'AU' THEN 'Australia' WHEN 'AW' THEN 'Aruba'
+        WHEN 'AX' THEN 'Åland Islands' WHEN 'AZ' THEN 'Azerbaijan'
+        WHEN 'BA' THEN 'Bosnia and Herzegovina' WHEN 'BB' THEN 'Barbados' WHEN 'BD' THEN 'Bangladesh'
+        WHEN 'BE' THEN 'Belgium' WHEN 'BF' THEN 'Burkina Faso' WHEN 'BG' THEN 'Bulgaria' WHEN 'BH' THEN 'Bahrain'
+        WHEN 'BI' THEN 'Burundi' WHEN 'BJ' THEN 'Benin' WHEN 'BL' THEN 'Saint Barthélemy' WHEN 'BM' THEN 'Bermuda'
+        WHEN 'BN' THEN 'Brunei' WHEN 'BO' THEN 'Bolivia' WHEN 'BQ' THEN 'Caribbean Netherlands' WHEN 'BR' THEN 'Brazil'
+        WHEN 'BS' THEN 'Bahamas' WHEN 'BT' THEN 'Bhutan' WHEN 'BV' THEN 'Bouvet Island' WHEN 'BW' THEN 'Botswana'
+        WHEN 'BY' THEN 'Belarus' WHEN 'BZ' THEN 'Belize'
+        WHEN 'CC' THEN 'Cocos (Keeling) Islands' WHEN 'CD' THEN 'DR Congo' WHEN 'CF' THEN 'Central African Republic'
+        WHEN 'CG' THEN 'Republic of Congo' WHEN 'CH' THEN 'Switzerland' WHEN 'CI' THEN 'Ivory Coast'
+        WHEN 'CK' THEN 'Cook Islands' WHEN 'CL' THEN 'Chile' WHEN 'CM' THEN 'Cameroon' WHEN 'CN' THEN 'China'
+        WHEN 'CO' THEN 'Colombia' WHEN 'CR' THEN 'Costa Rica' WHEN 'CU' THEN 'Cuba' WHEN 'CV' THEN 'Cape Verde'
+        WHEN 'CW' THEN 'Curaçao' WHEN 'CX' THEN 'Christmas Island' WHEN 'CY' THEN 'Cyprus' WHEN 'CZ' THEN 'Czech Republic'
+        WHEN 'DE' THEN 'Germany' WHEN 'DJ' THEN 'Djibouti' WHEN 'DK' THEN 'Denmark' WHEN 'DM' THEN 'Dominica'
+        WHEN 'DO' THEN 'Dominican Republic' WHEN 'DZ' THEN 'Algeria'
+        WHEN 'EC' THEN 'Ecuador' WHEN 'EE' THEN 'Estonia' WHEN 'EG' THEN 'Egypt' WHEN 'EH' THEN 'Western Sahara'
+        WHEN 'ER' THEN 'Eritrea' WHEN 'ES' THEN 'Spain' WHEN 'ET' THEN 'Ethiopia'
+        WHEN 'FI' THEN 'Finland' WHEN 'FJ' THEN 'Fiji' WHEN 'FK' THEN 'Falkland Islands' WHEN 'FM' THEN 'Micronesia'
+        WHEN 'FO' THEN 'Faroe Islands' WHEN 'FR' THEN 'France'
+        WHEN 'GA' THEN 'Gabon' WHEN 'GB' THEN 'United Kingdom' WHEN 'GD' THEN 'Grenada' WHEN 'GE' THEN 'Georgia'
+        WHEN 'GF' THEN 'French Guiana' WHEN 'GG' THEN 'Guernsey' WHEN 'GH' THEN 'Ghana' WHEN 'GI' THEN 'Gibraltar'
+        WHEN 'GL' THEN 'Greenland' WHEN 'GM' THEN 'Gambia' WHEN 'GN' THEN 'Guinea' WHEN 'GP' THEN 'Guadeloupe'
+        WHEN 'GQ' THEN 'Equatorial Guinea' WHEN 'GR' THEN 'Greece' WHEN 'GS' THEN 'South Georgia' WHEN 'GT' THEN 'Guatemala'
+        WHEN 'GU' THEN 'Guam' WHEN 'GW' THEN 'Guinea-Bissau' WHEN 'GY' THEN 'Guyana'
+        WHEN 'HK' THEN 'Hong Kong' WHEN 'HM' THEN 'Heard & McDonald Islands' WHEN 'HN' THEN 'Honduras'
+        WHEN 'HR' THEN 'Croatia' WHEN 'HT' THEN 'Haiti' WHEN 'HU' THEN 'Hungary'
+        WHEN 'ID' THEN 'Indonesia' WHEN 'IE' THEN 'Ireland' WHEN 'IL' THEN 'Israel' WHEN 'IM' THEN 'Isle of Man'
+        WHEN 'IN' THEN 'India' WHEN 'IO' THEN 'British Indian Ocean Territory' WHEN 'IQ' THEN 'Iraq'
+        WHEN 'IR' THEN 'Iran' WHEN 'IS' THEN 'Iceland' WHEN 'IT' THEN 'Italy'
+        WHEN 'JE' THEN 'Jersey' WHEN 'JM' THEN 'Jamaica' WHEN 'JO' THEN 'Jordan' WHEN 'JP' THEN 'Japan'
+        WHEN 'KE' THEN 'Kenya' WHEN 'KG' THEN 'Kyrgyzstan' WHEN 'KH' THEN 'Cambodia' WHEN 'KI' THEN 'Kiribati'
+        WHEN 'KM' THEN 'Comoros' WHEN 'KN' THEN 'Saint Kitts and Nevis' WHEN 'KP' THEN 'North Korea'
+        WHEN 'KR' THEN 'South Korea' WHEN 'KW' THEN 'Kuwait' WHEN 'KY' THEN 'Cayman Islands' WHEN 'KZ' THEN 'Kazakhstan'
+        WHEN 'LA' THEN 'Laos' WHEN 'LB' THEN 'Lebanon' WHEN 'LC' THEN 'Saint Lucia' WHEN 'LI' THEN 'Liechtenstein'
+        WHEN 'LK' THEN 'Sri Lanka' WHEN 'LR' THEN 'Liberia' WHEN 'LS' THEN 'Lesotho' WHEN 'LT' THEN 'Lithuania'
+        WHEN 'LU' THEN 'Luxembourg' WHEN 'LV' THEN 'Latvia' WHEN 'LY' THEN 'Libya'
+        WHEN 'MA' THEN 'Morocco' WHEN 'MC' THEN 'Monaco' WHEN 'MD' THEN 'Moldova' WHEN 'ME' THEN 'Montenegro'
+        WHEN 'MF' THEN 'Saint Martin' WHEN 'MG' THEN 'Madagascar' WHEN 'MH' THEN 'Marshall Islands'
+        WHEN 'MK' THEN 'North Macedonia' WHEN 'ML' THEN 'Mali' WHEN 'MM' THEN 'Myanmar' WHEN 'MN' THEN 'Mongolia'
+        WHEN 'MO' THEN 'Macao' WHEN 'MP' THEN 'Northern Mariana Islands' WHEN 'MQ' THEN 'Martinique'
+        WHEN 'MR' THEN 'Mauritania' WHEN 'MS' THEN 'Montserrat' WHEN 'MT' THEN 'Malta' WHEN 'MU' THEN 'Mauritius'
+        WHEN 'MV' THEN 'Maldives' WHEN 'MW' THEN 'Malawi' WHEN 'MX' THEN 'Mexico' WHEN 'MY' THEN 'Malaysia'
+        WHEN 'MZ' THEN 'Mozambique'
+        WHEN 'NA' THEN 'Namibia' WHEN 'NC' THEN 'New Caledonia' WHEN 'NE' THEN 'Niger' WHEN 'NF' THEN 'Norfolk Island'
+        WHEN 'NG' THEN 'Nigeria' WHEN 'NI' THEN 'Nicaragua' WHEN 'NL' THEN 'Netherlands' WHEN 'NO' THEN 'Norway'
+        WHEN 'NP' THEN 'Nepal' WHEN 'NR' THEN 'Nauru' WHEN 'NU' THEN 'Niue' WHEN 'NZ' THEN 'New Zealand'
+        WHEN 'OM' THEN 'Oman'
+        WHEN 'PA' THEN 'Panama' WHEN 'PE' THEN 'Peru' WHEN 'PF' THEN 'French Polynesia' WHEN 'PG' THEN 'Papua New Guinea'
+        WHEN 'PH' THEN 'Philippines' WHEN 'PK' THEN 'Pakistan' WHEN 'PL' THEN 'Poland'
+        WHEN 'PM' THEN 'Saint Pierre and Miquelon' WHEN 'PN' THEN 'Pitcairn' WHEN 'PR' THEN 'Puerto Rico'
+        WHEN 'PS' THEN 'Palestine' WHEN 'PT' THEN 'Portugal' WHEN 'PW' THEN 'Palau' WHEN 'PY' THEN 'Paraguay'
+        WHEN 'QA' THEN 'Qatar'
+        WHEN 'RE' THEN 'Réunion' WHEN 'RO' THEN 'Romania' WHEN 'RS' THEN 'Serbia' WHEN 'RU' THEN 'Russia'
+        WHEN 'RW' THEN 'Rwanda'
+        WHEN 'SA' THEN 'Saudi Arabia' WHEN 'SB' THEN 'Solomon Islands' WHEN 'SC' THEN 'Seychelles' WHEN 'SD' THEN 'Sudan'
+        WHEN 'SE' THEN 'Sweden' WHEN 'SG' THEN 'Singapore' WHEN 'SH' THEN 'Saint Helena' WHEN 'SI' THEN 'Slovenia'
+        WHEN 'SJ' THEN 'Svalbard and Jan Mayen' WHEN 'SK' THEN 'Slovakia' WHEN 'SL' THEN 'Sierra Leone'
+        WHEN 'SM' THEN 'San Marino' WHEN 'SN' THEN 'Senegal' WHEN 'SO' THEN 'Somalia' WHEN 'SR' THEN 'Suriname'
+        WHEN 'SS' THEN 'South Sudan' WHEN 'ST' THEN 'São Tomé and Príncipe' WHEN 'SV' THEN 'El Salvador'
+        WHEN 'SX' THEN 'Sint Maarten' WHEN 'SY' THEN 'Syria' WHEN 'SZ' THEN 'Eswatini'
+        WHEN 'TC' THEN 'Turks and Caicos' WHEN 'TD' THEN 'Chad' WHEN 'TF' THEN 'French Southern Territories'
+        WHEN 'TG' THEN 'Togo' WHEN 'TH' THEN 'Thailand' WHEN 'TJ' THEN 'Tajikistan' WHEN 'TK' THEN 'Tokelau'
+        WHEN 'TL' THEN 'Timor-Leste' WHEN 'TM' THEN 'Turkmenistan' WHEN 'TN' THEN 'Tunisia' WHEN 'TO' THEN 'Tonga'
+        WHEN 'TR' THEN 'Turkey' WHEN 'TT' THEN 'Trinidad and Tobago' WHEN 'TV' THEN 'Tuvalu' WHEN 'TW' THEN 'Taiwan'
+        WHEN 'TZ' THEN 'Tanzania'
+        WHEN 'UA' THEN 'Ukraine' WHEN 'UG' THEN 'Uganda' WHEN 'UM' THEN 'U.S. Minor Outlying Islands'
+        WHEN 'UY' THEN 'Uruguay' WHEN 'UZ' THEN 'Uzbekistan'
+        WHEN 'VA' THEN 'Vatican City' WHEN 'VC' THEN 'Saint Vincent and the Grenadines' WHEN 'VE' THEN 'Venezuela'
+        WHEN 'VG' THEN 'British Virgin Islands' WHEN 'VI' THEN 'U.S. Virgin Islands' WHEN 'VN' THEN 'Vietnam'
+        WHEN 'VU' THEN 'Vanuatu'
+        WHEN 'WF' THEN 'Wallis and Futuna' WHEN 'WS' THEN 'Samoa'
+        WHEN 'XK' THEN 'Kosovo'
+        WHEN 'YE' THEN 'Yemen' WHEN 'YT' THEN 'Mayotte'
+        WHEN 'ZA' THEN 'South Africa' WHEN 'ZM' THEN 'Zambia' WHEN 'ZW' THEN 'Zimbabwe'
+        ELSE last_tok  -- raw code for any future ISO addition we haven't named yet
+      END;
+      RETURN QUERY SELECT last_tok, pretty;
+      RETURN;
+    END IF;
+  END;
+
+  -- Last-resort: free-text country name matches (for users with only a manual
+  -- `location` field, no ip_location). Patterns tuned to avoid US/CA collisions
+  -- since those branches handled them above.
   RETURN QUERY SELECT c, l FROM (VALUES
-    ('GB','United Kingdom','united kingdom|\mengland\M|\mscotland\M|\mwales\M|\buk\b|\mgb\M'),
-    ('IE','Ireland','\mireland\M|\mie\M'),
-    ('AU','Australia','\maustralia\M|\mau\M'),
-    ('NZ','New Zealand','new zealand|\mnz\M'),
-    ('DK','Denmark','denmark|\mdk\M'),
-    ('NO','Norway','norway|\mno\M'),
-    ('SE','Sweden','sweden|\mse\M'),
-    ('FI','Finland','finland|\mfi\M'),
-    ('NL','Netherlands','netherlands|holland|\mnl\M'),
-    ('DE','Germany','germany|\mde\M'),
-    ('FR','France','france|\mfr\M'),
-    ('IT','Italy','italy|\mit\M'),
-    ('PL','Poland','poland|\mpl\M'),
-    ('ES','Spain','spain|\mes\M'),
-    ('PT','Portugal','portugal|\mpt\M'),
-    ('CH','Switzerland','switzerland|\mch\M'),
-    ('AT','Austria','austria|\mat\M'),
-    ('BE','Belgium','belgium|\mbe\M'),
-    ('GR','Greece','greece|\mgr\M'),
-    ('CZ','Czech Republic','czech|\mcz\M'),
-    ('RO','Romania','romania|\mro\M'),
-    ('HU','Hungary','hungary|\mhu\M'),
-    ('ZA','South Africa','south africa|\mza\M'),
-    ('IN','India','\mindia\M|\min\M')
+    ('GB','United Kingdom','united kingdom|\mengland\M|\mscotland\M|\mwales\M|\buk\b'),
+    ('IE','Ireland','\mireland\M'),
+    ('AU','Australia','\maustralia\M'),
+    ('NZ','New Zealand','new zealand'),
+    ('JP','Japan','\mjapan\M'),
+    ('KR','South Korea','south korea|\mkorea\M'),
+    ('CN','China','\mchina\M'),
+    ('IN','India','\mindia\M'),
+    ('BR','Brazil','\mbrazil\M'),
+    ('MX','Mexico','\mmexico\M'),
+    ('DE','Germany','\mgermany\M'),
+    ('FR','France','\mfrance\M'),
+    ('IT','Italy','\mitaly\M'),
+    ('ES','Spain','\mspain\M'),
+    ('NL','Netherlands','netherlands|holland'),
+    ('SE','Sweden','\msweden\M'),
+    ('NO','Norway','\mnorway\M'),
+    ('DK','Denmark','\mdenmark\M'),
+    ('FI','Finland','\mfinland\M'),
+    ('PL','Poland','\mpoland\M'),
+    ('CH','Switzerland','\mswitzerland\M'),
+    ('AT','Austria','\maustria\M'),
+    ('BE','Belgium','\mbelgium\M'),
+    ('PT','Portugal','\mportugal\M'),
+    ('GR','Greece','\mgreece\M'),
+    ('CZ','Czech Republic','\mczech\M'),
+    ('RO','Romania','\mromania\M'),
+    ('HU','Hungary','\mhungary\M'),
+    ('TR','Turkey','\mturkey\M'),
+    ('RU','Russia','\mrussia\M'),
+    ('UA','Ukraine','\mukraine\M'),
+    ('IL','Israel','\misrael\M'),
+    ('AE','United Arab Emirates','united arab emirates|\muae\M'),
+    ('SA','Saudi Arabia','saudi arabia'),
+    ('EG','Egypt','\megypt\M'),
+    ('ZA','South Africa','south africa'),
+    ('NG','Nigeria','\mnigeria\M'),
+    ('AR','Argentina','\margentina\M'),
+    ('CL','Chile','\mchile\M'),
+    ('CO','Colombia','\mcolombia\M'),
+    ('PE','Peru','\mperu\M'),
+    ('SG','Singapore','\msingapore\M'),
+    ('MY','Malaysia','\mmalaysia\M'),
+    ('TH','Thailand','\mthailand\M'),
+    ('VN','Vietnam','\mvietnam\M'),
+    ('ID','Indonesia','\mindonesia\M'),
+    ('PH','Philippines','\mphilippines\M'),
+    ('PK','Pakistan','\mpakistan\M'),
+    ('BD','Bangladesh','\mbangladesh\M')
   ) AS s(c, l, pat)
   WHERE t ~* pat
   LIMIT 1;
