@@ -46,6 +46,7 @@ export async function GET() {
       fetchPlausibleStats(),
       fetchRetentionCohorts(supabase),
       fetchNewUsers(supabase),
+      fetchRegionMatching(supabase),
     ]);
 
     const [
@@ -53,7 +54,7 @@ export async function GET() {
       retention, engagement, forumBreakdown,
       peakHours, taperTracker, newVsReturning, churnRisk,
       topMembers, threadFunnel, pageViews, plausible, retentionCohorts,
-      newUsers,
+      newUsers, regionMatching,
     ] = results.map(r => r.status === 'fulfilled' ? r.value : null);
 
     return NextResponse.json({
@@ -75,6 +76,7 @@ export async function GET() {
       plausible,
       retentionCohorts,
       newUsers,
+      regionMatching,
       fetchedAt: new Date().toISOString(),
       _responseTimeMs: Date.now() - _t0,
     });
@@ -116,16 +118,18 @@ async function fetchTopLineStats(supabase) {
 }
 
 async function fetchSignupSeries(supabase) {
-  const [d7, d30, d90] = await Promise.all([
+  const [d7, d30, d90, dAll] = await Promise.all([
     supabase.rpc('analytics_signup_series', { days_back: 7 }),
     supabase.rpc('analytics_signup_series', { days_back: 30 }),
     supabase.rpc('analytics_signup_series', { days_back: 90 }),
+    supabase.rpc('analytics_signup_series', { days_back: 3650 }),
   ]);
 
   return {
     last7: d7.data || [],
     last30: d30.data || [],
     last90: d90.data || [],
+    alltime: dAll.data || [],
   };
 }
 
@@ -339,11 +343,10 @@ async function fetchPeriodHistoricalSeries(supabase) {
 }
 
 async function fetchDailyActivity(supabase) {
-  const thirtyDaysAgo = new Date(Date.now() - 30 * 86400000).toISOString();
-
+  // Fetch all-time threads + replies (capped); bucket into last30, last90, alltime
   const [threads, replies] = await Promise.all([
-    supabase.from('threads').select('created_at').gte('created_at', thirtyDaysAgo).limit(2000),
-    supabase.from('replies').select('created_at').gte('created_at', thirtyDaysAgo).limit(2000),
+    supabase.from('threads').select('created_at').order('created_at', { ascending: true }).limit(20000),
+    supabase.from('replies').select('created_at').order('created_at', { ascending: true }).limit(20000),
   ]);
 
   const dayMap = {};
@@ -358,7 +361,16 @@ async function fetchDailyActivity(supabase) {
     dayMap[d].comments++;
   }
 
-  return Object.values(dayMap).sort((a, b) => a.date.localeCompare(b.date));
+  const all = Object.values(dayMap).sort((a, b) => a.date.localeCompare(b.date));
+  const cutoff = (days) => new Date(Date.now() - days * 86400000).toISOString().slice(0, 10);
+  const d30 = cutoff(30);
+  const d90 = cutoff(90);
+
+  return {
+    last30: all.filter(d => d.date >= d30),
+    last90: all.filter(d => d.date >= d90),
+    alltime: all,
+  };
 }
 
 async function fetchRetention(supabase) {
@@ -746,40 +758,86 @@ async function fetchPageViews(supabase) {
     .sort((a, b) => b.views - a.views)
     .slice(0, 10);
 
-  // Top referrers (last 7 days)
+  // Top referrers (last 7 days) — count UNIQUE SESSIONS per platform, not raw clicks
   const { data: refViews } = await supabase
     .from('page_views')
-    .select('referrer')
+    .select('referrer, session_id')
     .gte('created_at', weekAgo)
     .not('referrer', 'is', null)
     .neq('referrer', '')
     .limit(5000);
 
-  const refCounts = {};
+  // Collapse subdomains so one platform = one row (reddit.com, google.com, etc.)
+  const normalizeHost = (host) => {
+    let h = host.toLowerCase().replace(/^www\./, '');
+    // Strip common mobile/regional subdomains
+    h = h.replace(/^(m|old|new|mobile|amp)\./, '');
+    // Google TLDs → google.com
+    if (/^google\.[a-z.]+$/.test(h)) h = 'google.com';
+    // Known umbrella mappings
+    const umbrella = {
+      't.co': 'twitter.com',
+      'x.com': 'twitter.com',
+      'l.facebook.com': 'facebook.com',
+      'lm.facebook.com': 'facebook.com',
+      'out.reddit.com': 'reddit.com',
+      'away.vk.com': 'vk.com',
+      'l.instagram.com': 'instagram.com',
+      'lnkd.in': 'linkedin.com',
+      'youtu.be': 'youtube.com',
+      'm.youtube.com': 'youtube.com',
+    };
+    return umbrella[h] || h;
+  };
+
+  // Own-domain hosts to exclude (primary + Vercel prod + Vercel preview deployments)
+  const isOwnHost = (host) => {
+    if (host.includes('taper.community')) return true;
+    if (host === 'localhost' || host.endsWith('.localhost')) return true;
+    if (host === 'taper-community.vercel.app') return true;
+    if (host === 'tapermeds-frontend.vercel.app') return true;
+    // Preview deployments: taper-community-<hash>-<scope>.vercel.app etc.
+    if (/^taper-community[-.][\w-]+\.vercel\.app$/.test(host)) return true;
+    if (/^tapermeds-frontend[-.][\w-]+\.vercel\.app$/.test(host)) return true;
+    return false;
+  };
+
+  // source → Set<session_id>
+  const refSessions = {};
   for (const v of (refViews || [])) {
     try {
-      const host = new URL(v.referrer).hostname;
-      if (!host.includes('taper.community') && !host.includes('localhost')) {
-        refCounts[host] = (refCounts[host] || 0) + 1;
-      }
+      const host = normalizeHost(new URL(v.referrer).hostname);
+      if (isOwnHost(host)) continue;
+      if (!refSessions[host]) refSessions[host] = new Set();
+      if (v.session_id) refSessions[host].add(v.session_id);
     } catch { /* skip invalid URLs */ }
   }
-  const topReferrers = Object.entries(refCounts)
-    .map(([source, count]) => ({ source, count }))
+  const topReferrers = Object.entries(refSessions)
+    .map(([source, set]) => ({ source, count: set.size }))
+    .filter(r => r.count > 0)
     .sort((a, b) => b.count - a.count)
-    .slice(0, 5);
+    .slice(0, 10);
 
-  // Daily page views (last 30 days) — fill all 30 days so the chart isn't sparse
-  const { data: dailyViews } = await supabase
-    .from('page_views')
-    .select('created_at')
-    .gte('created_at', monthAgo)
-    .limit(5000);
-
+  // Daily page views (last 30 days) — aggregate in DB so limits don't truncate recent days
   const dayMap = {};
-  for (const v of (dailyViews || [])) {
-    const d = v.created_at.slice(0, 10);
-    dayMap[d] = (dayMap[d] || 0) + 1;
+  const { data: rpcDaily, error: rpcErr } = await supabase.rpc('analytics_page_views_daily', { days_back: 30 });
+  if (!rpcErr && rpcDaily) {
+    for (const row of rpcDaily) {
+      // row.date comes back as 'YYYY-MM-DD' from postgres
+      dayMap[row.date] = Number(row.views) || 0;
+    }
+  } else {
+    // Fallback: raw query, ordered DESC so we get most recent rows if limit is hit
+    const { data: dailyViews } = await supabase
+      .from('page_views')
+      .select('created_at')
+      .gte('created_at', monthAgo)
+      .order('created_at', { ascending: false })
+      .limit(50000);
+    for (const v of (dailyViews || [])) {
+      const d = v.created_at.slice(0, 10);
+      dayMap[d] = (dayMap[d] || 0) + 1;
+    }
   }
   // Build full 30-day series (always show all days, even zeros)
   const dailySeries = [];
@@ -867,7 +925,7 @@ async function fetchNewUsers(supabase) {
   const [profilesRes, matchRes] = await Promise.all([
     supabase
       .from('profiles')
-      .select('id, display_name, avatar_url, drug, taper_stage, has_clinician, drug_signature, location, joined_at, email, ip_location, last_ip')
+      .select('id, display_name, avatar_url, drug, taper_stage, has_clinician, drug_signature, location, joined_at, email, ip_location, last_ip, region_code, region_label')
       .order('joined_at', { ascending: false })
       .limit(500),
     supabase
@@ -881,4 +939,80 @@ async function fetchNewUsers(supabase) {
   const matchRequestUserIds = [...new Set((matchRes.data || []).map(r => r.user_id))];
 
   return { users, matchRequestUserIds };
+}
+
+// -----------------------------------------------------------------------------
+// Regional clinician coverage
+// -----------------------------------------------------------------------------
+// Buckets members and clinicians by `region_code`, producing a side-by-side view
+// of where we have demand (members) vs supply (clinicians). Both queries are
+// indexed GROUP BYs that run in parallel; total add to analytics wall-clock is
+// negligible at current data volumes.
+async function fetchRegionMatching(supabase) {
+  const [profilesRes, cliniciansRes, totalMembersRes] = await Promise.all([
+    supabase
+      .from('profiles')
+      .select('region_code, region_label')
+      .not('region_code', 'is', null),
+    supabase
+      .from('clinicians')
+      .select('id, name, role, clinic, region_code, region_label')
+      .eq('is_active', true),
+    // head:true + count:'exact' returns just the row count without payload
+    supabase
+      .from('profiles')
+      .select('id', { count: 'exact', head: true }),
+  ]);
+
+  const profiles = profilesRes.data || [];
+  const clinicians = cliniciansRes.data || [];
+  const totalMembers = totalMembersRes.count || 0;
+
+  // Bucket by region_code: { code, label, memberCount, clinicians[] }
+  const byRegion = new Map();
+
+  for (const p of profiles) {
+    const key = p.region_code;
+    if (!byRegion.has(key)) {
+      byRegion.set(key, { code: key, label: p.region_label || key, memberCount: 0, clinicians: [] });
+    }
+    byRegion.get(key).memberCount += 1;
+  }
+  for (const c of clinicians) {
+    if (!c.region_code) continue;
+    const key = c.region_code;
+    if (!byRegion.has(key)) {
+      byRegion.set(key, { code: key, label: c.region_label || key, memberCount: 0, clinicians: [] });
+    }
+    byRegion.get(key).clinicians.push({
+      id: c.id, name: c.name, role: c.role, clinic: c.clinic,
+    });
+  }
+
+  const regions = [...byRegion.values()].sort((a, b) => b.memberCount - a.memberCount);
+
+  const knownRegionMemberCount = profiles.length;
+  const coveredMembers = profiles.reduce((sum, p) => {
+    const bucket = byRegion.get(p.region_code);
+    return bucket && bucket.clinicians.length > 0 ? sum + 1 : sum;
+  }, 0);
+  const coveragePct = knownRegionMemberCount > 0
+    ? Math.round((coveredMembers / knownRegionMemberCount) * 1000) / 10
+    : 0;
+
+  // Clinicians in regions where we have no members — useful supply metric.
+  const orphanClinicianCount = clinicians.filter(
+    (c) => c.region_code && !profiles.some((p) => p.region_code === c.region_code)
+  ).length;
+
+  return {
+    regions,
+    totalMembers,
+    knownRegionMemberCount,
+    unknownMemberCount: totalMembers - knownRegionMemberCount,
+    coveredMembers,
+    coveragePct,
+    totalClinicians: clinicians.length,
+    orphanClinicianCount,
+  };
 }

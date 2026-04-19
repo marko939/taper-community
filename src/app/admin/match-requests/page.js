@@ -6,6 +6,12 @@ import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { isAdmin } from '@/lib/blog';
 import { useRouteCleanup } from '@/hooks/useRouteCleanup';
+import {
+  resolveRegionLegacy as deriveRegion,
+  US_STATES,
+  CA_PROVINCES,
+  COUNTRIES,
+} from '@/lib/regions';
 
 const STATUSES = ['pending', 'contacted', 'onboarded', 'matched', 'declined', 'closed'];
 const STATUS_COLORS = {
@@ -26,130 +32,13 @@ const SORT_OPTIONS = [
   { value: 'manual', label: 'Manual order' },
 ];
 
-const US_STATES = [
-  'Alabama','Alaska','Arizona','Arkansas','California','Colorado','Connecticut','Delaware',
-  'District of Columbia','Florida','Georgia','Hawaii','Idaho','Illinois','Indiana','Iowa',
-  'Kansas','Kentucky','Louisiana','Maine','Maryland','Massachusetts','Michigan','Minnesota',
-  'Mississippi','Missouri','Montana','Nebraska','Nevada','New Hampshire','New Jersey',
-  'New Mexico','New York','North Carolina','North Dakota','Ohio','Oklahoma','Oregon',
-  'Pennsylvania','Rhode Island','South Carolina','South Dakota','Tennessee','Texas','Utah',
-  'Vermont','Virginia','Washington','West Virginia','Wisconsin','Wyoming',
-];
-
-const US_ABBR_TO_STATE = {
-  'al':'Alabama','ak':'Alaska','az':'Arizona','ar':'Arkansas','ca':'California','co':'Colorado',
-  'ct':'Connecticut','de':'Delaware','dc':'District of Columbia','fl':'Florida','ga':'Georgia',
-  'hi':'Hawaii','id':'Idaho','il':'Illinois','in':'Indiana','ia':'Iowa','ks':'Kansas',
-  'ky':'Kentucky','la':'Louisiana','me':'Maine','md':'Maryland','ma':'Massachusetts',
-  'mi':'Michigan','mn':'Minnesota','ms':'Mississippi','mo':'Missouri','mt':'Montana',
-  'ne':'Nebraska','nv':'Nevada','nh':'New Hampshire','nj':'New Jersey','nm':'New Mexico',
-  'ny':'New York','nc':'North Carolina','nd':'North Dakota','oh':'Ohio','ok':'Oklahoma',
-  'or':'Oregon','pa':'Pennsylvania','ri':'Rhode Island','sc':'South Carolina','sd':'South Dakota',
-  'tn':'Tennessee','tx':'Texas','ut':'Utah','vt':'Vermont','va':'Virginia','wa':'Washington',
-  'wv':'West Virginia','wi':'Wisconsin','wy':'Wyoming',
-};
-
-const CA_PROVINCES = [
-  'Alberta','British Columbia','Manitoba','New Brunswick','Newfoundland and Labrador',
-  'Nova Scotia','Ontario','Prince Edward Island','Quebec','Saskatchewan',
-];
-const CA_ABBR = { 'ab':'Alberta','bc':'British Columbia','mb':'Manitoba','nb':'New Brunswick',
-  'nl':'Newfoundland and Labrador','ns':'Nova Scotia','on':'Ontario','pe':'Prince Edward Island',
-  'qc':'Quebec','sk':'Saskatchewan' };
-
-const COUNTRIES = ['Australia','United Kingdom','Ireland','Denmark','Norway','Sweden',
-  'Netherlands','Germany','France','Italy','Poland','Spain','Portugal','Switzerland',
-  'Austria','Belgium','Finland','Greece','Czech Republic','Romania','Hungary'];
-
-function deriveRegion(req) {
-  // Manual override takes priority
-  if (req.assigned_location) return req.assigned_location;
-
-  const loc = (req.profile?.location || '').trim();
-  const ip = (req.profile?.ip_location || '').trim();
-
-  if (!loc && !ip) return null;
-
-  // ip_location format from Vercel: "City, StateCode, CountryCode" e.g. "Los Angeles, CA, US"
-  const ipParts = ip.split(',').map(s => s.trim());
-  const combined = `${loc}, ${ip}`.toLowerCase();
-
-  // Detect country — check last part, or anywhere in text
-  const lastPart = (ipParts[ipParts.length - 1] || '').toLowerCase();
-  const isUS = lastPart === 'us' || lastPart === 'usa' || combined.includes('united states');
-  const isCA = (!isUS && (lastPart === 'ca' || combined.includes('canada')));
-
-  // For US: resolve to state
-  if (isUS) {
-    // Try every part of ip_location as a potential state abbreviation
-    for (const part of ipParts) {
-      const code = part.trim().toLowerCase();
-      if (code !== 'us' && code !== 'usa' && US_ABBR_TO_STATE[code]) return US_ABBR_TO_STATE[code];
-    }
-    // Try full state names anywhere in combined text
-    for (const st of US_STATES) {
-      if (combined.includes(st.toLowerCase())) return st;
-    }
-    // Try state abbreviations with word boundary in the full text
-    for (const [abbr, full] of Object.entries(US_ABBR_TO_STATE)) {
-      const re = new RegExp(`\\b${abbr}\\b`, 'i');
-      if (re.test(loc) || re.test(ip)) return full;
-    }
-    return 'USA (unspecified)';
-  }
-
-  // For Canada: resolve to province
-  if (isCA) {
-    for (const part of ipParts) {
-      const code = part.trim().toLowerCase();
-      if (code !== 'ca' && CA_ABBR[code]) return CA_ABBR[code];
-    }
-    for (const prov of CA_PROVINCES) {
-      if (combined.includes(prov.toLowerCase())) return prov;
-    }
-    for (const [abbr, full] of Object.entries(CA_ABBR)) {
-      const re = new RegExp(`\\b${abbr}\\b`, 'i');
-      if (re.test(loc) || re.test(ip)) return full;
-    }
-    return 'Canada (unspecified)';
-  }
-
-  // For everyone else: resolve to country
-  if (lastPart === 'gb' || combined.includes('united kingdom') || combined.includes('england') || combined.includes(', uk')) return 'United Kingdom';
-  if (lastPart === 'ie' || combined.includes('ireland')) return 'Ireland';
-  if (lastPart === 'au' || combined.includes('australia')) return 'Australia';
-  if (lastPart === 'dk' || combined.includes('denmark')) return 'Denmark';
-  if (lastPart === 'no' || combined.includes('norway')) return 'Norway';
-  if (lastPart === 'se' || combined.includes('sweden')) return 'Sweden';
-  if (lastPart === 'nl' || combined.includes('netherlands')) return 'Netherlands';
-  if (lastPart === 'de' || combined.includes('germany')) return 'Germany';
-  if (lastPart === 'fr' || combined.includes('france')) return 'France';
-  if (lastPart === 'it' || combined.includes('italy')) return 'Italy';
-  if (lastPart === 'pl' || combined.includes('poland')) return 'Poland';
-  if (lastPart === 'es' || combined.includes('spain')) return 'Spain';
-  if (lastPart === 'pt' || combined.includes('portugal')) return 'Portugal';
-  if (lastPart === 'ch' || combined.includes('switzerland')) return 'Switzerland';
-  if (lastPart === 'at' || combined.includes('austria')) return 'Austria';
-  if (lastPart === 'be' || combined.includes('belgium')) return 'Belgium';
-  if (lastPart === 'fi' || combined.includes('finland')) return 'Finland';
-  if (lastPart === 'gr' || combined.includes('greece')) return 'Greece';
-  if (lastPart === 'cz' || combined.includes('czech')) return 'Czech Republic';
-  if (lastPart === 'ro' || combined.includes('romania')) return 'Romania';
-  if (lastPart === 'hu' || combined.includes('hungary')) return 'Hungary';
-  if (lastPart === 'nz' || combined.includes('new zealand')) return 'New Zealand';
-  if (lastPart === 'za' || combined.includes('south africa')) return 'South Africa';
-  if (lastPart === 'in' || combined.includes('india')) return 'India';
-
-  // Fallback: try full state/province names in text
-  for (const st of US_STATES) {
-    if (combined.includes(st.toLowerCase())) return st;
-  }
-  for (const prov of CA_PROVINCES) {
-    if (combined.includes(prov.toLowerCase())) return prov;
-  }
-
-  return lastPart ? lastPart.toUpperCase() : null;
-}
+// Region lookup tables + `deriveRegion` live in `src/lib/regions.js` so every
+// admin surface resolves regions identically. `deriveRegion` here is aliased to
+// `resolveRegionLegacy`, which preserves this page's prior contract:
+//   - honors `req.assigned_location` as an explicit override
+//   - returns just the display label string (not { code, label })
+// If this page needs to filter by US_STATES / CA_PROVINCES / COUNTRIES for its
+// own dropdowns, import them from `@/lib/regions` — they're exported there.
 
 function timeAgo(date) {
   const seconds = Math.floor((Date.now() - date.getTime()) / 1000);

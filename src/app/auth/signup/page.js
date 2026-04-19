@@ -218,6 +218,11 @@ function SignUpForm() {
               <button type="submit" disabled={loading} className="btn btn-primary w-full disabled:opacity-50">
                 {loading ? 'Creating account...' : 'Create Account'}
               </button>
+              <p className="text-[11px] leading-relaxed text-text-subtle">
+                We detect your general region — country, US state, or Canadian
+                province — from your IP address to help match you with local
+                clinicians. We never store your precise location.
+              </p>
             </form>
 
             <p className="mt-6 text-center text-sm text-text-muted">

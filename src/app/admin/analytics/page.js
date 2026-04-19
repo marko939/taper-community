@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, Fragment } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { isAdmin } from '@/lib/blog';
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer, Legend,
@@ -11,6 +12,9 @@ import {
 import { createClient } from '@/lib/supabase/client';
 import Avatar from '@/components/shared/Avatar';
 import { useRouteCleanup } from '@/hooks/useRouteCleanup';
+
+// Leaflet touches window/document on load — render client-side only.
+const RegionMap = dynamic(() => import('@/components/admin/RegionMap'), { ssr: false });
 
 export default function AnalyticsDashboard() {
   useRouteCleanup();
@@ -165,11 +169,14 @@ export default function AnalyticsDashboard() {
           <SignupBarChart series={data.signupSeries} range={signupRange} setRange={setSignupRange} />
 
           {/* New Users — Intake Forms */}
-          <NewUsersIntake data={data.newUsers} />
+          <NewUsersIntake data={data.newUsers} regionMatching={data.regionMatching} />
 
           {/* 3. Retention */}
           <RetentionCards retention={data.retention} />
           <RetentionCohortTable cohorts={data.retentionCohorts} />
+
+          {/* Site Traffic (custom tracker) */}
+          <PageViewsSection pageViews={data.pageViews} />
 
           {/* 4. Daily Posts & Comments */}
           <DailyActivityChart activity={data.dailyActivity} />
@@ -195,12 +202,11 @@ export default function AnalyticsDashboard() {
 
           {/* Clinician Interest */}
 
-          {/* Site Traffic */}
-          {data.plausible ? (
-            <PlausibleSection plausible={data.plausible} />
-          ) : (
-            <PlausibleUnavailableCard />
-          )}
+          {/* Global Member Distribution — world map */}
+          <RegionMap regions={data.regionMatching?.regions ?? []} />
+
+          {/* Regional Clinician Coverage */}
+          <RegionalCoverageSection matching={data.regionMatching} />
 
           {/* Period Comparisons — DoD / WoW / MoM */}
           {data.periodComparisons && (
@@ -255,6 +261,7 @@ function SignupBarChart({ series, range, setRange }) {
     { key: 'last7', label: '7 Days' },
     { key: 'last30', label: '30 Days' },
     { key: 'last90', label: '90 Days' },
+    { key: 'alltime', label: 'All Time' },
   ];
 
   const chartData = (series[range] || []).map(d => ({
@@ -432,20 +439,56 @@ function ComparisonTable({ title, data, labels, historicalSeries }) {
 }
 
 function DailyActivityChart({ activity }) {
+  const [range, setRange] = useState('last30');
+
   if (!activity) return <SectionUnavailable label="Daily Activity" />;
+
+  // Support both old (flat array) and new (object with ranges) shapes
+  const ranged = Array.isArray(activity)
+    ? { last30: activity, last90: activity, alltime: activity }
+    : activity;
+
+  const ranges = [
+    { key: 'last30', label: '30 Days' },
+    { key: 'last90', label: '90 Days' },
+    { key: 'alltime', label: 'All Time' },
+  ];
+
+  const data = ranged[range] || [];
+  const tickFormatter = range === 'alltime'
+    ? v => new Date(v).toLocaleDateString('en-US', { month: 'short', year: '2-digit' })
+    : v => new Date(v).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 
   return (
     <Card>
-      <h2 className="text-sm font-semibold text-foreground">Daily Posts & Comments (30 days)</h2>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <h2 className="text-sm font-semibold text-foreground">Daily Posts & Comments</h2>
+        <div className="flex gap-1">
+          {ranges.map(r => (
+            <button
+              key={r.key}
+              onClick={() => setRange(r.key)}
+              className="rounded-lg px-2.5 py-1 text-[11px] font-medium transition"
+              style={{
+                background: range === r.key ? 'var(--purple-pale)' : 'transparent',
+                color: range === r.key ? 'var(--purple)' : 'var(--text-muted)',
+              }}
+            >
+              {r.label}
+            </button>
+          ))}
+        </div>
+      </div>
       <div className="mt-4 h-64">
-        {activity.length === 0 ? (
+        {data.length === 0 ? (
           <EmptyChart />
         ) : (
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={activity}>
+            <BarChart data={data}>
               <CartesianGrid strokeDasharray="3 3" stroke="var(--border-subtle)" />
               <XAxis dataKey="date" tick={{ fontSize: 10, fill: 'var(--text-subtle)' }}
-                tickFormatter={v => new Date(v).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} />
+                tickFormatter={tickFormatter}
+                interval={range === 'alltime' ? Math.max(0, Math.floor(data.length / 12)) : 'preserveStartEnd'} />
               <YAxis tick={{ fontSize: 11, fill: 'var(--text-subtle)' }} />
               <Tooltip contentStyle={tooltipStyle} />
               <Legend wrapperStyle={{ fontSize: 11 }} />
@@ -744,6 +787,145 @@ function TopMembersTable({ members }) {
   );
 }
 
+function RegionalCoverageSection({ matching }) {
+  const [expandedCode, setExpandedCode] = useState(null);
+
+  if (!matching || !matching.regions) {
+    return <SectionUnavailable label="Regional Clinician Coverage" />;
+  }
+
+  const {
+    regions,
+    totalMembers,
+    knownRegionMemberCount,
+    unknownMemberCount,
+    coveredMembers,
+    coveragePct,
+    totalClinicians,
+    orphanClinicianCount,
+  } = matching;
+
+  return (
+    <Card>
+      <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
+        <h2 className="text-sm font-semibold text-foreground">Regional Clinician Coverage</h2>
+        <span className="text-[11px] text-text-subtle">
+          Matches are by US state, Canadian province, or country.
+        </span>
+      </div>
+
+      {/* Summary */}
+      <div className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <div>
+          <p className="text-[10px] font-medium uppercase tracking-wide text-text-subtle">Coverage</p>
+          <p className="mt-1 text-2xl font-bold" style={{ color: coveragePct >= 50 ? '#10B981' : '#E8A838' }}>
+            {coveragePct}%
+          </p>
+          <p className="text-[11px] text-text-subtle">
+            {coveredMembers} of {knownRegionMemberCount} members have a local clinician
+          </p>
+        </div>
+        <div>
+          <p className="text-[10px] font-medium uppercase tracking-wide text-text-subtle">Known regions</p>
+          <p className="mt-1 text-2xl font-bold text-foreground">{regions.length}</p>
+          <p className="text-[11px] text-text-subtle">distinct regions represented</p>
+        </div>
+        <div>
+          <p className="text-[10px] font-medium uppercase tracking-wide text-text-subtle">Unknown</p>
+          <p className="mt-1 text-2xl font-bold text-foreground">{unknownMemberCount}</p>
+          <p className="text-[11px] text-text-subtle">
+            of {totalMembers} members have no detected region
+          </p>
+        </div>
+        <div>
+          <p className="text-[10px] font-medium uppercase tracking-wide text-text-subtle">Orphan clinicians</p>
+          <p className="mt-1 text-2xl font-bold text-foreground">{orphanClinicianCount}</p>
+          <p className="text-[11px] text-text-subtle">
+            of {totalClinicians} active — regions with no members yet
+          </p>
+        </div>
+      </div>
+
+      {/* Members-by-region table */}
+      {regions.length === 0 ? (
+        <p className="text-xs text-text-subtle">No regional data yet. Members will appear here after their next signin populates region_code.</p>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full text-xs">
+            <thead>
+              <tr className="border-b" style={{ borderColor: 'var(--border-subtle)' }}>
+                <th className="pb-2 text-left font-medium text-text-subtle">Region</th>
+                <th className="pb-2 text-right font-medium text-text-subtle">Members</th>
+                <th className="pb-2 text-right font-medium text-text-subtle">Clinicians</th>
+                <th className="pb-2 text-right font-medium text-text-subtle">Coverage</th>
+                <th className="pb-2 text-right font-medium text-text-subtle">&nbsp;</th>
+              </tr>
+            </thead>
+            <tbody>
+              {regions.map((r) => {
+                const isExpanded = expandedCode === r.code;
+                const hasClinician = r.clinicians.length > 0;
+                return (
+                  <Fragment key={r.code}>
+                    <tr
+                      className="cursor-pointer border-b last:border-0 hover:bg-[var(--surface-strong-hover)]"
+                      style={{ borderColor: 'var(--border-light)' }}
+                      onClick={() => setExpandedCode(isExpanded ? null : r.code)}
+                    >
+                      <td className="py-2">
+                        <span className="font-medium text-foreground">{r.label}</span>
+                        <span className="ml-2 text-[10px] text-text-subtle">{r.code}</span>
+                      </td>
+                      <td className="py-2 text-right font-semibold text-foreground">{r.memberCount}</td>
+                      <td className="py-2 text-right text-foreground">{r.clinicians.length}</td>
+                      <td className="py-2 text-right">
+                        <span
+                          className="inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold"
+                          style={{
+                            background: hasClinician ? '#D1FAE5' : '#FEF3C7',
+                            color: hasClinician ? '#065F46' : '#92400E',
+                          }}
+                        >
+                          {hasClinician ? 'Covered' : 'Gap'}
+                        </span>
+                      </td>
+                      <td className="py-2 text-right text-[11px] text-text-subtle">
+                        {isExpanded ? '▾' : '▸'}
+                      </td>
+                    </tr>
+                    {isExpanded && (
+                      <tr style={{ background: 'var(--purple-ghost)' }}>
+                        <td colSpan={5} className="px-2 py-3">
+                          {r.clinicians.length === 0 ? (
+                            <p className="text-[11px] text-text-subtle">
+                              No active clinicians in {r.label}. Consider adding via{' '}
+                              <Link href="/admin/clinician-discovery" className="underline">Clinician Discovery</Link>.
+                            </p>
+                          ) : (
+                            <ul className="space-y-1">
+                              {r.clinicians.map((c) => (
+                                <li key={c.id} className="text-[11px] text-foreground">
+                                  <span className="font-medium">{c.name}</span>
+                                  {c.role ? <span className="text-text-subtle"> — {c.role}</span> : null}
+                                  {c.clinic ? <span className="text-text-subtle"> @ {c.clinic}</span> : null}
+                                </li>
+                              ))}
+                            </ul>
+                          )}
+                        </td>
+                      </tr>
+                    )}
+                  </Fragment>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </Card>
+  );
+}
+
 const CLINICIAN_FILTERS = [
   { key: 'all', label: 'All' },
   { key: 'has', label: 'Has Clinician' },
@@ -751,7 +933,7 @@ const CLINICIAN_FILTERS = [
   { key: 'wants', label: 'Wants Help' },
 ];
 
-function NewUsersIntake({ data }) {
+function NewUsersIntake({ data, regionMatching }) {
   const [expandedId, setExpandedId] = useState(null);
   const [filter, setFilter] = useState('all');
 
@@ -759,6 +941,11 @@ function NewUsersIntake({ data }) {
 
   const { users, matchRequestUserIds = [] } = data;
   const matchSet = new Set(matchRequestUserIds);
+
+  // Build an index so looking up clinicians for a given user is O(1) per row.
+  const regionIndex = new Map(
+    (regionMatching?.regions ?? []).map((r) => [r.code, r])
+  );
 
   const getClinicianStatus = (u) => {
     if (matchSet.has(u.id)) return 'wants';
@@ -909,6 +1096,51 @@ function NewUsersIntake({ data }) {
                           <p className="mt-0.5 italic text-foreground">{u.drug_signature}</p>
                         </div>
                       )}
+
+                      {/* Matching clinicians pulled from the region_code index.
+                          `regionIndex` is keyed by code, so lookup is O(1). */}
+                      {u.region_code ? (() => {
+                        const region = regionIndex.get(u.region_code);
+                        const regionClinicians = region?.clinicians ?? [];
+                        return (
+                          <div className="text-xs border-t pt-2" style={{ borderColor: 'var(--border-subtle)' }}>
+                            <p className="font-medium text-text-subtle">
+                              Clinicians in {region?.label || u.region_label || u.region_code}
+                              {regionClinicians.length === 0
+                                ? ' — none available yet'
+                                : ` (${regionClinicians.length})`}
+                            </p>
+                            {regionClinicians.length > 0 ? (
+                              <ul className="mt-1 space-y-0.5">
+                                {regionClinicians.slice(0, 5).map((c) => (
+                                  <li key={c.id} className="text-foreground">
+                                    <span className="font-medium">{c.name}</span>
+                                    {c.role ? <span className="text-text-subtle"> — {c.role}</span> : null}
+                                    {c.clinic ? <span className="text-text-subtle"> @ {c.clinic}</span> : null}
+                                  </li>
+                                ))}
+                                {regionClinicians.length > 5 && (
+                                  <li className="text-[10px] text-text-subtle">
+                                    …and {regionClinicians.length - 5} more
+                                  </li>
+                                )}
+                              </ul>
+                            ) : (
+                              <p className="mt-1 text-[11px] text-text-subtle">
+                                Consider adding one via{' '}
+                                <Link href="/admin/clinician-discovery" className="underline" style={{ color: 'var(--purple)' }}>
+                                  Clinician Discovery
+                                </Link>.
+                              </p>
+                            )}
+                          </div>
+                        );
+                      })() : (
+                        <div className="text-[11px] text-text-subtle border-t pt-2" style={{ borderColor: 'var(--border-subtle)' }}>
+                          No region detected yet — will populate on next signin.
+                        </div>
+                      )}
+
                       <div className="flex items-center justify-between pt-1 text-[11px] text-text-subtle">
                         <span>Joined {formatDate(u.joined_at)}</span>
                         <Link href={`/profile/${u.id}`} className="font-medium hover:underline" style={{ color: 'var(--purple)' }}>
